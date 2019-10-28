@@ -54,7 +54,8 @@ static const usbus_hdr_gen_funcs_t _cdcacm_descriptor = {
     .fmt_pre_descriptor = _gen_assoc_descriptor,
     .get_header = _gen_full_acm_descriptor,
     .len = {
-        .fixed_len = sizeof(usb_desc_cdc_t) +
+        .fixed_len = sizeof(usb_descriptor_interface_association_t) +
+                     sizeof(usb_desc_cdc_t) +
                      sizeof(usb_desc_acm_t) +
                      sizeof(usb_desc_union_t) +
                      sizeof(usb_desc_call_mngt_t),
@@ -179,7 +180,7 @@ void usbus_cdc_acm_init(usbus_t *usbus, usbus_cdcacm_device_t *cdcacm,
 
 static void _init(usbus_t *usbus, usbus_handler_t *handler)
 {
-    DEBUG("CDC_ACM: intialization\n");
+    DEBUG("CDC_ACM: initialization\n");
     usbus_cdcacm_device_t *cdcacm = (usbus_cdcacm_device_t*)handler;
 
     cdcacm->flush.handler = _handle_flush;

@@ -79,11 +79,6 @@ endif
 # files here so they will be submitted along with the test jobs.
 TEST_EXTRA_FILES += $(SLOT_RIOT_ELFS) $(SUIT_SEC) $(SUIT_PUB)
 
-# Due to issues with source address selection, this test currently might not
-# run reliably on CI.
-# See #12404, #12408.
-TEST_ON_CI_BLACKLIST += all
-
 include $(RIOTBASE)/Makefile.include
 
 .PHONY: host-tools
@@ -91,4 +86,4 @@ include $(RIOTBASE)/Makefile.include
 host-tools:
 	$(Q)env -u CC -u CFLAGS make -C $(RIOTTOOLS)
 
-include $(RIOTMAKE)/default-channel.inc.mk
+include $(RIOTMAKE)/default-radio-settings.inc.mk
