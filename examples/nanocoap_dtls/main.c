@@ -31,6 +31,7 @@ static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
 
 /* import "ifconfig" shell command, used for printing addresses */
 extern int _gnrc_netif_config(int argc, char **argv);
+extern int dtls_server(void);
 
 char thread_stack[THREAD_STACKSIZE_MAIN];
 
@@ -42,6 +43,13 @@ void* start_nanocoap(void* arg)
     sock_udp_ep_t local = { .port=COAP_PORT, .family=AF_INET6 };
     puts("Start nanocoap...");
     nanocoap_server(&local, buf, sizeof(buf));
+
+    return NULL;
+}
+
+void* start_dtls(void* arg)
+{
+    dtls_server();
 
     return NULL;
 }
@@ -65,6 +73,8 @@ int main(void)
         <= KERNEL_PID_UNDEF) {
         return -1;
     }
+
+    //start_dtls(NULL); TODO: maybe multi-threading?
 
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(NULL, line_buf, SHELL_DEFAULT_BUFSIZE);

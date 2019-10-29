@@ -31,6 +31,22 @@ USEMODULE += shell
 USEMODULE += shell_commands
 USEMODULE += ps
 
+USEPKG += wolfssl
+USEMODULE += wolfcrypt
+USEMODULE += wolfssl
+USEMODULE += wolfssl_dtls
+
+# Select public key algorithm (or PSK) support fot ciphersuite(s):
+#USEMODULE += wolfcrypt_ecc
+#USEMODULE += wolfcrypt_rsa wolfcrypt_dh
+USEMODULE += wolfssl_psk
+
+# DTLS stuff
+CFLAGS += -DDTLS_DEFAULT_PORT=$(DTLS_PORT) -DDTLS_WOLFSSL -Wno-unused-parameter -Wno-unused-variable
+
+# A larger stack size is required if using ECC or RSA
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=\(3*THREAD_STACKSIZE_DEFAULT\)
+
 # Comment this out to enable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:
