@@ -31,7 +31,7 @@ static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
 
 /* import "ifconfig" shell command, used for printing addresses */
 extern int _gnrc_netif_config(int argc, char **argv);
-extern int dtls_server(void);
+extern int start_dtls_client(void);
 
 char thread_stack[THREAD_STACKSIZE_MAIN];
 
@@ -49,7 +49,7 @@ void* start_nanocoap(void* arg)
 
 void* start_dtls(void* arg)
 {
-    dtls_server();
+    start_dtls_client();
 
     return NULL;
 }
@@ -74,7 +74,7 @@ int main(void)
         return -1;
     }
 
-    //start_dtls(NULL); TODO: maybe multi-threading?
+    start_dtls(NULL);
 
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(NULL, line_buf, SHELL_DEFAULT_BUFSIZE);

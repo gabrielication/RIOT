@@ -10,9 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "fmt.h"
 #include "net/nanocoap.h"
-#include "hashes/sha256.h"
 
 static ssize_t _riot_board_handler(coap_pkt_t *pkt, uint8_t *buf, size_t len, void *context)
 {
@@ -25,6 +23,7 @@ static ssize_t _riot_board_handler(coap_pkt_t *pkt, uint8_t *buf, size_t len, vo
 const coap_resource_t coap_resources[] = {
     COAP_WELL_KNOWN_CORE_DEFAULT_HANDLER,
     { "/riot/board", COAP_GET, _riot_board_handler, NULL },
+    { "/.well-known/atls", COAP_POST, _riot_board_handler, NULL },
 };
 
 const unsigned coap_resources_numof = ARRAY_SIZE(coap_resources);
