@@ -5,10 +5,13 @@
 #include <wolfssl/ssl.h>
 
 #include "log.h"
+#include "net/gcoap.h"
 
 #ifdef MODULE_WOLFSSL_PSK
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
+
+extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
 int fpRecv = 0;
 
@@ -65,6 +68,29 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         }
     printf("\n/*-------------------- CLIENT SENDING -----------------*/\n");
 
+    //TODO
+
+    uint8_t buf2[GCOAP_PDU_BUF_SIZE];
+    coap_pkt_t pdu;
+    size_t len;
+    size_t paylen;
+
+    char str[] = "AO";
+    paylen = strlen(buf);
+
+    gcoap_req_init(&pdu, &buf2[0], 256, 2, "/.well-known/atls");
+
+    coap_opt_add_format(&pdu, COAP_FORMAT_TEXT);
+    len = coap_opt_finish(&pdu, COAP_OPT_FINISH_PAYLOAD);
+    if (pdu.payload_len >= paylen) {
+                memcpy(pdu.payload, buf, paylen);
+                len += paylen;
+    }
+
+    if (!_send(&buf2[0], len, "fe80::14e4:abff:fe5f:936f", "5683")){
+        puts("gcoap_cli: msg send failed");
+    }
+
     return sz;
 }
 
@@ -119,10 +145,13 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
     return ssl;
 }
 
-int start_dtls_client(void)
+int start_dtls_client(int argc, char **argv)
 {
     WOLFSSL* sslCli;
     WOLFSSL_CTX* ctxCli = NULL;
+
+    (void) argc;
+    (void) argv;
 
     int ret = SSL_FAILURE;
 

@@ -7,20 +7,22 @@ BOARD ?= native
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../..
 
+# Increase from default for confirmable block2 follow-on requests
+GCOAP_RESEND_BUFS_MAX ?= 2
+CFLAGS += -DGCOAP_RESEND_BUFS_MAX=$(GCOAP_RESEND_BUFS_MAX)
+
 # Include packages that pull up and auto-init the link layer.
 # NOTE: 6LoWPAN will be included if IEEE802.15.4 devices are present
 USEMODULE += gnrc_netdev_default
 USEMODULE += auto_init_gnrc_netif
-# Specify the mandatory networking modules for IPv6 and UDP
+# Specify the mandatory networking modules
 USEMODULE += gnrc_ipv6_default
-USEMODULE += gnrc_udp
-USEMODULE += gnrc_sock_udp
+USEMODULE += gcoap
 # Additional networking modules that can be dropped if not needed
 USEMODULE += gnrc_icmpv6_echo
 
-USEMODULE += nanocoap_sock
-
-# include this for nicely formatting the returned internal value
+# Required by gcoap example
+USEMODULE += od
 USEMODULE += fmt
 
 # include sha256 (used by example blockwise handler)
