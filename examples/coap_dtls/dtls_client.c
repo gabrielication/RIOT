@@ -54,7 +54,6 @@ static inline unsigned int my_psk_client_cb(WOLFSSL* ssl, const char* hint,
 int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 {
     (void) ssl;
-    (void) buf;
     (void) sz;
     (void) ctx;
 
@@ -69,25 +68,34 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     printf("\n/*-------------------- CLIENT SENDING -----------------*/\n");
 
     //TODO
+    /*
+        For initializing a COAP packet we need a buffer which can contain all of the header options for
+        a PDU and the eventual payload.
+    */
 
-    uint8_t buf2[GCOAP_PDU_BUF_SIZE];
+    // The GCOAP macro is 128B because it is typically enough to hold all the header options
+    // But we have to be sure it is enoguh to hold also the payload!!!
+    uint8_t buf2[GCOAP_PDU_BUF_SIZE]; //Probably needs more space
     coap_pkt_t pdu;
     size_t len;
     size_t paylen;
 
-    char str[] = "AO";
-    paylen = strlen(buf);
+    paylen = sz; //Using strlen here is stupid. It will understand zeroes as end of a string
 
-    gcoap_req_init(&pdu, &buf2[0], 256, 2, "/.well-known/atls");
+    gcoap_req_init(&pdu, &buf2[0], GCOAP_PDU_BUF_SIZE, 2, "/.well-known/atls"); //Probably needs more space
 
     coap_opt_add_format(&pdu, COAP_FORMAT_TEXT);
     len = coap_opt_finish(&pdu, COAP_OPT_FINISH_PAYLOAD);
+
+    // The payload len tells how many bytes are free for the payload. If we have
+    // enough space we can copy our message inside it.
     if (pdu.payload_len >= paylen) {
                 memcpy(pdu.payload, buf, paylen);
+                printf("Paylen is %d and len is %d\n",paylen,len);
                 len += paylen;
     }
 
-    if (!_send(&buf2[0], len, "fe80::14e4:abff:fe5f:936f", "5683")){
+    if (!_send(&buf2[0], len, "fe80::5cb1:3aff:fe69:7a2b", "5683")){
         puts("gcoap_cli: msg send failed");
     }
 

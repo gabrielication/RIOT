@@ -157,8 +157,17 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
     (void)ctx;
 
     char payload[256];
-    memcpy(payload, (char *)pdu->payload, pdu->payload_len);
-    printf("LEN %d\n", pdu->payload_len);
+    memcpy(payload, (char *) pdu->payload, pdu->payload_len);
+
+    int i;
+    
+    printf("/*-------------------- CLIENT SENDING -----------------*/\n");
+        for (i = 0; i < pdu->payload_len; i++) {
+            printf("%02x ", (unsigned char) payload[i]);
+            if (i > 0 && (i % 16) == 0)
+                printf("\n");
+        }
+    printf("\n/*-------------------- CLIENT SENDING -----------------*/\n");
 
     return gcoap_response(pdu, buf, len, COAP_CODE_CHANGED);
 
@@ -213,6 +222,10 @@ size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str)
     if (bytes_sent > 0) {
         req_count++;
     }
+
+    printf("BYTES SENT %d\n", bytes_sent);
+
+
     return bytes_sent;
 }
 
