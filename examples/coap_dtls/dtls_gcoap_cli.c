@@ -191,6 +191,11 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
                 memcpy(pdu->payload, str, paylen);
                 printf("Paylen is %d and len is %d\n",paylen,len);
                 len += paylen;
+    } else {
+        puts("gcoap_cli: msg buffer too small");
+        mutex_lock(&lock);
+        
+        return gcoap_response(pdu, buf, len, COAP_CODE_INTERNAL_SERVER_ERROR);
     }
 
     mutex_lock(&lock);

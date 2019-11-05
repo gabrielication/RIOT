@@ -93,6 +93,9 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
                 memcpy(pdu.payload, buf, paylen);
                 printf("Paylen is %d and len is %d\n",paylen,len);
                 len += paylen;
+    } else {
+                puts("gcoap_cli: msg buffer too small");
+                return -1;
     }
 
     if (!_send(&buf2[0], len, "fe80::705e:72ff:fe98:e983", "5683")){
