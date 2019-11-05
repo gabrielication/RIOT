@@ -75,14 +75,14 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     // The GCOAP macro is 128B because it is typically enough to hold all the header options
     // But we have to be sure it is enoguh to hold also the payload!!!
-    uint8_t buf2[256]; //Probably needs more space
+    uint8_t buf_pdu[GCOAP_PDU_BUF_SIZE]; //Probably needs more space
     coap_pkt_t pdu;
     size_t len;
     size_t paylen;
 
     paylen = sz; //Using strlen here is stupid. It will understand zeroes as end of a string
 
-    gcoap_req_init(&pdu, &buf2[0], 256, 2, "/.well-known/atls"); //Probably needs more space
+    gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, 2, "/.well-known/atls"); //Probably needs more space
 
     coap_opt_add_format(&pdu, COAP_FORMAT_TEXT);
     len = coap_opt_finish(&pdu, COAP_OPT_FINISH_PAYLOAD);
@@ -98,7 +98,7 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
                 return -1;
     }
 
-    if (!_send(&buf2[0], len, "fe80::705e:72ff:fe98:e983", "5683")){
+    if (!_send(&buf_pdu[0], len, "fe80::705e:72ff:fe98:e983", "5683")){
         puts("gcoap_cli: msg send failed");
     }
 

@@ -97,7 +97,7 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
 {
     (void)remote;       /* not interested in the source currently */
 
-    printf("payload %s\n",pdu->payload);
+    printf("payload len %d opts len %d\n",pdu->payload_len,pdu->options_len);
 
     if (req_state == GCOAP_MEMO_TIMEOUT) {
         printf("gcoap: timeout for msg ID %02u\n", coap_get_id(pdu));
@@ -115,7 +115,7 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
 
     char *class_str = (coap_get_code_class(pdu) == COAP_CLASS_SUCCESS)
                             ? "Success" : "Error";
-    printf("gcoap: response %s, code %1u.%02u", class_str,
+    printf("gcoap: response %s, code %1u.%02u\n", class_str,
                                                 coap_get_code_class(pdu),
                                                 coap_get_code_detail(pdu));
     if (pdu->payload_len) {
@@ -125,8 +125,16 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
                 || coap_get_code_class(pdu) == COAP_CLASS_CLIENT_FAILURE
                 || coap_get_code_class(pdu) == COAP_CLASS_SERVER_FAILURE) {
             /* Expecting diagnostic payload in failure cases */
-            printf(", %u bytes\n%.*s\n", pdu->payload_len, pdu->payload_len,
-                                                          (char *)pdu->payload);
+            int i;
+            
+            printf("/*-------------------- CLIENT RECV -----------------*/\n");
+            for (i = 0; i < pdu->payload_len; i++) {
+                printf("%02x ", (unsigned char) pdu->payload[i]);
+                if (i > 0 && (i % 16) == 0)
+                    printf("\n");
+            }
+            printf("\n/*-------------------- CLIENT RECV -----------------*/\n");
+
         }
         else {
             printf(", %u bytes\n", pdu->payload_len);
@@ -176,19 +184,17 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
     //TODO: need a semaphore later
     //TODO: len has to be redefined (?)
 
-    char str[8] = "dummy";
-
-    gcoap_resp_init(pdu, buf, len, COAP_CODE_CHANGED); //Probably needs more space
+    gcoap_resp_init(pdu, buf, len, COAP_CODE_CHANGED);
 
     coap_opt_add_format(pdu, COAP_FORMAT_TEXT);
     len = coap_opt_finish(pdu, COAP_OPT_FINISH_PAYLOAD);
 
-    paylen = 8;
+    paylen = size_payload;
 
     // The payload len tells how many bytes are free for the payload. If we have
     // enough space we can copy our message inside it.
     if (pdu->payload_len >= paylen) {
-                memcpy(pdu->payload, str, paylen);
+                memcpy(pdu->payload, payload_dtls, paylen);
                 printf("Paylen is %d and len is %d\n",paylen,len);
                 len += paylen;
     } else {

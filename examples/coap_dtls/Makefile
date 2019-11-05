@@ -10,6 +10,7 @@ RIOTBASE ?= $(CURDIR)/../..
 # Increase from default for confirmable block2 follow-on requests
 GCOAP_RESEND_BUFS_MAX ?= 2
 CFLAGS += -DGCOAP_RESEND_BUFS_MAX=$(GCOAP_RESEND_BUFS_MAX)
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=2048
 
 # Include packages that pull up and auto-init the link layer.
 # NOTE: 6LoWPAN will be included if IEEE802.15.4 devices are present

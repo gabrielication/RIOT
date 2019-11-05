@@ -80,10 +80,6 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
-    printf("sz in SEND %d\n",sz);
-
-    char str[8] = "dummy";
-
     printf("/*-------------------- SERVER SENDING -----------------*/\n");
         for (i = 0; i < sz; i++) {
             printf("%02x ", (unsigned char) buf[i]);
@@ -92,7 +88,7 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         }
     printf("\n/*-------------------- SERVER SENDING -----------------*/\n");
 
-    memcpy(payload_dtls, str, 8);
+    memcpy(payload_dtls, buf, sz);
 
     size_payload = sz;
 
