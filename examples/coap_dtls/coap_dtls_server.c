@@ -7,6 +7,9 @@
 #include "log.h"
 #include "net/gcoap.h"
 
+#include "mutex.h"
+#include "thread.h"
+
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
 static int fpSend;
@@ -21,7 +24,9 @@ extern unsigned int server_key_len;
 
 extern char payload_dtls[];
 extern int size_payload;
-extern int sem;
+
+extern mutex_t lock;
+extern kernel_pid_t main_pid;
 
 static const char Test_dtls_string[] = "DTLS OK!";
 
@@ -75,6 +80,10 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
+    printf("sz in SEND %d\n",sz);
+
+    char str[8] = "dummy";
+
     printf("/*-------------------- SERVER SENDING -----------------*/\n");
         for (i = 0; i < sz; i++) {
             printf("%02x ", (unsigned char) buf[i]);
@@ -83,12 +92,13 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         }
     printf("\n/*-------------------- SERVER SENDING -----------------*/\n");
 
-    memcpy(payload_dtls, buf, sz);
+    memcpy(payload_dtls, str, 8);
 
     size_payload = sz;
-    sem = 0;
 
     //TODO: LOCK MUTEX AGAIN
+    mutex_unlock(&lock);
+    thread_wakeup(main_pid);
 
     return sz;
 }
@@ -102,9 +112,10 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     //TODO: WAIT LOCKED MUTEX
 
-    while(!sem){}
+    mutex_lock(&lock);
 
     memcpy(buf, payload_dtls, sz);
+    printf("sz in RECV %d\n",sz);
 
     int i;
 
@@ -116,11 +127,6 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         }
     printf("\n/*-------------------- SERVER RECV -----------------*/\n");
 
-    // in wolfssl example of custom-io the read operation shifts forwards the descriptor index
-    // so we do the same thing here
-    // TODO: remove magic numbers
-    memmove(payload_dtls,payload_dtls+sz,256-sz);
-
     return sz;
 }
 
@@ -129,7 +135,7 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
     WOLFSSL* ssl;
     int ret = -1;
 
-    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
+    if ((ctx = wolfSSL_CTX_new(wolfDTLSv1_2_server_method())) == NULL) {
         printf("Error in setting server ctx\n");
         return NULL;
     }

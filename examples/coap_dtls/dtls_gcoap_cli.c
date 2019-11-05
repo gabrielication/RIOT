@@ -26,6 +26,7 @@
 #include "od.h"
 #include "fmt.h"
 #include "mutex.h"
+#include "thread.h"
 
 #define ENABLE_DEBUG (0)
 #include "debug.h"
@@ -36,9 +37,10 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
                           sock_udp_ep_t *remote);
 static ssize_t _atls_handler(coap_pkt_t* pdu, uint8_t *buf, size_t len, void *ctx);
 
-static mutex_t lock = MUTEX_INIT_LOCKED;
+mutex_t lock = MUTEX_INIT_LOCKED;
+kernel_pid_t main_pid;
 
-char payload_dtls[256] = "";
+char payload_dtls[2048] = "";
 
 int size_payload = 0;
 int sem = 0;
@@ -162,17 +164,19 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
 
 static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ctx)
 {
-
     (void)ctx;
     size_t paylen;
 
+    main_pid = thread_getpid();
+
     memcpy(payload_dtls, (char *) pdu->payload, pdu->payload_len);
 
+    mutex_unlock_and_sleep(&lock);
+
     //TODO: need a semaphore later
+    //TODO: len has to be redefined (?)
 
     char str[8] = "dummy";
-
-    printf("starting len %d", len);
 
     gcoap_resp_init(pdu, buf, len, COAP_CODE_CHANGED); //Probably needs more space
 
@@ -189,7 +193,9 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
                 len += paylen;
     }
 
-    //return gcoap_response(pdu, buf, len, COAP_CODE_DELETED);
+    mutex_lock(&lock);
+
+    //NO NEED FOR GCOAP_RESPONSE, that is only for empty payloads
     return len;
 }
 
