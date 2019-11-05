@@ -37,13 +37,13 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
                           sock_udp_ep_t *remote);
 static ssize_t _atls_handler(coap_pkt_t* pdu, uint8_t *buf, size_t len, void *ctx);
 
-mutex_t lock = MUTEX_INIT_LOCKED;
+mutex_t server_lock = MUTEX_INIT_LOCKED;
+mutex_t client_lock = MUTEX_INIT;
+
 kernel_pid_t main_pid;
 
 char payload_dtls[2048] = "";
-
 int size_payload = 0;
-int sem = 0;
 
 /* CoAP resources. Must be sorted by path (ASCII order). */
 static const coap_resource_t _resources[] = {
@@ -126,15 +126,13 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
                 || coap_get_code_class(pdu) == COAP_CLASS_SERVER_FAILURE) {
             /* Expecting diagnostic payload in failure cases */
             int i;
-            
-            printf("/*-------------------- CLIENT RECV -----------------*/\n");
-            for (i = 0; i < pdu->payload_len; i++) {
-                printf("%02x ", (unsigned char) pdu->payload[i]);
-                if (i > 0 && (i % 16) == 0)
-                    printf("\n");
-            }
-            printf("\n/*-------------------- CLIENT RECV -----------------*/\n");
 
+            // TODO: maybe we have to reset to 0 the payload everytime?
+            memset(payload_dtls,0,2048);
+            memcpy(payload_dtls,pdu->payload,pdu->payload_len);
+            size_payload = pdu->payload_len;
+
+            mutex_unlock(&client_lock);
         }
         else {
             printf(", %u bytes\n", pdu->payload_len);
@@ -170,6 +168,7 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
     }
 }
 
+// Will be used only from the server right now
 static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ctx)
 {
     (void)ctx;
@@ -178,8 +177,9 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
     main_pid = thread_getpid();
 
     memcpy(payload_dtls, (char *) pdu->payload, pdu->payload_len);
+    size_payload = pdu->payload_len;
 
-    mutex_unlock_and_sleep(&lock);
+    mutex_unlock_and_sleep(&server_lock);
 
     //TODO: need a semaphore later
     //TODO: len has to be redefined (?)
@@ -199,12 +199,12 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
                 len += paylen;
     } else {
         puts("gcoap_cli: msg buffer too small");
-        mutex_lock(&lock);
+        mutex_lock(&server_lock);
         
         return gcoap_response(pdu, buf, len, COAP_CODE_INTERNAL_SERVER_ERROR);
     }
 
-    mutex_lock(&lock);
+    mutex_lock(&server_lock);
 
     //NO NEED FOR GCOAP_RESPONSE, that is only for empty payloads
     return len;

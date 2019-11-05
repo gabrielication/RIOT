@@ -6,12 +6,18 @@
 
 #include "log.h"
 #include "net/gcoap.h"
+#include "mutex.h"
 
 #ifdef MODULE_WOLFSSL_PSK
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
+
+extern char payload_dtls[];
+extern int size_payload;
+
+extern mutex_t client_lock;
 
 int fpRecv = 0;
 
@@ -57,6 +63,10 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) sz;
     (void) ctx;
 
+    printf("SEND CLIENT\n");
+
+    mutex_lock(&client_lock);
+
     int i;
 
     printf("/*-------------------- CLIENT SENDING -----------------*/\n");
@@ -75,14 +85,15 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     // The GCOAP macro is 128B because it is typically enough to hold all the header options
     // But we have to be sure it is enoguh to hold also the payload!!!
-    uint8_t buf_pdu[GCOAP_PDU_BUF_SIZE]; //Probably needs more space
+    uint8_t buf_pdu[GCOAP_PDU_BUF_SIZE];
     coap_pkt_t pdu;
     size_t len;
     size_t paylen;
 
     paylen = sz; //Using strlen here is stupid. It will understand zeroes as end of a string
 
-    gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, 2, "/.well-known/atls"); //Probably needs more space
+    // Code '2' is POST
+    gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, 2, "/.well-known/atls");
 
     coap_opt_add_format(&pdu, COAP_FORMAT_TEXT);
     len = coap_opt_finish(&pdu, COAP_OPT_FINISH_PAYLOAD);
@@ -98,6 +109,7 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
                 return -1;
     }
 
+    // TODO: address MUST be inserted by the user
     if (!_send(&buf_pdu[0], len, "fe80::705e:72ff:fe98:e983", "5683")){
         puts("gcoap_cli: msg send failed");
     }
@@ -111,8 +123,17 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) buf;
     (void) sz;
     (void) ctx;
+    int i;
+
+    //printf("RECV wait\n");
+
+    mutex_lock(&client_lock);
+
+    memcpy(buf, payload_dtls, size_payload);
+
+    mutex_unlock(&client_lock);
     
-    return 0;
+    return size_payload;
 }
 
 WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
