@@ -31,10 +31,12 @@ static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
 extern int gcoap_cli_cmd(int argc, char **argv);
 extern void gcoap_cli_init(void);
 extern int start_dtls_client(int argc, char **argv);
+extern int start_dtls_server(int argc, char **argv);
 
 static const shell_command_t shell_commands[] = {
     { "coap", "CoAP example", gcoap_cli_cmd },
     { "dtls-client", "DTLS Client example", start_dtls_client },
+    { "dtls-server", "DTLS Server example", start_dtls_server },
     { NULL, NULL, NULL }
 };
 

@@ -25,6 +25,7 @@
 #include "net/gcoap.h"
 #include "od.h"
 #include "fmt.h"
+#include "mutex.h"
 
 #define ENABLE_DEBUG (0)
 #include "debug.h"
@@ -34,6 +35,13 @@ static ssize_t _encode_link(const coap_resource_t *resource, char *buf,
 static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
                           sock_udp_ep_t *remote);
 static ssize_t _atls_handler(coap_pkt_t* pdu, uint8_t *buf, size_t len, void *ctx);
+
+static mutex_t lock = MUTEX_INIT_LOCKED;
+
+char payload_dtls[256] = "";
+
+int size_payload = 0;
+int sem = 0;
 
 /* CoAP resources. Must be sorted by path (ASCII order). */
 static const coap_resource_t _resources[] = {
@@ -86,6 +94,8 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
                           sock_udp_ep_t *remote)
 {
     (void)remote;       /* not interested in the source currently */
+
+    printf("payload %s\n",pdu->payload);
 
     if (req_state == GCOAP_MEMO_TIMEOUT) {
         printf("gcoap: timeout for msg ID %02u\n", coap_get_id(pdu));
@@ -152,25 +162,35 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
 
 static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ctx)
 {
-    puts("daje");
 
     (void)ctx;
+    size_t paylen;
 
-    char payload[256];
-    memcpy(payload, (char *) pdu->payload, pdu->payload_len);
+    memcpy(payload_dtls, (char *) pdu->payload, pdu->payload_len);
 
-    int i;
-    
-    printf("/*-------------------- CLIENT SENDING -----------------*/\n");
-        for (i = 0; i < pdu->payload_len; i++) {
-            printf("%02x ", (unsigned char) payload[i]);
-            if (i > 0 && (i % 16) == 0)
-                printf("\n");
-        }
-    printf("\n/*-------------------- CLIENT SENDING -----------------*/\n");
+    //TODO: need a semaphore later
 
-    return gcoap_response(pdu, buf, len, COAP_CODE_CHANGED);
+    char str[8] = "dummy";
 
+    printf("starting len %d", len);
+
+    gcoap_resp_init(pdu, buf, len, COAP_CODE_CHANGED); //Probably needs more space
+
+    coap_opt_add_format(pdu, COAP_FORMAT_TEXT);
+    len = coap_opt_finish(pdu, COAP_OPT_FINISH_PAYLOAD);
+
+    paylen = 8;
+
+    // The payload len tells how many bytes are free for the payload. If we have
+    // enough space we can copy our message inside it.
+    if (pdu->payload_len >= paylen) {
+                memcpy(pdu->payload, str, paylen);
+                printf("Paylen is %d and len is %d\n",paylen,len);
+                len += paylen;
+    }
+
+    //return gcoap_response(pdu, buf, len, COAP_CODE_DELETED);
+    return len;
 }
 
 size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str)
