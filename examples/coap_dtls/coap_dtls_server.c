@@ -26,7 +26,10 @@ extern char payload_dtls[];
 extern int size_payload;
 
 extern mutex_t server_lock;
+extern mutex_t server_req_lock;
 extern kernel_pid_t main_pid;
+
+int wake_flag = 0;
 
 static const char Test_dtls_string[] = "DTLS OK!";
 
@@ -80,20 +83,22 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
+    printf("SERVER SEND WAIT...\n");
+    mutex_lock(&server_req_lock);
+
     printf("/*-------------------- SERVER SENDING -----------------*/\n");
         for (i = 0; i < sz; i++) {
             printf("%02x ", (unsigned char) buf[i]);
             if (i > 0 && (i % 16) == 0)
                 printf("\n");
         }
-    printf("\n/*-------------------- SERVER SENDING -----------------*/\n");
+    printf("\n/*-------------------- END SENDING -----------------*/\n");
 
     memcpy(payload_dtls, buf, sz);
-
     size_payload = sz;
 
-    //TODO: LOCK MUTEX AGAIN
-    mutex_unlock(&server_lock);
+    wake_flag = 0;
+
     thread_wakeup(main_pid);
 
     return sz;
@@ -106,12 +111,17 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) sz;
     (void) ctx;
 
-    //TODO: WAIT LOCKED MUTEX
-    printf("RECV in server\n");
+    printf("SERVER RECV WAIT...\n");
+
+    if(wake_flag){
+        thread_wakeup(main_pid);
+    }
+
+    wake_flag = 1;
+    
     mutex_lock(&server_lock);
 
     memcpy(buf, payload_dtls, size_payload);
-    printf("sz in RECV %d\n",sz);
 
     int i;
 
@@ -121,7 +131,7 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
             if (i > 0 && (i % 16) == 0)
                 printf("\n");
         }
-    printf("\n/*-------------------- SERVER RECV -----------------*/\n");
+    printf("\n/*-------------------- END RECV -----------------*/\n");
 
     return size_payload;
 }

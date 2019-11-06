@@ -38,7 +38,8 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
 static ssize_t _atls_handler(coap_pkt_t* pdu, uint8_t *buf, size_t len, void *ctx);
 
 mutex_t server_lock = MUTEX_INIT_LOCKED;
-mutex_t client_lock = MUTEX_INIT;
+mutex_t client_lock = MUTEX_INIT_LOCKED;
+mutex_t server_req_lock = MUTEX_INIT_LOCKED;
 
 kernel_pid_t main_pid;
 
@@ -47,7 +48,7 @@ int size_payload = 0;
 
 /* CoAP resources. Must be sorted by path (ASCII order). */
 static const coap_resource_t _resources[] = {
-    { "/.well-known/atls", COAP_POST, _atls_handler, NULL},
+    { "/.well-known/atls", COAP_GET | COAP_POST, _atls_handler, NULL},
 };
 
 static const char *_link_params[] = {
@@ -96,8 +97,6 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
                           sock_udp_ep_t *remote)
 {
     (void)remote;       /* not interested in the source currently */
-
-    printf("payload len %d opts len %d\n",pdu->payload_len,pdu->options_len);
 
     if (req_state == GCOAP_MEMO_TIMEOUT) {
         printf("gcoap: timeout for msg ID %02u\n", coap_get_id(pdu));
@@ -176,13 +175,20 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
 
     main_pid = thread_getpid();
 
-    memcpy(payload_dtls, (char *) pdu->payload, pdu->payload_len);
-    size_payload = pdu->payload_len;
+    /* read coap method type in packet */
+    unsigned method_flag = coap_method2flag(coap_get_code_detail(pdu));
 
-    mutex_unlock_and_sleep(&server_lock);
-
-    //TODO: need a semaphore later
-    //TODO: len has to be redefined (?)
+    switch(method_flag) {
+        case COAP_GET:
+            mutex_unlock_and_sleep(&server_req_lock);
+            break;
+        case COAP_POST:
+            memcpy(payload_dtls, (char *) pdu->payload, pdu->payload_len);
+            size_payload = pdu->payload_len;
+            mutex_unlock(&server_req_lock);
+            mutex_unlock_and_sleep(&server_lock);
+            break;
+    }
 
     gcoap_resp_init(pdu, buf, len, COAP_CODE_CHANGED);
 
@@ -195,16 +201,11 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
     // enough space we can copy our message inside it.
     if (pdu->payload_len >= paylen) {
                 memcpy(pdu->payload, payload_dtls, paylen);
-                printf("Paylen is %d and len is %d\n",paylen,len);
                 len += paylen;
     } else {
         puts("gcoap_cli: msg buffer too small");
-        mutex_lock(&server_lock);
-        
         return gcoap_response(pdu, buf, len, COAP_CODE_INTERNAL_SERVER_ERROR);
     }
-
-    mutex_lock(&server_lock);
 
     //NO NEED FOR GCOAP_RESPONSE, that is only for empty payloads
     return len;

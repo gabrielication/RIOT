@@ -17,6 +17,8 @@ extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 extern char payload_dtls[];
 extern int size_payload;
 
+int write_flag = 0;
+
 extern mutex_t client_lock;
 
 int fpRecv = 0;
@@ -57,27 +59,8 @@ static inline unsigned int my_psk_client_cb(WOLFSSL* ssl, const char* hint,
 }
 #endif
 
-int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
+int coap_post(void)
 {
-    (void) ssl;
-    (void) sz;
-    (void) ctx;
-
-    printf("SEND CLIENT\n");
-
-    mutex_lock(&client_lock);
-
-    int i;
-
-    printf("/*-------------------- CLIENT SENDING -----------------*/\n");
-        for (i = 0; i < sz; i++) {
-            printf("%02x ", (unsigned char) buf[i]);
-            if (i > 0 && (i % 16) == 0)
-                printf("\n");
-        }
-    printf("\n/*-------------------- CLIENT SENDING -----------------*/\n");
-
-    //TODO
     /*
         For initializing a COAP packet we need a buffer which can contain all of the header options for
         a PDU and the eventual payload.
@@ -90,7 +73,7 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     size_t len;
     size_t paylen;
 
-    paylen = sz; //Using strlen here is stupid. It will understand zeroes as end of a string
+    paylen = size_payload; //Using strlen here is stupid. It will understand zeroes as end of a string
 
     // Code '2' is POST
     gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, 2, "/.well-known/atls");
@@ -101,18 +84,66 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     // The payload len tells how many bytes are free for the payload. If we have
     // enough space we can copy our message inside it.
     if (pdu.payload_len >= paylen) {
-                memcpy(pdu.payload, buf, paylen);
-                printf("Paylen is %d and len is %d\n",paylen,len);
+                memcpy(pdu.payload, payload_dtls, paylen);
                 len += paylen;
     } else {
                 puts("gcoap_cli: msg buffer too small");
                 return -1;
     }
 
+    int i;
+
+    printf("/*-------------------- CLIENT POST -----------------*/\n");
+        for (i = 0; i < size_payload; i++) {
+            printf("%02x ", (unsigned char) pdu.payload[i]);
+            if (i > 0 && (i % 16) == 0)
+                printf("\n");
+        }
+    printf("\n/*-------------------- END POST -----------------*/\n");
+
     // TODO: address MUST be inserted by the user
-    if (!_send(&buf_pdu[0], len, "fe80::705e:72ff:fe98:e983", "5683")){
+    if (!_send(&buf_pdu[0], len, "fe80::342e:1cff:fec3:2111", "5683")){
         puts("gcoap_cli: msg send failed");
+        return -1;
     }
+
+    return 0;
+}
+
+int coap_get(void)
+{
+    uint8_t buf_pdu[GCOAP_PDU_BUF_SIZE];
+    coap_pkt_t pdu;
+    size_t len;
+
+    printf("/*-------------------- CLIENT GET -----------------*/\n");
+    // Code '2' is GET
+    gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, 1, "/.well-known/atls");
+    len = coap_opt_finish(&pdu, COAP_OPT_FINISH_NONE);
+
+    // TODO: address MUST be inserted by the user
+    if (!_send(&buf_pdu[0], len, "fe80::342e:1cff:fec3:2111", "5683")){
+        puts("gcoap_cli: msg send failed");
+        return -1;
+    }
+    printf("\n/*-------------------- END GET -----------------*/\n");
+
+    return 0;
+}
+
+int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
+{
+    (void) ssl;
+    (void) sz;
+    (void) ctx;
+
+    printf("CLIENT SEND...\n");
+
+    memcpy(payload_dtls,buf,sz);
+    size_payload = sz;
+
+    write_flag = 1;
+    coap_post();
 
     return sz;
 }
@@ -125,13 +156,25 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) ctx;
     int i;
 
-    //printf("RECV wait\n");
+    if(!write_flag){
+        coap_get();
+    }
+
+    write_flag = 0;
+
+    printf("CLIENT RECV WAIT...\n");
 
     mutex_lock(&client_lock);
 
     memcpy(buf, payload_dtls, size_payload);
 
-    mutex_unlock(&client_lock);
+    printf("/*-------------------- CLIENT RECV -----------------*/\n");
+        for (i = 0; i < size_payload; i++) {
+            printf("%02x ", (unsigned char) buf[i]);
+            if (i > 0 && (i % 16) == 0)
+                printf("\n");
+        }
+    printf("\n/*-------------------- END RECV -----------------*/\n");
     
     return size_payload;
 }
