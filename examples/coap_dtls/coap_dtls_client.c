@@ -8,7 +8,8 @@
 #include "net/gcoap.h"
 #include "mutex.h"
 
-#ifdef MODULE_WOLFSSL_PSK
+#define APP_DTLS_BUF_SIZE 64
+
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
 
@@ -22,6 +23,8 @@ int write_flag = 0;
 extern mutex_t client_lock;
 
 int fpRecv = 0;
+
+#ifdef MODULE_WOLFSSL_PSK
 
 static inline unsigned int my_psk_client_cb(WOLFSSL* ssl, const char* hint,
         char* identity, unsigned int id_max_len, unsigned char* key,
@@ -102,7 +105,7 @@ int coap_post(void)
     printf("\n/*-------------------- END POST -----------------*/\n");
 
     // TODO: address MUST be inserted by the user
-    if (!_send(&buf_pdu[0], len, "fe80::342e:1cff:fec3:2111", "5683")){
+    if (!_send(&buf_pdu[0], len, "fe80::cc41:85ff:fedc:bfd1", "5683")){
         puts("gcoap_cli: msg send failed");
         return -1;
     }
@@ -122,7 +125,7 @@ int coap_get(void)
     len = coap_opt_finish(&pdu, COAP_OPT_FINISH_NONE);
 
     // TODO: address MUST be inserted by the user
-    if (!_send(&buf_pdu[0], len, "fe80::342e:1cff:fec3:2111", "5683")){
+    if (!_send(&buf_pdu[0], len, "fe80::cc41:85ff:fedc:bfd1", "5683")){
         puts("gcoap_cli: msg send failed");
         return -1;
     }
@@ -230,6 +233,8 @@ int start_dtls_client(int argc, char **argv)
 
     int ret = SSL_FAILURE;
 
+    char buf[APP_DTLS_BUF_SIZE] = "Hello from DTLS client!";
+
     wolfSSL_Init();
 
     /* Example usage */
@@ -258,7 +263,19 @@ int start_dtls_client(int argc, char **argv)
             }
         }
         printf("Client connected successfully...\n");
+        write_flag = 1;
     }
+
+    /* send the hello message */
+    wolfSSL_write(sslCli, buf, strlen(buf));
+
+    /* wait for a reply, indefinitely */
+    wolfSSL_read(sslCli, buf, APP_DTLS_BUF_SIZE - 1);
+    buf[size_payload] = (char)0;
+    LOG(LOG_INFO, "Received: '%s'\r\n", buf);
+
+    /* Clean up and exit. */
+    LOG(LOG_INFO, "Closing connection.\r\n");
 
 cleanup:
     wolfSSL_shutdown(sslCli);

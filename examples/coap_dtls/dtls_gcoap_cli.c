@@ -180,9 +180,11 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
 
     switch(method_flag) {
         case COAP_GET:
+            printf("COAP_GET\n");
             mutex_unlock_and_sleep(&server_req_lock);
             break;
         case COAP_POST:
+            printf("COAP_POST\n");
             memcpy(payload_dtls, (char *) pdu->payload, pdu->payload_len);
             size_payload = pdu->payload_len;
             mutex_unlock(&server_req_lock);

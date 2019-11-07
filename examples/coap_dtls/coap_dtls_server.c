@@ -33,9 +33,12 @@ int wake_flag = 0;
 
 static const char Test_dtls_string[] = "DTLS OK!";
 
-#ifdef MODULE_WOLFSSL_PSK
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
+
+#define APP_DTLS_BUF_SIZE 64
+
+#ifdef MODULE_WOLFSSL_PSK
 
 static inline unsigned int my_psk_server_cb(WOLFSSL* ssl, const char* identity,
         unsigned char* key, unsigned int key_max_len)
@@ -183,8 +186,7 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
 
 int start_dtls_server(int argc, char **argv){
 
-    char sMsg[] = "I hear you fashizzle\r\n";
-    char reply[256];
+    char buf[APP_DTLS_BUF_SIZE];
     int ret, msgSz;
     WOLFSSL* sslServ;
     WOLFSSL_CTX* ctxServ = NULL;
@@ -216,51 +218,18 @@ int start_dtls_server(int argc, char **argv){
 
     }
 
+    thread_wakeup(main_pid);
     printf("CONNECTED\n");
 
-    /* read */
-    while (1) {
-        int error;
-
-        /* server send/read */
-        memset(reply, 0, sizeof(reply));
-        ret  = wolfSSL_read(sslServ, reply, sizeof(reply) - 1);
-        error = wolfSSL_get_error(sslServ, 0);
-        if (ret < 0) {
-            if (error != SSL_ERROR_WANT_READ &&
-                error != SSL_ERROR_WANT_WRITE) {
-                printf("server read failed\n");
-                break;
-            }
-        }
-        else {
-            reply[ret] = 0;
-            printf("Server Received : %s\n", reply);
-            break;
-        }
+    ret = wolfSSL_read(sslServ, buf, APP_DTLS_BUF_SIZE);
+    if (ret > 0) {
+        buf[ret] = (char)0;
+        LOG(LOG_INFO, "Received '%s'\r\n", buf);
     }
 
-    /* write */
-    while (1) {
-        int error;
-
-        msgSz = sizeof(sMsg);
-        ret = wolfSSL_write(sslServ, sMsg, msgSz);
-        error = wolfSSL_get_error(sslServ, 0);
-        if (ret != msgSz) {
-            if (error != SSL_ERROR_WANT_READ &&
-                error != SSL_ERROR_WANT_WRITE) {
-                printf("server write failed\n");
-                break;
-            }
-        } else if (ret == msgSz) {
-            printf("Server send successful\n");
-            break;
-        } else {
-            printf("Unkown error occured, shutting down\n");
-            break;
-        }
-    }
+    /* Send reply */
+    LOG(LOG_INFO, "Sending 'DTLS OK'...\r\n");
+    wolfSSL_write(sslServ, Test_dtls_string, sizeof(Test_dtls_string));
 
 cleanup:
 
