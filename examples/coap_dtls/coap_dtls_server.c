@@ -29,7 +29,7 @@ extern mutex_t server_lock;
 extern mutex_t server_req_lock;
 extern kernel_pid_t main_pid;
 
-int wake_flag = 0;
+int count = 0;
 
 static const char Test_dtls_string[] = "DTLS OK!";
 
@@ -37,6 +37,8 @@ static const char Test_dtls_string[] = "DTLS OK!";
 static const char* kIdentityStr = "Client_identity";
 
 #define APP_DTLS_BUF_SIZE 64
+
+#define VERBOSE 1
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -89,18 +91,18 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     printf("SERVER SEND WAIT...\n");
     mutex_lock(&server_req_lock);
 
-    printf("/*-------------------- SERVER SENDING -----------------*/\n");
+    if(VERBOSE){
+        printf("/*-------------------- SERVER SENDING -----------------*/\n");
         for (i = 0; i < sz; i++) {
             printf("%02x ", (unsigned char) buf[i]);
             if (i > 0 && (i % 16) == 0)
                 printf("\n");
         }
-    printf("\n/*-------------------- END SENDING -----------------*/\n");
+        printf("\n/*-------------------- END SENDING -----------------*/\n");
+    }
 
     memcpy(payload_dtls, buf, sz);
     size_payload = sz;
-
-    wake_flag = 0;
 
     thread_wakeup(main_pid);
 
@@ -115,12 +117,6 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) ctx;
 
     printf("SERVER RECV WAIT...\n");
-
-    if(wake_flag){
-        thread_wakeup(main_pid);
-    }
-
-    wake_flag = 1;
     
     mutex_lock(&server_lock);
 
@@ -128,13 +124,33 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
-    printf("/*-------------------- SERVER RECV -----------------*/\n");
+    if(VERBOSE){
+        printf("/*-------------------- SERVER RECV -----------------*/\n");
         for (i = 0; i < size_payload; i++) {
             printf("%02x ", (unsigned char) buf[i]);
             if (i > 0 && (i % 16) == 0)
                 printf("\n");
         }
-    printf("\n/*-------------------- END RECV -----------------*/\n");
+        printf("\n/*-------------------- END RECV -----------------*/\n");
+    }
+
+    count += 1;
+
+    /*
+        Why 3? This is the client's message seq ID in which the server has to do multiple recvs
+        without doing any send in the middle. Since it is typically the send function in charge to wake up
+        again the COAP thread which is waiting to perform a reply, we need another way. With
+        this cheap trick we can reset the mutex and wake up the COAP's thread in order to perform a reply.
+
+        TODO: here the COAP thread still sends some data in the buffer back to the client but in this
+        phase that is totally unnecessary. It will be good to just send a 'success' message with an empty
+        payload.
+    */
+
+    if(count == 3){
+        mutex_lock(&server_req_lock);
+        thread_wakeup(main_pid);
+    }
 
     return size_payload;
 }
@@ -218,18 +234,18 @@ int start_dtls_server(int argc, char **argv){
 
     }
 
-    thread_wakeup(main_pid);
     printf("CONNECTED\n");
 
-    ret = wolfSSL_read(sslServ, buf, APP_DTLS_BUF_SIZE);
-    if (ret > 0) {
-        buf[ret] = (char)0;
-        LOG(LOG_INFO, "Received '%s'\r\n", buf);
-    }
+    wolfSSL_read(sslServ, buf, APP_DTLS_BUF_SIZE);
+    buf[size_payload-2] = (char)0;
+    LOG(LOG_INFO, "Received '%s'\r\n", buf);
 
     /* Send reply */
     LOG(LOG_INFO, "Sending 'DTLS OK'...\r\n");
     wolfSSL_write(sslServ, Test_dtls_string, sizeof(Test_dtls_string));
+
+    /* Clean up and exit. */
+    LOG(LOG_INFO, "Closing connection.\r\n");
 
 cleanup:
 

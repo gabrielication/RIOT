@@ -10,6 +10,8 @@
 
 #define APP_DTLS_BUF_SIZE 64
 
+#define VERBOSE 1
+
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
 
@@ -18,7 +20,7 @@ extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 extern char payload_dtls[];
 extern int size_payload;
 
-int write_flag = 0;
+int count_read = 0;
 
 extern mutex_t client_lock;
 
@@ -94,18 +96,8 @@ int coap_post(void)
                 return -1;
     }
 
-    int i;
-
-    printf("/*-------------------- CLIENT POST -----------------*/\n");
-        for (i = 0; i < size_payload; i++) {
-            printf("%02x ", (unsigned char) pdu.payload[i]);
-            if (i > 0 && (i % 16) == 0)
-                printf("\n");
-        }
-    printf("\n/*-------------------- END POST -----------------*/\n");
-
     // TODO: address MUST be inserted by the user
-    if (!_send(&buf_pdu[0], len, "fe80::cc41:85ff:fedc:bfd1", "5683")){
+    if (!_send(&buf_pdu[0], len, "fe80::389a:78ff:feb8:490f", "5683")){
         puts("gcoap_cli: msg send failed");
         return -1;
     }
@@ -119,17 +111,15 @@ int coap_get(void)
     coap_pkt_t pdu;
     size_t len;
 
-    printf("/*-------------------- CLIENT GET -----------------*/\n");
     // Code '2' is GET
     gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, 1, "/.well-known/atls");
     len = coap_opt_finish(&pdu, COAP_OPT_FINISH_NONE);
 
     // TODO: address MUST be inserted by the user
-    if (!_send(&buf_pdu[0], len, "fe80::cc41:85ff:fedc:bfd1", "5683")){
+    if (!_send(&buf_pdu[0], len, "fe80::389a:78ff:feb8:490f", "5683")){
         puts("gcoap_cli: msg send failed");
         return -1;
     }
-    printf("\n/*-------------------- END GET -----------------*/\n");
 
     return 0;
 }
@@ -140,12 +130,21 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) sz;
     (void) ctx;
 
-    printf("CLIENT SEND...\n");
-
     memcpy(payload_dtls,buf,sz);
     size_payload = sz;
 
-    write_flag = 1;
+    if(VERBOSE){
+        int i;
+
+        printf("/*-------------------- CLIENT SEND -----------------*/\n");
+        for (i = 0; i < size_payload; i++) {
+            printf("%02x ", (unsigned char) payload_dtls[i]);
+            if (i > 0 && (i % 16) == 0)
+                printf("\n");
+        }
+        printf("\n/*-------------------- END SEND -----------------*/\n");
+    }
+
     coap_post();
 
     return sz;
@@ -159,25 +158,33 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) ctx;
     int i;
 
-    if(!write_flag){
+    count_read += 1;
+
+    /*  
+        Why 3 and 4? They are the server's messages seq IDs in which the client needs to do more
+        reads without doing any writes between them. Without the the writes we can't have
+        any call to COAP's 'send' function because we don't actually have anything to send.
+        In order to have a request -> response mechanism (and in order to let the server know
+        the client's ip address when replying) we adopt this cheap trick calling a 'get'.
+    */
+
+    if(count_read == 3 || count_read == 4){
         coap_get();
     }
-
-    write_flag = 0;
-
-    printf("CLIENT RECV WAIT...\n");
 
     mutex_lock(&client_lock);
 
     memcpy(buf, payload_dtls, size_payload);
 
-    printf("/*-------------------- CLIENT RECV -----------------*/\n");
+    if(VERBOSE){
+        printf("/*-------------------- CLIENT RECV -----------------*/\n");
         for (i = 0; i < size_payload; i++) {
             printf("%02x ", (unsigned char) buf[i]);
             if (i > 0 && (i % 16) == 0)
                 printf("\n");
         }
-    printf("\n/*-------------------- END RECV -----------------*/\n");
+        printf("\n/*-------------------- END RECV -----------------*/\n");
+    }
     
     return size_payload;
 }
@@ -263,13 +270,11 @@ int start_dtls_client(int argc, char **argv)
             }
         }
         printf("Client connected successfully...\n");
-        write_flag = 1;
     }
 
     /* send the hello message */
     wolfSSL_write(sslCli, buf, strlen(buf));
 
-    /* wait for a reply, indefinitely */
     wolfSSL_read(sslCli, buf, APP_DTLS_BUF_SIZE - 1);
     buf[size_payload] = (char)0;
     LOG(LOG_INFO, "Received: '%s'\r\n", buf);
