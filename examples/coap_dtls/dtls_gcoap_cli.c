@@ -180,11 +180,9 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
 
     switch(method_flag) {
         case COAP_GET:
-            printf("COAP_GET\n");
             mutex_unlock_and_sleep(&server_req_lock);
             break;
         case COAP_POST:
-            printf("COAP_POST\n");
             memcpy(payload_dtls, (char *) pdu->payload, pdu->payload_len);
             size_payload = pdu->payload_len;
             mutex_unlock(&server_req_lock);
@@ -265,120 +263,7 @@ size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str)
 
     printf("BYTES SENT %d\n", bytes_sent);
 
-
     return bytes_sent;
-}
-
-int gcoap_cli_cmd(int argc, char **argv)
-{
-    /* Ordered like the RFC method code numbers, but off by 1. GET is code 0. */
-    char *method_codes[] = {"get", "post", "put"};
-    uint8_t buf[GCOAP_PDU_BUF_SIZE];
-    coap_pkt_t pdu;
-    size_t len;
-
-    if (argc == 1) {
-        /* show help for main commands */
-        goto end;
-    }
-
-    if (strcmp(argv[1], "info") == 0) {
-        uint8_t open_reqs = gcoap_op_state();
-
-        printf("CoAP server is listening on port %u\n", GCOAP_PORT);
-        printf(" CLI requests sent: %u\n", req_count);
-        printf("CoAP open requests: %u\n", open_reqs);
-        return 0;
-    }
-
-    /* if not 'info', must be a method code */
-    int code_pos = -1;
-    for (size_t i = 0; i < ARRAY_SIZE(method_codes); i++) {
-        if (strcmp(argv[1], method_codes[i]) == 0) {
-            code_pos = i;
-        }
-    }
-    if (code_pos == -1) {
-        goto end;
-    }
-
-    /* parse options */
-    int apos          = 2;               /* position of address argument */
-    unsigned msg_type = COAP_TYPE_NON;
-    if (argc > apos && strcmp(argv[apos], "-c") == 0) {
-        msg_type = COAP_TYPE_CON;
-        apos++;
-    }
-
-    /*
-     * "get" (code_pos 0) must have exactly apos + 3 arguments
-     * while "post" (code_pos 1) and "put" (code_pos 2) and must have exactly
-     * apos + 4 arguments
-     */
-    if (((argc == apos + 3) && (code_pos == 0)) ||
-        ((argc == apos + 4) && (code_pos != 0))) {
-        gcoap_req_init(&pdu, &buf[0], GCOAP_PDU_BUF_SIZE, code_pos+1, argv[apos+2]);
-        coap_hdr_set_type(pdu.hdr, msg_type);
-
-        memset(_last_req_path, 0, _LAST_REQ_PATH_MAX);
-        if (strlen(argv[apos+2]) < _LAST_REQ_PATH_MAX) {
-            memcpy(_last_req_path, argv[apos+2], strlen(argv[apos+2]));
-        }
-
-        size_t paylen = (argc == apos + 4) ? strlen(argv[apos+3]) : 0;
-        if (paylen) {
-            coap_opt_add_format(&pdu, COAP_FORMAT_TEXT);
-            len = coap_opt_finish(&pdu, COAP_OPT_FINISH_PAYLOAD);
-            if (pdu.payload_len >= paylen) {
-                memcpy(pdu.payload, argv[apos+3], paylen);
-                len += paylen;
-            }
-            else {
-                puts("gcoap_cli: msg buffer too small");
-                return 1;
-            }
-        }
-        else {
-            len = coap_opt_finish(&pdu, COAP_OPT_FINISH_NONE);
-        }
-
-        printf("gcoap_cli: sending msg ID %u, %u bytes\n", coap_get_id(&pdu),
-               (unsigned) len);
-        if (!_send(&buf[0], len, argv[apos], argv[apos+1])) {
-            puts("gcoap_cli: msg send failed");
-        }
-        else {
-            /* send Observe notification for /cli/stats */
-            switch (gcoap_obs_init(&pdu, &buf[0], GCOAP_PDU_BUF_SIZE,
-                    &_resources[0])) {
-            case GCOAP_OBS_INIT_OK:
-                DEBUG("gcoap_cli: creating /cli/stats notification\n");
-                coap_opt_add_format(&pdu, COAP_FORMAT_TEXT);
-                len = coap_opt_finish(&pdu, COAP_OPT_FINISH_PAYLOAD);
-                len += fmt_u16_dec((char *)pdu.payload, req_count);
-                gcoap_obs_send(&buf[0], len, &_resources[0]);
-                break;
-            case GCOAP_OBS_INIT_UNUSED:
-                DEBUG("gcoap_cli: no observer for /cli/stats\n");
-                break;
-            case GCOAP_OBS_INIT_ERR:
-                DEBUG("gcoap_cli: error initializing /cli/stats notification\n");
-                break;
-            }
-        }
-        return 0;
-    }
-    else {
-        printf("usage: %s <get|post|put> [-c] <addr>[%%iface] <port> <path> [data]\n",
-               argv[0]);
-        printf("Options\n");
-        printf("    -c  Send confirmably (defaults to non-confirmable)\n");
-        return 1;
-    }
-
-    end:
-    printf("usage: %s <get|post|put|info>\n", argv[0]);
-    return 1;
 }
 
 void gcoap_cli_init(void)

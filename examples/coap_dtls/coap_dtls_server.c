@@ -12,6 +12,7 @@
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
+/* Dummy */
 static int fpSend;
 static int fpRecv;
 
@@ -88,7 +89,6 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
-    printf("SERVER SEND WAIT...\n");
     mutex_lock(&server_req_lock);
 
     if(VERBOSE){
@@ -115,8 +115,6 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) buf;
     (void) sz;
     (void) ctx;
-
-    printf("SERVER RECV WAIT...\n");
     
     mutex_lock(&server_lock);
 
