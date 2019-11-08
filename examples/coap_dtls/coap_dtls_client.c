@@ -20,6 +20,8 @@ extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 extern char payload_dtls[];
 extern int size_payload;
 
+char *addr_str;
+
 int count_read = 0;
 
 extern mutex_t client_lock;
@@ -64,6 +66,11 @@ static inline unsigned int my_psk_client_cb(WOLFSSL* ssl, const char* hint,
 }
 #endif
 
+static void usage(const char *cmd_name)
+{
+    LOG(LOG_ERROR, "Usage: %s <server-address>\n", cmd_name);
+}
+
 int coap_post(void)
 {
     /*
@@ -73,12 +80,14 @@ int coap_post(void)
 
     // The GCOAP macro is 128B because it is typically enough to hold all the header options
     // But we have to be sure it is enoguh to hold also the payload!!!
+    // We solve that by redefining it in the Makefile.
     uint8_t buf_pdu[GCOAP_PDU_BUF_SIZE];
     coap_pkt_t pdu;
     size_t len;
     size_t paylen;
 
-    paylen = size_payload; //Using strlen here is stupid. It will understand zeroes as end of a string
+    //Using strlen here is stupid. It will understand zeroes as end of a string
+    paylen = size_payload;
 
     // Code '2' is POST
     gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, 2, "/.well-known/atls");
@@ -97,7 +106,7 @@ int coap_post(void)
     }
 
     // TODO: address MUST be inserted by the user
-    if (!_send(&buf_pdu[0], len, "fe80::389a:78ff:feb8:490f", "5683")){
+    if (!_send(&buf_pdu[0], len, addr_str, "5683")){
         puts("gcoap_cli: msg send failed");
         return -1;
     }
@@ -116,7 +125,7 @@ int coap_get(void)
     len = coap_opt_finish(&pdu, COAP_OPT_FINISH_NONE);
 
     // TODO: address MUST be inserted by the user
-    if (!_send(&buf_pdu[0], len, "fe80::389a:78ff:feb8:490f", "5683")){
+    if (!_send(&buf_pdu[0], len, addr_str, "5683")){
         puts("gcoap_cli: msg send failed");
         return -1;
     }
@@ -238,6 +247,13 @@ int start_dtls_client(int argc, char **argv)
     (void) argc;
     (void) argv;
 
+    if (argc != 2) {
+        usage(argv[0]);
+        return -1;
+    }
+
+    addr_str = argv[1];
+
     int ret = SSL_FAILURE;
 
     char buf[APP_DTLS_BUF_SIZE] = "Hello from DTLS client!";
@@ -272,7 +288,7 @@ int start_dtls_client(int argc, char **argv)
         printf("Client connected successfully...\n");
     }
 
-    /* send the hello message */
+    printf("Sending hello message...\n");
     wolfSSL_write(sslCli, buf, strlen(buf));
 
     wolfSSL_read(sslCli, buf, APP_DTLS_BUF_SIZE - 1);
@@ -283,6 +299,9 @@ int start_dtls_client(int argc, char **argv)
     LOG(LOG_INFO, "Closing connection.\r\n");
 
 cleanup:
+    /*Probably useless*/
+    memset(payload_dtls,0,2048);
+    size_payload = 0;
     wolfSSL_shutdown(sslCli);
     wolfSSL_free(sslCli);
     wolfSSL_CTX_free(ctxCli);

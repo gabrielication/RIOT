@@ -235,7 +235,7 @@ int start_dtls_server(int argc, char **argv){
     printf("CONNECTED\n");
 
     wolfSSL_read(sslServ, buf, APP_DTLS_BUF_SIZE);
-    buf[size_payload-2] = (char)0;
+    buf[size_payload] = (char)0;
     LOG(LOG_INFO, "Received '%s'\r\n", buf);
 
     /* Send reply */
@@ -246,7 +246,9 @@ int start_dtls_server(int argc, char **argv){
     LOG(LOG_INFO, "Closing connection.\r\n");
 
 cleanup:
-
+    /*Probably useless*/
+    memset(payload_dtls,0,2048);
+    size_payload = 0;
     wolfSSL_shutdown(sslServ);
     wolfSSL_free(sslServ);
     wolfSSL_CTX_free(ctxServ);
