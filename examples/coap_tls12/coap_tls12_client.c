@@ -104,7 +104,6 @@ int coap_post(void)
                 return -1;
     }
 
-    // TODO: address MUST be inserted by the user
     if (!_send(&buf_pdu[0], len, addr_str, "5683")){
         puts("gcoap_cli: msg send failed");
         return -1;
@@ -119,11 +118,10 @@ int coap_get(void)
     coap_pkt_t pdu;
     size_t len;
 
-    // Code '2' is GET
+    // Code '1' is GET
     gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, 1, "/.well-known/atls");
     len = coap_opt_finish(&pdu, COAP_OPT_FINISH_NONE);
 
-    // TODO: address MUST be inserted by the user
     if (!_send(&buf_pdu[0], len, addr_str, "5683")){
         puts("gcoap_cli: msg send failed");
         return -1;
@@ -141,11 +139,18 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     memcpy(payload_tls,buf,sz);
     size_payload = sz;
 
+    /*
+        Why 3 and 4? They are the client's messages seq IDs in which the server needs to do more
+        reads without doing any writes between them. We need someone in charge to restore
+        COAP - TLS mutexes synchronization.
+
+        TODO: it's not good practice AT ALL to have local counters. It will be a good idea to parse the seq
+        numbers directly from the packets and handle eventual packet loss.
+    */
+
     count_send += 1;
 
     if(count_send == 3 || count_send == 4) mutex_lock(&client_send_lock);
-
-    printf("count_send %d\n",count_send);
 
     if(VERBOSE){
         int i;
@@ -173,23 +178,22 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     int i;
 
     /*  
-        Why 3 and 4? They are the server's messages seq IDs in which the client needs to do more
+        Why 2, 3 and 5? They are the server's messages seq IDs in which the client needs to do more
         reads without doing any writes between them. Without the the writes we can't have
         any call to COAP's 'send' function because we don't actually have anything to send.
         In order to have a request -> response mechanism (and in order to let the server know
         the client's ip address when replying) we adopt this cheap trick calling a 'get'.
+
+        TODO: it's not good practice AT ALL to have local counters. It will be a good idea to parse the seq
+        numbers directly from the packets and handle eventual packet loss.
     */
 
     if(!offset) count_read += 1;
-
-    printf("count_read %d\n",count_read);
 
     if(count_read == 2 || count_read == 3 || count_read == 5){
         if(!get_flag) coap_get();
         get_flag = 1;
     }
-
-    printf("READ %d\n",sz);
 
     if(!offset) mutex_lock(&client_lock);
 
@@ -210,7 +214,6 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     if(offset == size_payload){
         offset = 0;
         get_flag = 0;
-        printf("Read finished\n");
     }
     
     return sz;
@@ -283,7 +286,7 @@ int start_tls_client(int argc, char **argv)
 
     wolfSSL_Init();
 
-    //  Example usage
+    //  Example usage (not implemented)
     //  sslServ = Server(ctxServ, "ECDHE-RSA-AES128-SHA", 1);
     sslCli  = Client(ctxCli, NULL, 0, 0);
 
