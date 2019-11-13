@@ -1,15 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
 #include <wolfssl/ssl.h>
-
 #include "log.h"
 #include "net/gcoap.h"
 #include "mutex.h"
 
 #define VERBOSE 1
-
 #define PAYLOAD_TLS_SIZE 128
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
@@ -17,7 +14,7 @@ static const char* kIdentityStr = "Client_identity";
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
-extern char payload_dtls[];
+extern char payload_tls[];
 extern int size_payload;
 
 char *addr_str;
@@ -29,8 +26,6 @@ static int get_flag = 0;
 
 extern mutex_t client_lock;
 extern mutex_t client_send_lock;
-
-int fpRecv = 0;
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -102,7 +97,7 @@ int coap_post(void)
     // The payload len tells how many bytes are free for the payload. If we have
     // enough space we can copy our message inside it.
     if (pdu.payload_len >= paylen) {
-                memcpy(pdu.payload, payload_dtls, paylen);
+                memcpy(pdu.payload, payload_tls, paylen);
                 len += paylen;
     } else {
                 puts("gcoap_cli: msg buffer too small");
@@ -143,7 +138,7 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) sz;
     (void) ctx;
 
-    memcpy(payload_dtls,buf,sz);
+    memcpy(payload_tls,buf,sz);
     size_payload = sz;
 
     count_send += 1;
@@ -157,7 +152,7 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
         printf("/*-------------------- CLIENT SEND -----------------*/\n");
         for (i = 0; i < size_payload; i++) {
-            printf("%02x ", (unsigned char) payload_dtls[i]);
+            printf("%02x ", (unsigned char) payload_tls[i]);
             if (i > 0 && (i % 16) == 0)
                 printf("\n");
         }
@@ -198,7 +193,7 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     if(!offset) mutex_lock(&client_lock);
 
-    memcpy(buf, payload_dtls+offset, sz);
+    memcpy(buf, payload_tls+offset, sz);
 
     offset += sz;
 
@@ -235,12 +230,12 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
     /* Disable certificate validation from the client side */
     wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, 0);
 
-    /* Load certificate file for the DTLS client */
+    /* Load certificate file for the TLS client */
     if (wolfSSL_CTX_use_certificate_buffer(ctx, server_cert,
                 server_cert_len, SSL_FILETYPE_ASN1 ) != SSL_SUCCESS)
     {
         LOG(LOG_ERROR, "Error loading cert buffer\n");
-        return -1;
+        return NULL;
     }
 
 #else /* !def MODULE_WOLFSSL_PSK */
@@ -257,6 +252,14 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
     }
 
     return ssl;
+}
+
+void client_cleanup(WOLFSSL* ssl, WOLFSSL_CTX* ctx)
+{
+    wolfSSL_shutdown(ssl);
+    wolfSSL_free(ssl);
+    wolfSSL_CTX_free(ctx);
+    wolfSSL_Cleanup();
 }
 
 int start_tls_client(int argc, char **argv)
@@ -280,13 +283,14 @@ int start_tls_client(int argc, char **argv)
 
     wolfSSL_Init();
 
-    /* Example usage */
-//    sslServ = Server(ctxServ, "ECDHE-RSA-AES128-SHA", 1);
-    sslCli  = Client(ctxCli, "let-wolfssl-decide", 0, 1);
+    //  Example usage
+    //  sslServ = Server(ctxServ, "ECDHE-RSA-AES128-SHA", 1);
+    sslCli  = Client(ctxCli, NULL, 0, 0);
 
     if (sslCli == NULL) {
         printf("Failed to start client\n");
-        goto cleanup;
+        client_cleanup(sslCli,ctxCli);
+        return -1;
     }
 
     printf("Starting client\n");
@@ -299,10 +303,9 @@ int start_tls_client(int argc, char **argv)
         if (ret != SSL_SUCCESS) {
             if (error != SSL_ERROR_WANT_READ &&
                 error != SSL_ERROR_WANT_WRITE) {
-                wolfSSL_free(sslCli);
-                wolfSSL_CTX_free(ctxCli);
                 printf("client ssl connect failed\n");
-                break;
+                client_cleanup(sslCli,ctxCli);
+                return -1;
             }
         }
         printf("Client connected successfully...\n");
@@ -320,11 +323,7 @@ int start_tls_client(int argc, char **argv)
     /* Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
 
-cleanup:
-    wolfSSL_shutdown(sslCli);
-    wolfSSL_free(sslCli);
-    wolfSSL_CTX_free(ctxCli);
-    wolfSSL_Cleanup();
+    client_cleanup(sslCli,ctxCli);
 
     return 0;
 }

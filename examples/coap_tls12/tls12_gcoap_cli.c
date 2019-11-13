@@ -46,7 +46,7 @@ kernel_pid_t main_pid;
 
 #define PAYLOAD_TLS_SIZE 128
 
-char payload_dtls[PAYLOAD_TLS_SIZE] = "";
+char payload_tls[PAYLOAD_TLS_SIZE] = "";
 int size_payload = 0;
 
 /* CoAP resources. Must be sorted by path (ASCII order). */
@@ -130,8 +130,8 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
             int i;
 
             // TODO: maybe we have to reset to 0 the payload everytime?
-            memset(payload_dtls,0,PAYLOAD_TLS_SIZE);
-            memcpy(payload_dtls,pdu->payload,pdu->payload_len);
+            memset(payload_tls,0,PAYLOAD_TLS_SIZE);
+            memcpy(payload_tls,pdu->payload,pdu->payload_len);
             size_payload = pdu->payload_len;
 
             mutex_unlock(&client_lock);
@@ -187,7 +187,7 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
             mutex_unlock_and_sleep(&server_req_lock);
             break;
         case COAP_POST:
-            memcpy(payload_dtls, (char *) pdu->payload, pdu->payload_len);
+            memcpy(payload_tls, (char *) pdu->payload, pdu->payload_len);
             size_payload = pdu->payload_len;
             mutex_unlock(&server_req_lock);
             mutex_unlock_and_sleep(&server_lock);
@@ -208,7 +208,7 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
         return gcoap_response(pdu, buf, len, COAP_CODE_CHANGED);
     }
     else if (pdu->payload_len >= paylen) {
-                memcpy(pdu->payload, payload_dtls, paylen);
+                memcpy(pdu->payload, payload_tls, paylen);
                 len += paylen;
     } else {
         puts("gcoap_cli: msg buffer too small");

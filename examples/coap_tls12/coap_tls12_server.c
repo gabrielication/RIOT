@@ -1,32 +1,25 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
 #include <wolfssl/ssl.h>
-
 #include "log.h"
 #include "net/gcoap.h"
-
 #include "mutex.h"
 #include "thread.h"
 
-extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
-
-/* Dummy */
-static int fpSend;
-static int fpRecv;
-
 #define SERVER_PORT 11111
 #define DEBUG 1
+#define PAYLOAD_TLS_SIZE 128
+#define VERBOSE 1
+
+extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
 extern const unsigned char server_cert[];
 extern const unsigned char server_key[];
 extern unsigned int server_cert_len;
 extern unsigned int server_key_len;
 
-#define PAYLOAD_TLS_SIZE 128
-
-extern char payload_dtls[];
+extern char payload_tls[];
 extern int size_payload;
 
 extern mutex_t server_lock;
@@ -37,12 +30,8 @@ int count = 0;
 static int offset = 0;
 static int wake_flag = 0;
 
-static const char Test_dtls_string[] = "TLS 1.2 OK!";
-
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
-
-#define VERBOSE 1
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -104,7 +93,7 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         printf("\n/*-------------------- END SENDING -----------------*/\n");
     }
 
-    memcpy(payload_dtls, buf, sz);
+    memcpy(payload_tls, buf, sz);
     size_payload = sz;
 
     thread_wakeup(main_pid);
@@ -127,7 +116,7 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         printf("COUNT: %d\n", count);
     }
 
-    memcpy(buf, payload_dtls+offset, sz);
+    memcpy(buf, payload_tls+offset, sz);
 
     offset += sz;
 
@@ -184,7 +173,7 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
     }
 
 #ifndef MODULE_WOLFSSL_PSK
-    /* Load certificate file for the DTLS server */
+    /* Load certificate file for the TLS server */
     if (wolfSSL_CTX_use_certificate_buffer(rctx, server_cert,
                 server_cert_len, SSL_FILETYPE_ASN1 ) != SSL_SUCCESS)
     {
@@ -216,21 +205,31 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
     return ssl;
 }
 
-int start_tls_server(int argc, char **argv){
+void server_cleanup(WOLFSSL* ssl, WOLFSSL_CTX* ctx)
+{
+    wolfSSL_shutdown(ssl);
+    wolfSSL_free(ssl);
+    wolfSSL_CTX_free(ctx);
+    wolfSSL_Cleanup();
+}
 
+int start_tls_server(int argc, char **argv)
+{
     char buf[PAYLOAD_TLS_SIZE];
     int ret, msgSz;
     WOLFSSL* sslServ;
     WOLFSSL_CTX* ctxServ = NULL;
 
-    fpSend = 0;
-    fpRecv = 0;
-
     wolfSSL_Init();
 
-    sslServ = Server(ctxServ, "let-wolfssl-choose", 0);
+    sslServ = Server(ctxServ, NULL, 0);
 
-    if (sslServ == NULL) { printf("sslServ NULL\n"); return 0;}
+    if (sslServ == NULL){
+        printf("Failed to start server. Exiting...\n");
+        server_cleanup(sslServ,ctxServ);
+        return -1;
+    }
+
     ret = SSL_FAILURE;
     printf("Starting server\n");
     while (ret != SSL_SUCCESS) {
@@ -240,11 +239,10 @@ int start_tls_server(int argc, char **argv){
         if (ret != SSL_SUCCESS) {
             if (error != SSL_ERROR_WANT_READ &&
                 error != SSL_ERROR_WANT_WRITE) {
-                wolfSSL_free(sslServ);
-                wolfSSL_CTX_free(ctxServ);
                 printf("server ssl accept failed ret = %d error = %d wr = %d\n",
                                                ret, error, SSL_ERROR_WANT_READ);
-                goto cleanup;
+                server_cleanup(sslServ,ctxServ);
+                return -1;
             }
         }
 
@@ -265,11 +263,7 @@ int start_tls_server(int argc, char **argv){
     /* Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
 
-cleanup:
-    wolfSSL_shutdown(sslServ);
-    wolfSSL_free(sslServ);
-    wolfSSL_CTX_free(ctxServ);
-    wolfSSL_Cleanup();
+    server_cleanup(sslServ,ctxServ);
 
-    return -1;
+    return 0;
 }
