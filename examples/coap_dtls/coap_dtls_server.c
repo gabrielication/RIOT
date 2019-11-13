@@ -1,23 +1,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
 #include <wolfssl/ssl.h>
-
 #include "log.h"
 #include "net/gcoap.h"
-
 #include "mutex.h"
 #include "thread.h"
 
-extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
-
-/* Dummy */
-static int fpSend;
-static int fpRecv;
-
 #define SERVER_PORT 11111
 #define DEBUG 1
+#define PAYLOAD_DTLS_SIZE 128
+#define VERBOSE 1
+
+extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
+
 extern const unsigned char server_cert[];
 extern const unsigned char server_key[];
 extern unsigned int server_cert_len;
@@ -30,16 +26,10 @@ extern mutex_t server_lock;
 extern mutex_t server_req_lock;
 extern kernel_pid_t main_pid;
 
-int count = 0;
-
-static const char Test_dtls_string[] = "DTLS OK!";
+int server_count = 0;
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
-
-#define APP_DTLS_BUF_SIZE 64
-
-#define VERBOSE 1
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -78,8 +68,6 @@ static inline unsigned int my_psk_server_cb(WOLFSSL* ssl, const char* identity,
 }
 #endif /* MODULE_WOLFSSL_PSK */
 
-#define APP_DTLS_BUF_SIZE 64
-
 int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 {
     (void) ssl;
@@ -88,6 +76,8 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) ctx;
 
     int i;
+
+    //printf("SERVER SEND...\n");
 
     mutex_lock(&server_req_lock);
 
@@ -115,12 +105,15 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) buf;
     (void) sz;
     (void) ctx;
-    
-    mutex_lock(&server_lock);
-
-    memcpy(buf, payload_dtls, size_payload);
 
     int i;
+
+    //printf("SERVER RECV...\n");
+
+    mutex_lock(&server_lock);
+    server_count += 1;
+
+    memcpy(buf, payload_dtls, size_payload);
 
     if(VERBOSE){
         printf("/*-------------------- SERVER RECV -----------------*/\n");
@@ -132,21 +125,18 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         printf("\n/*-------------------- END RECV -----------------*/\n");
     }
 
-    count += 1;
-
-    /*
+/*
         Why 3? This is the client's message seq ID in which the server has to do multiple recvs
         without doing any send in the middle. Since it is typically the send function in charge to wake up
         again the COAP thread which is waiting to perform a reply, we need another way. With
         this cheap trick we can reset the mutex and wake up the COAP's thread in order to perform a reply.
 
-        TODO: here the COAP thread still sends some data in the buffer back to the client but in this
-        phase that is totally unnecessary. It will be good to just send a 'success' message with an empty
-        payload.
-    */
+        TODO: it's not good practice AT ALL to have local counters. It will be a good idea to parse the seq
+        numbers directly from the packets and handle eventual packet loss.
+*/
 
-    if(count == 3){
-        mutex_lock(&server_req_lock);
+    if(server_count == 3){
+        //size_payload = 0;
         thread_wakeup(main_pid);
     }
 
@@ -164,7 +154,7 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
     }
 
 #ifndef MODULE_WOLFSSL_PSK
-    /* Load certificate file for the DTLS server */
+    /* Load certificate file for the TLS server */
     if (wolfSSL_CTX_use_certificate_buffer(rctx, server_cert,
                 server_cert_len, SSL_FILETYPE_ASN1 ) != SSL_SUCCESS)
     {
@@ -193,26 +183,34 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
         return NULL;
     }
 
-    wolfSSL_set_fd(ssl, fpRecv);
-    wolfSSL_set_using_nonblock(ssl, fpRecv);
     return ssl;
 }
 
-int start_dtls_server(int argc, char **argv){
+void server_cleanup(WOLFSSL* ssl, WOLFSSL_CTX* ctx)
+{
+    wolfSSL_shutdown(ssl);
+    wolfSSL_free(ssl);
+    wolfSSL_CTX_free(ctx);
+    wolfSSL_Cleanup();
+}
 
-    char buf[APP_DTLS_BUF_SIZE];
+int start_dtls_server(int argc, char **argv)
+{
+    char buf[PAYLOAD_DTLS_SIZE];
     int ret, msgSz;
     WOLFSSL* sslServ;
     WOLFSSL_CTX* ctxServ = NULL;
 
-    fpSend = 0;
-    fpRecv = 0;
-
     wolfSSL_Init();
 
-    sslServ = Server(ctxServ, "let-wolfssl-choose", 0);
+    sslServ = Server(ctxServ, NULL, 0);
 
-    if (sslServ == NULL) { printf("sslServ NULL\n"); return 0;}
+    if (sslServ == NULL){
+        printf("Failed to start server. Exiting...\n");
+        server_cleanup(sslServ,ctxServ);
+        return -1;
+    }
+
     ret = SSL_FAILURE;
     printf("Starting server\n");
     while (ret != SSL_SUCCESS) {
@@ -222,37 +220,35 @@ int start_dtls_server(int argc, char **argv){
         if (ret != SSL_SUCCESS) {
             if (error != SSL_ERROR_WANT_READ &&
                 error != SSL_ERROR_WANT_WRITE) {
-                wolfSSL_free(sslServ);
-                wolfSSL_CTX_free(ctxServ);
                 printf("server ssl accept failed ret = %d error = %d wr = %d\n",
                                                ret, error, SSL_ERROR_WANT_READ);
-                goto cleanup;
+                server_cleanup(sslServ,ctxServ);
+                return -1;
             }
         }
 
     }
 
-    printf("CONNECTED\n");
+    printf("SERVER CONNECTED SUCCESSFULLY!\n");
 
-    wolfSSL_read(sslServ, buf, APP_DTLS_BUF_SIZE);
+    char reply[] = "DTLS 1.2 OK!";
+
+    wolfSSL_read(sslServ, buf, PAYLOAD_DTLS_SIZE);
     buf[size_payload] = (char)0;
+
+    //  TODO: probably the string isn't terminated correctly and sometimes
+    //  can print random chars
+    
     LOG(LOG_INFO, "Received '%s'\r\n", buf);
 
     /* Send reply */
     LOG(LOG_INFO, "Sending 'DTLS OK'...\r\n");
-    wolfSSL_write(sslServ, Test_dtls_string, sizeof(Test_dtls_string));
+    wolfSSL_write(sslServ, reply, strlen(reply));
 
     /* Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
 
-cleanup:
-    /*Probably useless*/
-    memset(payload_dtls,0,2048);
-    size_payload = 0;
-    wolfSSL_shutdown(sslServ);
-    wolfSSL_free(sslServ);
-    wolfSSL_CTX_free(ctxServ);
-    wolfSSL_Cleanup();
+    server_cleanup(sslServ,ctxServ);
 
-    return -1;
+    return 0;
 }

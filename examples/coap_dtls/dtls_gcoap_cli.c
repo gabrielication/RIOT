@@ -31,6 +31,8 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
+#define PAYLOAD_DTLS_SIZE 128
+
 static ssize_t _encode_link(const coap_resource_t *resource, char *buf,
                             size_t maxlen, coap_link_encoder_ctx_t *context);
 static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
@@ -40,11 +42,14 @@ static ssize_t _atls_handler(coap_pkt_t* pdu, uint8_t *buf, size_t len, void *ct
 mutex_t server_lock = MUTEX_INIT_LOCKED;
 mutex_t client_lock = MUTEX_INIT_LOCKED;
 mutex_t server_req_lock = MUTEX_INIT_LOCKED;
+mutex_t client_send_lock = MUTEX_INIT_LOCKED;
 
 kernel_pid_t main_pid;
 
-char payload_dtls[2048] = "";
+char payload_dtls[PAYLOAD_DTLS_SIZE];
 int size_payload = 0;
+
+extern int server_count;
 
 /* CoAP resources. Must be sorted by path (ASCII order). */
 static const coap_resource_t _resources[] = {
@@ -127,7 +132,7 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
             int i;
 
             // TODO: maybe we have to reset to 0 the payload everytime?
-            memset(payload_dtls,0,2048);
+            memset(payload_dtls,0,PAYLOAD_DTLS_SIZE);
             memcpy(payload_dtls,pdu->payload,pdu->payload_len);
             size_payload = pdu->payload_len;
 
@@ -139,6 +144,7 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
         }
     }
     else {
+        mutex_unlock(&client_send_lock);
         printf(", empty payload\n");
     }
 
@@ -199,7 +205,11 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
 
     // The payload len tells how many bytes are free for the payload. If we have
     // enough space we can copy our message inside it.
-    if (pdu->payload_len >= paylen) {
+    if (server_count == 3){ //TODO: maybe something less cheap?
+        printf("COAP replied %d bytes\n", len);
+        return gcoap_response(pdu, buf, len, COAP_CODE_CHANGED);
+    }
+    else if (pdu->payload_len >= paylen) {
                 memcpy(pdu->payload, payload_dtls, paylen);
                 len += paylen;
     } else {
@@ -207,6 +217,7 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
         return gcoap_response(pdu, buf, len, COAP_CODE_INTERNAL_SERVER_ERROR);
     }
 
+    printf("COAP replied %d bytes\n", len);
     //NO NEED FOR GCOAP_RESPONSE, that is only for empty payloads
     return len;
 }
@@ -261,7 +272,7 @@ size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str)
         req_count++;
     }
 
-    printf("BYTES SENT %d\n", bytes_sent);
+    printf("COAP sent %d bytes\n", bytes_sent);
 
     return bytes_sent;
 }
