@@ -239,6 +239,14 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
     return ssl;
 }
 
+void client_cleanup(WOLFSSL* ssl, WOLFSSL_CTX* ctx)
+{
+    wolfSSL_shutdown(ssl);
+    wolfSSL_free(ssl);
+    wolfSSL_CTX_free(ctx);
+    wolfSSL_Cleanup();
+}
+
 int start_dtls_client(int argc, char **argv)
 {
     WOLFSSL* sslCli;
@@ -261,13 +269,14 @@ int start_dtls_client(int argc, char **argv)
 
     wolfSSL_Init();
 
-    /* Example usage */
-//    sslServ = Server(ctxServ, "ECDHE-RSA-AES128-SHA", 1);
-    sslCli  = Client(ctxCli, "let-wolfssl-decide", 0, 1);
+    // Example usage (not implemented)
+    // sslServ = Server(ctxServ, "ECDHE-RSA-AES128-SHA", 1);
+    sslCli  = Client(ctxCli, NULL, 0, 0);
 
     if (sslCli == NULL) {
         printf("Failed to start client\n");
-        goto cleanup;
+        client_cleanup(sslCli,ctxCli);
+        return -1;
     }
 
     printf("Starting client\n");
@@ -280,10 +289,8 @@ int start_dtls_client(int argc, char **argv)
         if (ret != SSL_SUCCESS) {
             if (error != SSL_ERROR_WANT_READ &&
                 error != SSL_ERROR_WANT_WRITE) {
-                wolfSSL_free(sslCli);
-                wolfSSL_CTX_free(ctxCli);
-                printf("client ssl connect failed\n");
-                break;
+                client_cleanup(sslCli,ctxCli);
+                return -1;
             }
         }
         printf("Client connected successfully...\n");
@@ -299,14 +306,7 @@ int start_dtls_client(int argc, char **argv)
     /* Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
 
-cleanup:
-    /*Probably useless*/
-    memset(payload_dtls,0,2048);
-    size_payload = 0;
-    wolfSSL_shutdown(sslCli);
-    wolfSSL_free(sslCli);
-    wolfSSL_CTX_free(ctxCli);
-    wolfSSL_Cleanup();
+    client_cleanup(sslCli,ctxCli);
 
     return 0;
 }
