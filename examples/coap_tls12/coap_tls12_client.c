@@ -311,8 +311,9 @@ int start_tls_client(int argc, char **argv)
                 return -1;
             }
         }
-        printf("Client connected successfully...\n");
     }
+
+    printf("CLIENT CONNECTED SUCCESSFULLY!\n");
 
     char send_msg[] = "Hello from TLS 1.2 client!";
 
@@ -321,6 +322,10 @@ int start_tls_client(int argc, char **argv)
 
     wolfSSL_read(sslCli, buf, PAYLOAD_TLS_SIZE);
     buf[size_payload] = (char)0;
+
+    //  TODO: probably the string isn't terminated correctly and sometimes
+    //  can print random chars
+    
     LOG(LOG_INFO, "Received: '%s'\r\n", buf);
 
     /* Clean up and exit. */

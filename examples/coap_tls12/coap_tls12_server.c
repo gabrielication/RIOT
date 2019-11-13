@@ -79,8 +79,6 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
-    printf("SEND %d\n", sz);
-
     mutex_lock(&server_req_lock);
 
     if(VERBOSE){
@@ -108,19 +106,16 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) sz;
     (void) ctx;
 
-    printf("READ %d\n",sz);
+    int i;
 
     if(!offset){
         mutex_lock(&server_lock);
         count += 1;
-        printf("COUNT: %d\n", count);
     }
 
     memcpy(buf, payload_tls+offset, sz);
 
     offset += sz;
-
-    int i;
 
     if(VERBOSE){
         printf("/*-------------------- SERVER RECV -----------------*/\n");
@@ -133,19 +128,16 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     }
 
 /*
-        Why 3? This is the client's message seq ID in which the server has to do multiple recvs
+        Why 2 and 3? This is the client's message seq ID in which the server has to do multiple recvs
         without doing any send in the middle. Since it is typically the send function in charge to wake up
         again the COAP thread which is waiting to perform a reply, we need another way. With
         this cheap trick we can reset the mutex and wake up the COAP's thread in order to perform a reply.
 
-        TODO: here the COAP thread still sends some data in the buffer back to the client but in this
-        phase that is totally unnecessary. It will be good to just send a 'success' message with an empty
-        payload.
+        TODO: it's not good practice AT ALL to have local counters. It will be a good idea to parse the seq
+        numbers directly from the packets and handle eventual packet loss.
 */
-    printf("size_payload %d\n",size_payload);
 
     if(offset == size_payload){
-        printf("READ FINISHED\n");
         offset = 0;
     }
 
@@ -248,12 +240,16 @@ int start_tls_server(int argc, char **argv)
 
     }
 
-    printf("CONNECTED\n");
+    printf("SERVER CONNECTED SUCCESSFULLY!\n");
 
     char reply[] = "TLS 1.2 OK!";
 
     wolfSSL_read(sslServ, buf, PAYLOAD_TLS_SIZE);
     buf[size_payload] = (char)0;
+
+    //  TODO: probably the string isn't terminated correctly and sometimes
+    //  can print random chars
+    
     LOG(LOG_INFO, "Received '%s'\r\n", buf);
 
     /* Send reply */
