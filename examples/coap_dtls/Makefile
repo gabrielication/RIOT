@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = nanocoap_server
+APPLICATION = coap_dtls
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
@@ -11,8 +11,8 @@ RIOTBASE ?= $(CURDIR)/../..
 GCOAP_RESEND_BUFS_MAX ?= 2
 CFLAGS += -DGCOAP_RESEND_BUFS_MAX=$(GCOAP_RESEND_BUFS_MAX)
 
-# Probably too much
-CFLAGS += -DGCOAP_PDU_BUF_SIZE=2048
+# Just twice of default is enough
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=256
 
 # Include packages that pull up and auto-init the link layer.
 # NOTE: 6LoWPAN will be included if IEEE802.15.4 devices are present

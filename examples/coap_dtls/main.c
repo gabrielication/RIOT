@@ -33,8 +33,8 @@ extern int start_dtls_client(int argc, char **argv);
 extern int start_dtls_server(int argc, char **argv);
 
 static const shell_command_t shell_commands[] = {
-    { "dtls-client", "DTLS Client example", start_dtls_client },
-    { "dtls-server", "DTLS Server example", start_dtls_server },
+    { "dtlsc", "DTLS Client example", start_dtls_client },
+    { "dtlss", "DTLS Server example", start_dtls_server },
     { NULL, NULL, NULL }
 };
 
