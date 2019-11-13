@@ -8,9 +8,9 @@
 #include "net/gcoap.h"
 #include "mutex.h"
 
-#define APP_DTLS_BUF_SIZE 64
-
 #define VERBOSE 1
+
+#define PAYLOAD_TLS_SIZE 128
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
@@ -256,9 +256,6 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
         return NULL;
     }
 
-    wolfSSL_set_fd(ssl, fpRecv);
-    wolfSSL_set_using_nonblock(ssl, fpRecv);
-
     return ssl;
 }
 
@@ -279,7 +276,7 @@ int start_tls_client(int argc, char **argv)
 
     int ret = SSL_FAILURE;
 
-    char buf[APP_DTLS_BUF_SIZE] = "Hello from TLS 1.2 client!";
+    char buf[PAYLOAD_TLS_SIZE];
 
     wolfSSL_Init();
 
@@ -311,10 +308,12 @@ int start_tls_client(int argc, char **argv)
         printf("Client connected successfully...\n");
     }
 
-    printf("Sending hello message...\n");
-    wolfSSL_write(sslCli, buf, strlen(buf));
+    char send_msg[] = "Hello from TLS 1.2 client!";
 
-    wolfSSL_read(sslCli, buf, APP_DTLS_BUF_SIZE - 1);
+    printf("Sending hello message...\n");
+    wolfSSL_write(sslCli, send_msg, strlen(send_msg));
+
+    wolfSSL_read(sslCli, buf, PAYLOAD_TLS_SIZE);
     buf[size_payload] = (char)0;
     LOG(LOG_INFO, "Received: '%s'\r\n", buf);
 
@@ -322,9 +321,6 @@ int start_tls_client(int argc, char **argv)
     LOG(LOG_INFO, "Closing connection.\r\n");
 
 cleanup:
-    /*Probably useless*/
-    memset(payload_dtls,0,2048);
-    size_payload = 0;
     wolfSSL_shutdown(sslCli);
     wolfSSL_free(sslCli);
     wolfSSL_CTX_free(ctxCli);

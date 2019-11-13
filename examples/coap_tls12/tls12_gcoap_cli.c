@@ -44,7 +44,9 @@ mutex_t client_send_lock = MUTEX_INIT_LOCKED;
 
 kernel_pid_t main_pid;
 
-char payload_dtls[2048] = "";
+#define PAYLOAD_TLS_SIZE 128
+
+char payload_dtls[PAYLOAD_TLS_SIZE] = "";
 int size_payload = 0;
 
 /* CoAP resources. Must be sorted by path (ASCII order). */
@@ -128,7 +130,7 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
             int i;
 
             // TODO: maybe we have to reset to 0 the payload everytime?
-            memset(payload_dtls,0,2048);
+            memset(payload_dtls,0,PAYLOAD_TLS_SIZE);
             memcpy(payload_dtls,pdu->payload,pdu->payload_len);
             size_payload = pdu->payload_len;
 

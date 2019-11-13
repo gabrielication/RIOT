@@ -18,10 +18,13 @@ static int fpRecv;
 
 #define SERVER_PORT 11111
 #define DEBUG 1
+
 extern const unsigned char server_cert[];
 extern const unsigned char server_key[];
 extern unsigned int server_cert_len;
 extern unsigned int server_key_len;
+
+#define PAYLOAD_TLS_SIZE 128
 
 extern char payload_dtls[];
 extern int size_payload;
@@ -38,8 +41,6 @@ static const char Test_dtls_string[] = "TLS 1.2 OK!";
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
-
-#define APP_DTLS_BUF_SIZE 64
 
 #define VERBOSE 1
 
@@ -79,8 +80,6 @@ static inline unsigned int my_psk_server_cb(WOLFSSL* ssl, const char* identity,
     }
 }
 #endif /* MODULE_WOLFSSL_PSK */
-
-#define APP_DTLS_BUF_SIZE 64
 
 int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 {
@@ -214,14 +213,12 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
         return NULL;
     }
 
-    wolfSSL_set_fd(ssl, fpRecv);
-    wolfSSL_set_using_nonblock(ssl, fpRecv);
     return ssl;
 }
 
 int start_tls_server(int argc, char **argv){
 
-    char buf[APP_DTLS_BUF_SIZE];
+    char buf[PAYLOAD_TLS_SIZE];
     int ret, msgSz;
     WOLFSSL* sslServ;
     WOLFSSL_CTX* ctxServ = NULL;
@@ -255,11 +252,11 @@ int start_tls_server(int argc, char **argv){
 
     printf("CONNECTED\n");
 
-    wolfSSL_read(sslServ, buf, APP_DTLS_BUF_SIZE);
+    char reply[] = "TLS 1.2 OK!";
+
+    wolfSSL_read(sslServ, buf, PAYLOAD_TLS_SIZE);
     buf[size_payload] = (char)0;
     LOG(LOG_INFO, "Received '%s'\r\n", buf);
-
-    char reply[APP_DTLS_BUF_SIZE] = "TLS 1.2 OK!";
 
     /* Send reply */
     LOG(LOG_INFO, "Sending 'TLS OK'...\r\n");
@@ -269,9 +266,6 @@ int start_tls_server(int argc, char **argv){
     LOG(LOG_INFO, "Closing connection.\r\n");
 
 cleanup:
-    /*Probably useless*/
-    memset(payload_dtls,0,2048);
-    size_payload = 0;
     wolfSSL_shutdown(sslServ);
     wolfSSL_free(sslServ);
     wolfSSL_CTX_free(ctxServ);
