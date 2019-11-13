@@ -44,7 +44,7 @@ You have to start the client now. Open a new terminal on the same folder. Type:
 
     PORT=tap1 make term
     
-And then type `dtlsc` followed by the previous address you copied from the server, like:
+And then type `tlsc` followed by the previous address you copied from the server, like:
 
     > tlsc fe80::ac4a:f4ff:fef7:b23d
     
