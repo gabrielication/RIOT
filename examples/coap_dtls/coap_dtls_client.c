@@ -8,7 +8,7 @@
 #include "net/gcoap.h"
 #include "mutex.h"
 
-#define APP_DTLS_BUF_SIZE 64
+#define PAYLOAD_DTLS_SIZE 128
 
 #define VERBOSE 1
 
@@ -256,7 +256,8 @@ int start_dtls_client(int argc, char **argv)
 
     int ret = SSL_FAILURE;
 
-    char buf[APP_DTLS_BUF_SIZE] = "Hello from DTLS client!";
+    char buf[PAYLOAD_DTLS_SIZE];
+    char send_msg[] = "Hello from DTLS client!";
 
     wolfSSL_Init();
 
@@ -289,9 +290,9 @@ int start_dtls_client(int argc, char **argv)
     }
 
     printf("Sending hello message...\n");
-    wolfSSL_write(sslCli, buf, strlen(buf));
+    wolfSSL_write(sslCli, send_msg, strlen(send_msg));
 
-    wolfSSL_read(sslCli, buf, APP_DTLS_BUF_SIZE - 1);
+    wolfSSL_read(sslCli, buf, PAYLOAD_DTLS_SIZE);
     buf[size_payload] = (char)0;
     LOG(LOG_INFO, "Received: '%s'\r\n", buf);
 
