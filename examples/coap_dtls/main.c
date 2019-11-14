@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Ken Bannister. All rights reserved.
+ * Copyright (C) 2019 Gabriele Restuccia
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -11,9 +11,9 @@
  * @{
  *
  * @file
- * @brief       gcoap example
+ * @brief       Example application of ADTLS 1.2 over CoAP
  *
- * @author      Ken Bannister <kb2ma@runbox.com>
+ * @author      Gabriele Restuccia <restuccia.1548310@studenti.uniroma1.it>
  *
  * @}
  */
