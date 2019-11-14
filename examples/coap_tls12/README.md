@@ -1,4 +1,4 @@
-# ATLS 1.3 over CoAP Transport
+# ATLS 1.2 over CoAP Transport
 
 This program provides an example of a TLS 1.2 handshake and exchange of data using CoAP as a transport layer.
 The [wolfSSL](https://github.com/wolfSSL/wolfssl) library was used for the TLS 1.2 implementation and [gCoAP](https://riot-os.org/api/group__net__gcoap.html) as the CoAP implementation.
