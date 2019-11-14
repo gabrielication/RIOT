@@ -33,8 +33,8 @@ extern int start_tls_client(int argc, char **argv);
 extern int start_tls_server(int argc, char **argv);
 
 static const shell_command_t shell_commands[] = {
-    { "tlsc", "TLS 1.2 Client example", start_tls_client },
-    { "tlss", "TLS 1.2 Server example", start_tls_server },
+    { "tlsc", "ATLS 1.2 Client example", start_tls_client },
+    { "tlss", "ATLS 1.2 Server example", start_tls_server },
     { NULL, NULL, NULL }
 };
 

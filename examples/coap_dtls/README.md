@@ -1,4 +1,4 @@
-# ADTLS over CoAP Transport
+# ADTLS 1.2 over CoAP Transport
 
 This program provides an example of a DTLS 1.2 handshake and exchange of data using CoAP as a transport layer.
 The [wolfSSL](https://github.com/wolfSSL/wolfssl) library was used for the DTLS 1.2 implementation and [gCoAP](https://riot-os.org/api/group__net__gcoap.html) as the CoAP implementation.
