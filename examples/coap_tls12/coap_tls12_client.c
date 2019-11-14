@@ -156,9 +156,6 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) sz;
     (void) ctx;
 
-    memcpy(payload_tls,buf,sz);
-    size_payload = sz;
-
     /*
         Why 3 and 4? They are the client's messages seq IDs in which the server needs to do more
         reads without doing any writes between them. We need someone in charge to restore
@@ -171,6 +168,9 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     count_send += 1;
 
     if(count_send == 3 || count_send == 4) mutex_lock(&client_send_lock);
+
+    memcpy(payload_tls,buf,sz);
+    size_payload = sz;
 
     if(VERBOSE){
         int i;
