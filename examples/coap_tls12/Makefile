@@ -7,6 +7,17 @@ BOARD ?= native
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../..
 
+# use ethos (ethernet over serial) for network communication and stdio over
+# UART, but not on native, as native has a tap interface towards the host.
+ifeq (,$(filter native,$(BOARD)))
+  GNRC_NETIF_NUMOF := 2
+  USEMODULE += stdio_ethos
+
+  # ethos baudrate can be configured from make command
+  ETHOS_BAUDRATE ?= 115200
+  CFLAGS += -DETHOS_BAUDRATE=$(ETHOS_BAUDRATE)
+endif
+
 # Increase from default for confirmable block2 follow-on requests
 GCOAP_RESEND_BUFS_MAX ?= 2
 CFLAGS += -DGCOAP_RESEND_BUFS_MAX=$(GCOAP_RESEND_BUFS_MAX)
@@ -19,7 +30,6 @@ CFLAGS += -DGCOAP_PDU_BUF_SIZE=256
 USEMODULE += gnrc_netdev_default
 USEMODULE += auto_init_gnrc_netif
 # Specify the mandatory networking modules
-USEMODULE += gnrc_ipv6_default
 USEMODULE += gcoap
 # Additional networking modules that can be dropped if not needed
 USEMODULE += gnrc_icmpv6_echo
@@ -68,6 +78,9 @@ ifneq (,$(filter $(BOARD),$(LOW_MEMORY_BOARDS)))
   CFLAGS += -DGNRC_PKTBUF_SIZE=1000
   USEMODULE += prng_minstd
 endif
+
+TAP ?= tap0
+IPV6_PREFIX ?= 2001:db8::/64
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
