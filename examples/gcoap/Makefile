@@ -9,6 +9,17 @@ BOARD ?= native
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../..
 
+# use ethos (ethernet over serial) for network communication and stdio over
+# UART, but not on native, as native has a tap interface towards the host.
+ifeq (,$(filter native,$(BOARD)))
+  GNRC_NETIF_NUMOF := 2
+  USEMODULE += stdio_ethos
+
+  # ethos baudrate can be configured from make command
+  ETHOS_BAUDRATE ?= 115200
+  CFLAGS += -DETHOS_BAUDRATE=$(ETHOS_BAUDRATE)
+endif
+
 ## Uncomment to redefine port, for example use 61616 for RFC 6282 UDP compression.
 #GCOAP_PORT = 5683
 #CFLAGS += -DGCOAP_PORT=$(GCOAP_PORT)
@@ -26,7 +37,6 @@ CFLAGS += -DGCOAP_RESEND_BUFS_MAX=$(GCOAP_RESEND_BUFS_MAX)
 USEMODULE += gnrc_netdev_default
 USEMODULE += auto_init_gnrc_netif
 # Specify the mandatory networking modules
-USEMODULE += gnrc_ipv6_default
 USEMODULE += gcoap
 # Additional networking modules that can be dropped if not needed
 USEMODULE += gnrc_icmpv6_echo
@@ -43,6 +53,9 @@ USEMODULE += ps
 # which is not needed in a production environment but helps in the
 # development process:
 DEVELHELP ?= 1
+
+TAP ?= tap0
+IPV6_PREFIX ?= 2001:db8::/64
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
