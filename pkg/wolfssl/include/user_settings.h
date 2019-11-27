@@ -32,8 +32,6 @@ extern "C" {
 #define SP_WORD_SIZE 32
 #define WOLFSSL_SP
 
-
-
 /* GNRC support enabled if not
  * using sockets
  */
@@ -47,19 +45,8 @@ extern "C" {
 /* Select wolfcrypt only / +wolfssl
  * at compile time (via USEMODULE)
  */
-#ifndef MODULE_WOLFSSL_TLS
-#ifndef MODULE_WOLFSSL_TLS13
+#if !defined(MODULE_WOLFSSL_TLS) && !defined(MODULE_WOLFSSL_TLS13)
 #define WOLFCRYPT_ONLY
-#else
-#define NO_OLD_TLS
-#define HAVE_TLS_EXTENSIONS
-#define HAVE_AES_DECRYPT
-#define HAVE_AESGCM
-#define GCM_SMALL
-#define HAVE_AESCCM
-#define WOLFSSL_AES_COUNTER
-#define WOLFSSL_AES_DIRECT
-#endif
 #else
 #define HAVE_TLS_EXTENSIONS
 #endif
@@ -307,7 +294,19 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define HAVE_TLS13
 #define WOLFSSL_TLS13
 #define HAVE_HKDF
+
+#define NO_OLD_TLS
+#define HAVE_AES_DECRYPT
 #define HAVE_AESGCM
+#define GCM_SMALL
+//#define HAVE_AESCCM
+//#define WOLFSSL_AES_COUNTER
+//#define WOLFSSL_AES_DIRECT
+//
+#define NO_MD5
+#define NO_AES_256
+#define NO_AES_192
+
 #endif
 
 #ifdef __cplusplus
