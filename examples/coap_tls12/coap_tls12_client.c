@@ -27,15 +27,23 @@
 #include "mutex.h"
 
 #define VERBOSE 1
-#define PAYLOAD_TLS_SIZE 128
+#define PAYLOAD_TLS_SIZE 2048
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
+
+static int config_index = 0;
+static char *config[] = {"PSK", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES256-CCM-8"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
 extern char payload_tls[];
 extern int size_payload;
+
+extern const unsigned char server_cert[];
+extern const unsigned char server_key[];
+extern unsigned int server_cert_len;
+extern unsigned int server_key_len;
 
 char *addr_str;
 
@@ -156,6 +164,8 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) sz;
     (void) ctx;
 
+    //printf("SEND\n");
+
     /*
         Why 3 and 4? They are the client's messages seq IDs in which the server needs to do more
         reads without doing any writes between them. We need someone in charge to restore
@@ -197,6 +207,8 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) ctx;
     int i;
 
+    //printf("RECV\n");
+
     /*  
         Why 2, 3 and 5? They are the server's messages seq IDs in which the client needs to do more
         reads without doing any writes between them. Without the the writes we can't have
@@ -210,9 +222,16 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     if(!offset) count_read += 1;
 
-    if(count_read == 2 || count_read == 3 || count_read == 5){
-        if(!get_flag) coap_get();
-        get_flag = 1;
+    if(config_index == 0){
+        if(count_read == 2 || count_read == 3 || count_read == 5){
+            if(!get_flag) coap_get();
+            get_flag = 1;
+        }
+    } else if(config_index == 1 || config_index == 2){
+        if(count_read == 2 || count_read == 3 || count_read == 4 || count_read == 6){
+            if(!get_flag) coap_get();
+            get_flag = 1;
+        }
     }
 
     if(!offset) mutex_lock(&client_lock);
@@ -260,6 +279,16 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
         LOG(LOG_ERROR, "Error loading cert buffer\n");
         return NULL;
     }
+
+    config_index = 1;
+    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, config[config_index])) != SSL_SUCCESS) {
+        printf("ret = %d\n", ret);
+        printf("Error :can't set cipher\n");
+        wolfSSL_CTX_free(ctx);
+        return NULL;
+    }
+
+    printf("eeeeeeeee\n");
 
 #else /* !def MODULE_WOLFSSL_PSK */
     wolfSSL_CTX_set_psk_client_callback(ctx, my_psk_client_cb);

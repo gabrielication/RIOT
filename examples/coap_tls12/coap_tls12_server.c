@@ -29,8 +29,11 @@
 
 #define SERVER_PORT 11111
 #define DEBUG 1
-#define PAYLOAD_TLS_SIZE 128
+#define PAYLOAD_TLS_SIZE 2048
 #define VERBOSE 1
+
+static int config_index = 0;
+static char *config[] = {"PSK", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES256-CCM-8"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
@@ -99,6 +102,8 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
+    //printf("SEND\n");
+
     mutex_lock(&server_req_lock);
 
     if(VERBOSE){
@@ -127,6 +132,8 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) ctx;
 
     int i;
+
+    //printf("RECV\n");
 
     if(!offset){
         mutex_lock(&server_lock);
@@ -186,11 +193,11 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
 
 #ifndef MODULE_WOLFSSL_PSK
     /* Load certificate file for the TLS server */
-    if (wolfSSL_CTX_use_certificate_buffer(rctx, server_cert,
+    if (wolfSSL_CTX_use_certificate_buffer(ctx, server_cert,
                 server_cert_len, SSL_FILETYPE_ASN1 ) != SSL_SUCCESS)
     {
         LOG(LOG_ERROR, "Failed to load certificate from memory.\r\n");
-        return -1;
+        return NULL;
     }
 
     /* Load the private key */
@@ -198,8 +205,20 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
                 server_key_len, SSL_FILETYPE_ASN1 ) != SSL_SUCCESS)
     {
         LOG(LOG_ERROR, "Failed to load private key from memory.\r\n");
-        return -1;
+        return NULL;
     }
+
+    //TODO: to be refined
+    config_index = 1;
+    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, config[config_index])) != SSL_SUCCESS) {
+        printf("ret = %d\n", ret);
+        printf("Error :can't set cipher\n");
+        wolfSSL_CTX_free(ctx);
+        return NULL;
+    }
+
+    printf("AOOOO\n");
+    
 #else
     wolfSSL_CTX_set_psk_server_callback(ctx, my_psk_server_cb);
     wolfSSL_CTX_use_psk_identity_hint(ctx, "hint");
