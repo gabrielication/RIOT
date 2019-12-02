@@ -31,7 +31,7 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-#define PAYLOAD_DTLS_SIZE 128
+#define PAYLOAD_DTLS_SIZE 2048
 
 static ssize_t _encode_link(const coap_resource_t *resource, char *buf,
                             size_t maxlen, coap_link_encoder_ctx_t *context);

@@ -23,7 +23,7 @@ GCOAP_RESEND_BUFS_MAX ?= 2
 CFLAGS += -DGCOAP_RESEND_BUFS_MAX=$(GCOAP_RESEND_BUFS_MAX)
 
 # Just twice of default is enough
-CFLAGS += -DGCOAP_PDU_BUF_SIZE=256
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=2048
 
 # Include packages that pull up and auto-init the link layer.
 # NOTE: 6LoWPAN will be included if IEEE802.15.4 devices are present
@@ -51,9 +51,9 @@ USEMODULE += wolfssl
 USEMODULE += wolfssl_dtls
 
 # Select public key algorithm (or PSK) support fot ciphersuite(s):
-#USEMODULE += wolfcrypt_ecc
+USEMODULE += wolfcrypt_ecc
 #USEMODULE += wolfcrypt_rsa wolfcrypt_dh
-USEMODULE += wolfssl_psk
+#USEMODULE += wolfssl_psk
 
 # DTLS stuff
 CFLAGS += -DDTLS_DEFAULT_PORT=$(DTLS_PORT) -DDTLS_WOLFSSL -Wno-unused-parameter -Wno-unused-variable
