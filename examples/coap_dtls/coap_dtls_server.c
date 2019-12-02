@@ -32,6 +32,9 @@
 #define PAYLOAD_DTLS_SIZE 2048
 #define VERBOSE 1
 
+static int config_index = 0;
+static char *config[] = {"PSK", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES256-CCM-8"};
+
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
 extern const unsigned char server_cert[];
@@ -191,7 +194,8 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
     }
 
     //TODO: to be refined
-    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, "ECDHE-ECDSA-AES128-CCM")) != SSL_SUCCESS) {
+    config_index = 2;
+    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, config[config_index])) != SSL_SUCCESS) {
         printf("ret = %d\n", ret);
         printf("Error :can't set cipher\n");
         wolfSSL_CTX_free(ctx);

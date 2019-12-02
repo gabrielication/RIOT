@@ -29,8 +29,8 @@
 #define VERBOSE 1
 #define PAYLOAD_DTLS_SIZE 2048
 
-int config_index = 0;
-char *config[] = {"PSK", "ECDHE-ECDSA-AES128-CCM", "ECDHE-ECDSA-AES256-CCM"};
+static int config_index = 0;
+static char *config[] = {"PSK", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES256-CCM-8"};
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
@@ -224,11 +224,7 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         if(count_read == 3 || count_read == 4){
             coap_get();
         }
-    } else if(config_index == 1){
-        if(count_read == 3 || count_read == 4 || count_read == 5){
-            coap_get();
-        }
-    } else if(config_index == 2){
+    } else if(config_index == 1 || config_index == 2){
         if(count_read == 3 || count_read == 4 || count_read == 5){
             coap_get();
         }
@@ -274,7 +270,7 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
     }
 
     //TODO: to be refined
-    config_index = 1;
+    config_index = 2;
     if (( ret = wolfSSL_CTX_set_cipher_list(ctx, config[config_index])) != SSL_SUCCESS) {
         printf("ret = %d\n", ret);
         printf("Error :can't set cipher\n");
