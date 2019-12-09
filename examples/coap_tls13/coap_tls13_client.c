@@ -27,7 +27,16 @@
 #include "mutex.h"
 
 #define VERBOSE 1
+
+#ifdef MODULE_WOLFSSL_PSK
+
+#define PAYLOAD_TLS_SIZE 348
+
+#else
+
 #define PAYLOAD_TLS_SIZE 2048
+
+#endif
 
 static int config_index = 0;
 static char *config[] = {"PSK", "TLS13-AES128-GCM-SHA256", "TLS13-AES256-GCM-SHA384"};
@@ -222,11 +231,21 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     //printf("Client RECV...%d count %d\n",sz,count_read);
 
-    // To be tweaked for different cipher suites cases like previous examples
+    #ifndef MODULE_WOLFSSL_PSK
+
     if(count_read == 2 || count_read == 3 || count_read == 4 || count_read == 5){
         if(!get_flag) coap_get();
         get_flag = 1;
     }
+
+    #else 
+
+    if(count_read == 2 || count_read == 3){
+        if(!get_flag) coap_get();
+        get_flag = 1;
+    }
+
+    #endif
 
     if(!offset) mutex_lock(&client_lock);
 

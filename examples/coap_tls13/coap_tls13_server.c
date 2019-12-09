@@ -29,8 +29,17 @@
 
 #define SERVER_PORT 11111
 #define DEBUG 1
-#define PAYLOAD_TLS_SIZE 2048
 #define VERBOSE 1
+
+#ifdef MODULE_WOLFSSL_PSK
+
+#define PAYLOAD_TLS_SIZE 348
+
+#else
+
+#define PAYLOAD_TLS_SIZE 2048
+
+#endif
 
 static int config_index = 0;
 static char *config[] = {"PSK", "TLS13-AES128-GCM-SHA256", "TLS13-AES256-GCM-SHA384"};
@@ -102,7 +111,7 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
-    //printf("Server SEND... %d\n",sz);
+    printf("Server SEND... %d\n",sz);
 
     mutex_lock(&server_req_lock);
 
@@ -133,7 +142,7 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
-    //printf("Server RECV... %d\n",sz);
+    printf("Server RECV... %d\n",sz);
 
     if(!offset){
         mutex_lock(&server_lock);
