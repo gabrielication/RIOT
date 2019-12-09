@@ -27,7 +27,16 @@
 #include "mutex.h"
 
 #define VERBOSE 1
+
+#ifdef MODULE_WOLFSSL_PSK
+
+#define PAYLOAD_TLS_SIZE 256
+
+#else
+
 #define PAYLOAD_TLS_SIZE 2048
+
+#endif
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";

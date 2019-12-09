@@ -27,10 +27,18 @@
 #include "mutex.h"
 #include "thread.h"
 
-#define SERVER_PORT 11111
 #define DEBUG 1
-#define PAYLOAD_TLS_SIZE 2048
 #define VERBOSE 1
+
+#ifdef MODULE_WOLFSSL_PSK
+
+#define PAYLOAD_TLS_SIZE 256
+
+#else
+
+#define PAYLOAD_TLS_SIZE 2048
+
+#endif
 
 static int config_index = 0;
 static char *config[] = {"PSK", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES256-CCM-8"};
