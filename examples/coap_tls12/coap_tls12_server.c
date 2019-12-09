@@ -36,7 +36,7 @@
 
 #else
 
-#define PAYLOAD_TLS_SIZE 2048
+#define PAYLOAD_TLS_SIZE 1024
 
 #endif
 
