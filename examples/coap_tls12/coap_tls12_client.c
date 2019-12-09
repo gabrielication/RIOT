@@ -231,17 +231,17 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     if(!offset) count_read += 1;
 
-    if(config_index == 0){
-        if(count_read == 2 || count_read == 3 || count_read == 5){
-            if(!get_flag) coap_get();
-            get_flag = 1;
-        }
-    } else if(config_index == 1 || config_index == 2){
+    #ifndef MODULE_WOLFSSL_PSK
         if(count_read == 2 || count_read == 3 || count_read == 4 || count_read == 6){
             if(!get_flag) coap_get();
             get_flag = 1;
         }
-    }
+    #else
+        if(count_read == 2 || count_read == 3 || count_read == 5){
+            if(!get_flag) coap_get();
+            get_flag = 1;
+        }
+    #endif
 
     if(!offset) mutex_lock(&client_lock);
 

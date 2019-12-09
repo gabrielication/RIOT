@@ -229,15 +229,15 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     count_read += 1;
 
-    if(config_index == 0){
-        if(count_read == 3 || count_read == 4){
-            coap_get();
-        }
-    } else if(config_index == 1 || config_index == 2){
+    #ifndef MODULE_WOLFSSL_PSK
         if(count_read == 3 || count_read == 4 || count_read == 5){
             coap_get();
         }
-    }
+    #else
+        if(count_read == 3 || count_read == 4){
+            coap_get();
+        }
+    #endif
     
     mutex_lock(&client_lock);
 

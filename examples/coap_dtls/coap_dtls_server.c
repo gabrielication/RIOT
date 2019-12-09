@@ -212,8 +212,6 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
             wolfSSL_CTX_free(ctx);
             return NULL;
         }
-
-        printf("hey\n");
         
     #endif
 
