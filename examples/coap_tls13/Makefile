@@ -51,6 +51,7 @@ USEMODULE += wolfcrypt
 USEMODULE += wolfssl
 USEMODULE += wolfssl_tls13
 USEMODULE += wolfcrypt_ecc
+USEMODULE += wolfcrypt_sha512
 
 # Select public key algorithm (or PSK) support fot ciphersuite(s):
 #USEMODULE += wolfcrypt_ecc

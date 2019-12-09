@@ -33,7 +33,7 @@
 #define VERBOSE 1
 
 static int config_index = 0;
-static char *config[] = {"PSK", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES256-CCM-8"};
+static char *config[] = {"PSK", "TLS13-AES128-GCM-SHA256", "TLS13-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
@@ -219,8 +219,6 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
             wolfSSL_CTX_free(ctx);
             return NULL;
         }
-
-        printf("here\n");
         
     #endif
 #else

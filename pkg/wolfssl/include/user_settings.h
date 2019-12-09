@@ -300,13 +300,11 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define HAVE_AES_DECRYPT
 #define HAVE_AESGCM
 #define GCM_SMALL
-//#define HAVE_AESCCM
-//#define WOLFSSL_AES_COUNTER
-//#define WOLFSSL_AES_DIRECT
-//
+#define HAVE_AESCCM
+#define WOLFSSL_AES_COUNTER
+#define WOLFSSL_AES_DIRECT
+
 #define NO_MD5
-#define NO_AES_256
-#define NO_AES_192
 
 #endif
 
