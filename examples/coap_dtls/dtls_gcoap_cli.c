@@ -37,7 +37,7 @@
 
 #else
 
-#define PAYLOAD_DTLS_SIZE 2048
+#define PAYLOAD_DTLS_SIZE 1024
 
 #endif
 

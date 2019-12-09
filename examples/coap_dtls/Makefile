@@ -50,7 +50,7 @@ USEMODULE += wolfssl_dtls
 # Select public key algorithm (or PSK) support for ciphersuites:
 # You have to redefine also the PDU_BUF_SIZE
 USEMODULE += wolfcrypt_ecc
-CFLAGS += -DGCOAP_PDU_BUF_SIZE=2048
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=1024
 
 # USEMODULE += wolfssl_psk
 # CFLAGS += -DGCOAP_PDU_BUF_SIZE=256
