@@ -51,11 +51,11 @@ USEMODULE += wolfcrypt_ecc
 
 # Select public key algorithm (or PSK) support for ciphersuites:
 # You have to redefine also the PDU_BUF_SIZE and SHA
-# USEMODULE += wolfcrypt_sha512
-# CFLAGS += -DGCOAP_PDU_BUF_SIZE=2048
+USEMODULE += wolfcrypt_sha512
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=1024
 
-USEMODULE += wolfssl_psk
-CFLAGS += -DGCOAP_PDU_BUF_SIZE=384
+# USEMODULE += wolfssl_psk
+# CFLAGS += -DGCOAP_PDU_BUF_SIZE=384
 
 CFLAGS += -Wno-unused-parameter -Wno-unused-variable
 
