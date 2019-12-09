@@ -108,7 +108,7 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
-    printf("SERVER SEND...\n");
+    //printf("SERVER SEND...\n");
 
     mutex_lock(&server_req_lock);
 
@@ -139,7 +139,7 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
-    printf("SERVER RECV...\n");
+    //printf("SERVER RECV...\n");
 
     mutex_lock(&server_lock);
     server_count += 1;
