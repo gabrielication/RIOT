@@ -59,6 +59,12 @@ CFLAGS += -DGCOAP_PDU_BUF_SIZE=1024
 CFLAGS += -DDTLS_DEFAULT_PORT=$(DTLS_PORT) -DDTLS_WOLFSSL -Wno-unused-parameter -Wno-unused-variable
 
 # A larger stack size is required if using ECC or RSA
+# You also need a bigger default thread stacksize
+ifneq ($(BOARD),native)
+  # TODO: having a fixed value like this is not good at all. Have to use 'ps' and understand how much
+  # stack we have to use
+  CFLAGS += -DTHREAD_STACKSIZE_DEFAULT=8192
+endif
 CFLAGS += -DTHREAD_STACKSIZE_MAIN=\(3*THREAD_STACKSIZE_DEFAULT\)
 
 # Comment this out to enable code in RIOT that does safety checking
