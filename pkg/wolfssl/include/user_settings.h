@@ -89,6 +89,11 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define WOLFSSL_DTLS
 #endif
 
+#undef HAVE_AESCCM
+#ifdef MODULE_WOLFCRYPT_AESCCM
+#define HAVE_AESCCM
+#endif
+
 #undef HAVE_FFDHE_2048
 #ifdef MODULE_WOLFCRYPT_FFDHE_2048
 #define HAVE_FFDHE_2048
