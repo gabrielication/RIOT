@@ -42,7 +42,7 @@
 static const char* kIdentityStr = "Client_identity";
 
 static int config_index = 0;
-static char *config[] = {"PSK", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES256-CCM-8"};
+static char *config[] = {"PSK-AES256-CCM-8", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES256-CCM-8"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
@@ -294,18 +294,19 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
         //TODO: to be refined
 
         config_index = 2;
-        if (( ret = wolfSSL_CTX_set_cipher_list(ctx, config[config_index])) != SSL_SUCCESS) {
-            printf("ret = %d\n", ret);
-            printf("Error :can't set cipher\n");
-            wolfSSL_CTX_free(ctx);
-            return NULL;
-        }
         
     #endif
 
 #else /* !def MODULE_WOLFSSL_PSK */
     wolfSSL_CTX_set_psk_client_callback(ctx, my_psk_client_cb);
 #endif
+
+    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, config[config_index])) != SSL_SUCCESS) {
+            printf("ret = %d\n", ret);
+            printf("Error :can't set cipher\n");
+            wolfSSL_CTX_free(ctx);
+            return NULL;
+    }
 
     wolfSSL_SetIORecv(ctx, client_recv);
     wolfSSL_SetIOSend(ctx, client_send);

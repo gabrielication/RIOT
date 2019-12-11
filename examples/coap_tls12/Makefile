@@ -54,6 +54,7 @@ USEMODULE += wolfcrypt_ecc
 CFLAGS += -DGCOAP_PDU_BUF_SIZE=1024
 
 # USEMODULE += wolfssl_psk
+# USEMODULE += wolfcrypt_aesccm
 # CFLAGS += -DGCOAP_PDU_BUF_SIZE=256
 
 CFLAGS += -Wno-unused-parameter -Wno-unused-variable
