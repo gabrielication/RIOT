@@ -186,7 +186,7 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     //printf("Client SEND... %d count %d\n",sz,count_send);
 
-    if(count_send == -1) mutex_lock(&client_send_lock);
+    if(count_send == 3) mutex_lock(&client_send_lock);
 
     memcpy(payload_tls,buf,sz);
     size_payload = sz;
