@@ -62,6 +62,8 @@ CFLAGS += -DDTLS_DEFAULT_PORT=$(DTLS_PORT) -DDTLS_WOLFSSL -Wno-unused-parameter 
 # You also need a bigger default thread stacksize
 ifneq ($(BOARD),native)
   # 2048 is the minimum when using certificates
+  # YOU CAN DISABLE THIS IF YOU WANT TO USE PSK ONLY OTHERWISE
+  # BOARDS LIKE nrf52dk will not work
   CFLAGS += -DTHREAD_STACKSIZE_DEFAULT=2048
 endif
 CFLAGS += -DTHREAD_STACKSIZE_MAIN=\(3*THREAD_STACKSIZE_DEFAULT\)

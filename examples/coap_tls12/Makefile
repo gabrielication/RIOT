@@ -61,6 +61,8 @@ CFLAGS += -Wno-unused-parameter -Wno-unused-variable
 # A larger stack size is required if using ECC or RSA
 ifneq ($(BOARD),native)
   # 2048 is the minimum when using certificates
+  # YOU CAN DISABLE THIS IF YOU WANT TO USE PSK ONLY OTHERWISE
+  # BOARDS LIKE nrf52dk will not work
   CFLAGS += -DTHREAD_STACKSIZE_DEFAULT=2048
 endif
 CFLAGS += -DTHREAD_STACKSIZE_MAIN=\(3*THREAD_STACKSIZE_DEFAULT\)
