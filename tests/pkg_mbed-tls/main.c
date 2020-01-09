@@ -52,8 +52,6 @@
 #include "mbedtls/ecjpake.h"
 #include "mbedtls/timing.h"
 
-#include "periph/hwrng.h"
-
 #include <stdio.h>
 #include <string.h>
 
@@ -68,18 +66,6 @@
 #if defined(MBEDTLS_MEMORY_BUFFER_ALLOC_C)
 #include "mbedtls/memory_buffer_alloc.h"
 #endif
-
-int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t *olen)
-{
-    ((void) data);
-    int ret;
-
-    hwrng_read((void*) output, len);
-
-    *olen = len;
-
-    return 0;
-}
 
 int main( int argc, char *argv[] )
 {
