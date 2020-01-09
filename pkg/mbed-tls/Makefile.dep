@@ -1,1 +1,2 @@
+USEMODULE += periph_hwrng
 USEMODULE += alt_features

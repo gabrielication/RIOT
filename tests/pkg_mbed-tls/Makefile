@@ -2,8 +2,6 @@ include ../Makefile.tests_common
 
 USEPKG += mbed-tls
 
-USEMODULE += periph_hwrng
-
 # A larger stack size is required or the board will reboot
 ifneq ($(BOARD),native)
   CFLAGS += -DTHREAD_STACKSIZE_DEFAULT=2048
