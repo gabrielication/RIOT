@@ -1,2 +1,2 @@
 USEMODULE += periph_hwrng
-USEMODULE += alt_features
+USEMODULE += mbed_alt_features
