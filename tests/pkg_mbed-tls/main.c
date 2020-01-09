@@ -71,7 +71,7 @@ int main( int argc, char *argv[] )
 {
     puts("entropy test");
 
-    mbedtls_entropy_self_test(1);
+    mbedtls_timing_self_test(1);
 
     return 0;
 }

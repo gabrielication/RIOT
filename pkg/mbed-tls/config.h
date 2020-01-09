@@ -248,7 +248,7 @@
 * You will need to provide a header "timing_alt.h" and an implementation at
 * compile time.
 */
-//#define MBEDTLS_TIMING_ALT
+#define MBEDTLS_TIMING_ALT
 
 /**
 * \def MBEDTLS__MODULE_NAME__ALT
@@ -1815,7 +1815,7 @@
 *
 * This module is used by the HAVEGE random number generator.
 */
-//#define MBEDTLS_TIMING_C
+#define MBEDTLS_TIMING_C
 
 /**
 * \def MBEDTLS_VERSION_C
