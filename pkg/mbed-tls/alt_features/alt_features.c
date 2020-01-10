@@ -14,6 +14,13 @@ int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t 
     return 0;
 }
 
+//TODO MBEDTLS_TIMING_ALT
+
+struct _hr_time
+{
+    struct timeval start;
+};
+
 volatile int mbedtls_timing_alarmed = 0;
 
 unsigned long mbedtls_timing_hardclock(void)
@@ -23,19 +30,64 @@ unsigned long mbedtls_timing_hardclock(void)
 
 unsigned long mbedtls_timing_get_timer(struct mbedtls_timing_hr_time *val, int reset)
 {
-    return 0;
+	unsigned long delta;
+    struct timeval offset;
+    struct _hr_time *t = (struct _hr_time *) val;
+
+    gettimeofday( &offset, NULL );
+
+    if( reset )
+    {
+        t->start.tv_sec  = offset.tv_sec;
+        t->start.tv_usec = offset.tv_usec;
+        return( 0 );
+    }
+
+    delta = ( offset.tv_sec  - t->start.tv_sec  ) * 1000
+          + ( offset.tv_usec - t->start.tv_usec ) / 1000;
+
+    return( delta );
 }
 
-void mbedtls_set_alarm(int seconds){
-    return;
+static void sighandler(void)
+{
+    mbedtls_timing_alarmed = 1;
+}
+
+void mbedtls_set_alarm( int seconds )
+{
+    mbedtls_timing_alarmed = 0;
+    rtt_init();
+    uint32_t ticks = RTT_SEC_TO_TICKS(seconds);
+    rtt_set_alarm(ticks, sighandler, NULL);
 }
 
 void mbedtls_timing_set_delay(void *data, uint32_t int_ms, uint32_t fin_ms)
 {
-    return;
+    mbedtls_timing_delay_context *ctx = (mbedtls_timing_delay_context *) data;
+
+    ctx->int_ms = int_ms;
+    ctx->fin_ms = fin_ms;
+
+    if( fin_ms != 0 )
+        (void) mbedtls_timing_get_timer( &ctx->timer, 1 );
 }
 
 int mbedtls_timing_get_delay(void *data)
 {
-    return 0;
+    mbedtls_timing_delay_context *ctx = (mbedtls_timing_delay_context *) data;
+    unsigned long elapsed_ms;
+
+    if( ctx->fin_ms == 0 )
+        return( -1 );
+
+    elapsed_ms = mbedtls_timing_get_timer( &ctx->timer, 0 );
+
+    if( elapsed_ms >= ctx->fin_ms )
+        return( 2 );
+
+    if( elapsed_ms >= ctx->int_ms )
+        return( 1 );
+
+    return( 0 );
 }
