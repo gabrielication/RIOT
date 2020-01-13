@@ -25,6 +25,7 @@ volatile int mbedtls_timing_alarmed = 0;
 
 unsigned long mbedtls_timing_hardclock(void)
 {
+    //TODO
     return 0;
 }
 
@@ -58,7 +59,7 @@ void mbedtls_set_alarm( int seconds )
 {
     mbedtls_timing_alarmed = 0;
     rtt_init();
-    uint32_t ticks = RTT_SEC_TO_TICKS(seconds);
+    uint32_t ticks = rtt_get_counter() + RTT_SEC_TO_TICKS(seconds);
     rtt_set_alarm(ticks, sighandler, NULL);
 }
 
