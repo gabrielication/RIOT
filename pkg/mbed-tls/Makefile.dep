@@ -1,4 +1,7 @@
 USEMODULE += periph_hwrng
-USEMODULE += periph_rtt
 USEMODULE += mbed_alt_features
-USEMODULE += xtimer
+
+ifneq ($(BOARD),native)
+  USEMODULE += periph_rtt
+  USEMODULE += xtimer
+endif

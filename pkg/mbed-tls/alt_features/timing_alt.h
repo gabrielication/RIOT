@@ -4,7 +4,12 @@
 #include <signal.h>
 #include <time.h>
 
-#include "periph/rtt.h"
+#ifndef BOARD_NATIVE
+    #include "periph/rtt.h"
+#else
+    #include <stdint.h>
+#endif
+
 /**
  * \brief          timer structure
  */

@@ -50,17 +50,25 @@ unsigned long mbedtls_timing_get_timer(struct mbedtls_timing_hr_time *val, int r
     return( delta );
 }
 
-static void sighandler(void)
+static void handler(int signum)
 {
     mbedtls_timing_alarmed = 1;
+    #ifdef BOARD_NATIVE
+        signal( signum, handler );
+    #endif
 }
 
 void mbedtls_set_alarm( int seconds )
 {
     mbedtls_timing_alarmed = 0;
-    rtt_init();
-    uint32_t ticks = rtt_get_counter() + RTT_SEC_TO_TICKS(seconds);
-    rtt_set_alarm(ticks, sighandler, NULL);
+    #ifndef BOARD_NATIVE
+        rtt_init();
+        uint32_t ticks = rtt_get_counter() + RTT_SEC_TO_TICKS(seconds);
+        rtt_set_alarm(ticks, handler, NULL);
+    #else
+        signal( SIGALRM, handler );
+        alarm( seconds );
+    #endif
 }
 
 void mbedtls_timing_set_delay(void *data, uint32_t int_ms, uint32_t fin_ms)
