@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2020 Gabriele Restuccia
+ *
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
+ */
+
+/**
+ * @ingroup     tests
+ * @{
+ *
+ * @file
+ * @brief       Alternative callbacks for mbed-tls
+ *
+ * @author      Gabriele Restuccia <restuccia.1548310@studenti.uniroma1.it>
+ *
+ * @}
+ */
+
 #include "alt_features.h"
 #include "timing_alt.h"
 
@@ -23,6 +43,7 @@ struct _hr_time
 
 volatile int mbedtls_timing_alarmed = 0;
 
+// Taken from original mbed-tls library/timing.c
 unsigned long mbedtls_timing_get_timer(struct mbedtls_timing_hr_time *val, int reset)
 {
 	unsigned long delta;
@@ -65,6 +86,7 @@ void mbedtls_set_alarm( int seconds )
     #endif
 }
 
+// Taken from original mbed-tls library/timing.c
 void mbedtls_timing_set_delay(void *data, uint32_t int_ms, uint32_t fin_ms)
 {
     mbedtls_timing_delay_context *ctx = (mbedtls_timing_delay_context *) data;
@@ -76,6 +98,7 @@ void mbedtls_timing_set_delay(void *data, uint32_t int_ms, uint32_t fin_ms)
         (void) mbedtls_timing_get_timer( &ctx->timer, 1 );
 }
 
+// Taken from original mbed-tls library/timing.c
 int mbedtls_timing_get_delay(void *data)
 {
     mbedtls_timing_delay_context *ctx = (mbedtls_timing_delay_context *) data;

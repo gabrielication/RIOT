@@ -1,9 +1,3 @@
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
-
 #include "mbedtls/entropy.h"
 #include "mbedtls/hmac_drbg.h"
 #include "mbedtls/ctr_drbg.h"
@@ -34,13 +28,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#if defined(MBEDTLS_PLATFORM_C)
-#include "mbedtls/platform.h"
-#else
-#include <stdio.h>
 #define mbedtls_printf     printf
 #define mbedtls_snprintf   snprintf
-#endif
 
 #if defined(MBEDTLS_MEMORY_BUFFER_ALLOC_C)
 #include "mbedtls/memory_buffer_alloc.h"
@@ -270,10 +259,6 @@ int main( int argc, char *argv[] )
     if( v != 0 )
     {
         mbedtls_printf( "  [ All tests passed ]\n\n" );
-#if defined(_WIN32)
-        mbedtls_printf( "  Press Enter to exit this program.\n" );
-        fflush( stdout ); getchar();
-#endif
     }
 
     return( ret );
