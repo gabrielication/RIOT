@@ -14,7 +14,7 @@ int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t 
     return 0;
 }
 
-//TODO MBEDTLS_TIMING_ALT
+//MBEDTLS_TIMING_ALT
 
 struct _hr_time
 {
@@ -22,12 +22,6 @@ struct _hr_time
 };
 
 volatile int mbedtls_timing_alarmed = 0;
-
-unsigned long mbedtls_timing_hardclock(void)
-{
-    //TODO
-    return 0;
-}
 
 unsigned long mbedtls_timing_get_timer(struct mbedtls_timing_hr_time *val, int reset)
 {
@@ -99,4 +93,10 @@ int mbedtls_timing_get_delay(void *data)
         return( 1 );
 
     return( 0 );
+}
+
+unsigned long mbedtls_timing_hardclock(void)
+{
+    //Not implemented right now
+    return 0;
 }
