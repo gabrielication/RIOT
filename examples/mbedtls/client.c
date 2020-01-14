@@ -9,6 +9,11 @@
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
 
+#include "net/gcoap.h"
+#include "mutex.h"
+
+#include "log.h"
+
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
@@ -21,6 +26,18 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
 static mbedtls_ssl_config conf;
 static mbedtls_x509_crt cacert;
+
+extern char payload_tls[];
+extern int size_payload;
+
+extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
+
+char *addr_str;
+
+static void usage(const char *cmd_name)
+{
+    LOG(LOG_ERROR, "Usage: %s <server-address>\n", cmd_name);
+}
 
 static void my_debug( void *ctx, int level,
                       const char *file, int line,
@@ -218,6 +235,15 @@ int start_client(int argc, char **argv)
 
     int ret;
 
+    if (argc != 2) {
+        usage(argv[0]);
+        return -1;
+    }
+
+    addr_str = argv[1];
+
+    printf("Initializing client...\n");
+
     ret = mbedtls_client_init();
     if( ret != 0){
         printf("mbedtls_client_init() failed!\n");
@@ -225,14 +251,19 @@ int start_client(int argc, char **argv)
         return ret;
     }
 
+    printf("Proceeding to handshake...\n");
+
     while( ( ret = mbedtls_ssl_handshake( &ssl ) ) != 0 )
     {
         if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
         {
             mbedtls_printf( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", -ret );
-            break;
+            mbedtls_client_exit(ret);
+            return ret;
         }
     }
+
+    printf("CLIENT CONNECTED SUCCESSFULLY!\n");
 
     mbedtls_client_exit(ret);
 
