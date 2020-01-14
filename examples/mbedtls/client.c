@@ -14,6 +14,8 @@
 
 #define VERBOSE 1
 
+#define PAYLOAD_TLS_SIZE 1024
+
 static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
@@ -28,6 +30,66 @@ static void my_debug( void *ctx, int level,
 
     mbedtls_fprintf( (FILE *) ctx, "%s:%04d: %s", file, line, str );
     fflush(  (FILE *) ctx  );
+}
+
+int coap_post(void)
+{
+    /*
+        For initializing a COAP packet we need a buffer which can contain all of the header options for
+        a PDU and the eventual payload.
+    */
+
+    // The GCOAP macro is 128B because it is typically enough to hold all the header options
+    // But we have to be sure it is enoguh to hold also the payload!!!
+    // We solve that by redefining it in the Makefile.
+    uint8_t buf_pdu[GCOAP_PDU_BUF_SIZE];
+    coap_pkt_t pdu;
+    size_t len;
+    size_t paylen;
+
+    //Using strlen here is stupid. It will understand zeroes as end of a string
+    paylen = size_payload;
+
+    // Code '2' is POST
+    gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, 2, "/.well-known/atls");
+
+    coap_opt_add_format(&pdu, COAP_FORMAT_TEXT);
+    len = coap_opt_finish(&pdu, COAP_OPT_FINISH_PAYLOAD);
+
+    // The payload len tells how many bytes are free for the payload. If we have
+    // enough space we can copy our message inside it.
+    if (pdu.payload_len >= paylen) {
+                memcpy(pdu.payload, payload_tls, paylen);
+                len += paylen;
+    } else {
+                puts("gcoap_cli: msg buffer too small");
+                return -1;
+    }
+
+    if (!_send(&buf_pdu[0], len, addr_str, "5683")){
+        puts("gcoap_cli: msg send failed");
+        return -1;
+    }
+
+    return 0;
+}
+
+int coap_get(void)
+{
+    uint8_t buf_pdu[GCOAP_PDU_BUF_SIZE];
+    coap_pkt_t pdu;
+    size_t len;
+
+    // Code '1' is GET
+    gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, 1, "/.well-known/atls");
+    len = coap_opt_finish(&pdu, COAP_OPT_FINISH_NONE);
+
+    if (!_send(&buf_pdu[0], len, addr_str, "5683")){
+        puts("gcoap_cli: msg send failed");
+        return -1;
+    }
+
+    return 0;
 }
 
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
