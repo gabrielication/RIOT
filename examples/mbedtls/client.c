@@ -30,9 +30,17 @@ static mbedtls_x509_crt cacert;
 extern char payload_tls[];
 extern int size_payload;
 
+extern mutex_t client_lock;
+extern mutex_t client_send_lock;
+
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
 char *addr_str;
+
+int count_read = 0;
+int count_send = 0;
+static int offset = 0;
+static int get_flag = 0;
 
 static void usage(const char *cmd_name)
 {
@@ -111,27 +119,62 @@ int coap_get(void)
 
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
+    count_send += 1;
+
+    printf("Client SEND... %d count %d\n",len,count_send);
+
+    if(count_send == -1) mutex_lock(&client_send_lock);
+
+    memcpy(payload_tls,buf,len);
+    size_payload = len;
+
     if(VERBOSE){
         int i;
 
         printf("/*-------------------- CLIENT SEND -----------------*/\n");
-        for (i = 0; i < len; i++) {
-            printf("%02x ", (unsigned char) buf[i]);
+        for (i = 0; i < size_payload; i++) {
+            printf("%02x ", (unsigned char) payload_tls[i]);
             if (i > 0 && (i % 16) == 0)
                 printf("\n");
         }
         printf("\n/*-------------------- END SEND -----------------*/\n");
     }
 
-    //TODO
-    return 0;
+    coap_post();
+
+    return len;
 }
 
 static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
-    if(VERBOSE){
-        int i;
+    int i;
 
+    /*  
+        Why 2, 3 and 5? They are the server's messages seq IDs in which the client needs to do more
+        reads without doing any writes between them. Without the the writes we can't have
+        any call to COAP's 'send' function because we don't actually have anything to send.
+        In order to have a request -> response mechanism (and in order to let the server know
+        the client's ip address when replying) we adopt this cheap trick calling a 'get'.
+        TODO: it's not good practice AT ALL to have local counters. It will be a good idea to parse the seq
+        numbers directly from the packets and handle eventual packet loss.
+    */
+
+    if(!offset) count_read += 1;
+
+    printf("Client RECV...%d count %d\n",len,count_read);
+
+    if(count_read ==-1){
+        if(!get_flag) coap_get();
+        get_flag = 1;
+    }
+
+    if(!offset) mutex_lock(&client_lock);
+
+    memcpy(buf, payload_tls+offset, len);
+
+    offset += len;
+
+    if(VERBOSE){
         printf("/*-------------------- CLIENT RECV -----------------*/\n");
         for (i = 0; i < len; i++) {
             printf("%02x ", (unsigned char) buf[i]);
@@ -141,8 +184,12 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         printf("\n/*-------------------- END RECV -----------------*/\n");
     }
 
-    //TODO
-    return 0;
+    if(offset == size_payload){
+        offset = 0;
+        get_flag = 0;
+    }
+    
+    return len;
 }
 
 static void mbedtls_client_exit(int ret)

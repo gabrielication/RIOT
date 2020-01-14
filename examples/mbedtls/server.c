@@ -9,6 +9,9 @@
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
 
+#include "mutex.h"
+#include "thread.h"
+
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
@@ -23,6 +26,18 @@ static mbedtls_ssl_config conf;
 static mbedtls_x509_crt srvcert;
 static mbedtls_pk_context pkey;
 
+extern char payload_tls[];
+extern int size_payload;
+
+extern mutex_t server_lock;
+extern mutex_t server_req_lock;
+
+extern kernel_pid_t main_pid;
+
+int count = 0;
+static int offset = 0;
+static int wake_flag = 0;
+
 static void my_debug( void *ctx, int level,
                       const char *file, int line,
                       const char *str )
@@ -35,28 +50,47 @@ static void my_debug( void *ctx, int level,
 
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
-    if(VERBOSE){
-        int i;
+    int i;
 
-        printf("/*-------------------- CLIENT SEND -----------------*/\n");
+    printf("Server SEND... %d\n",len);
+
+    mutex_lock(&server_req_lock);
+
+    if(VERBOSE){
+        printf("/*-------------------- SERVER SENDING -----------------*/\n");
         for (i = 0; i < len; i++) {
             printf("%02x ", (unsigned char) buf[i]);
             if (i > 0 && (i % 16) == 0)
                 printf("\n");
         }
-        printf("\n/*-------------------- END SEND -----------------*/\n");
+        printf("\n/*-------------------- END SENDING -----------------*/\n");
     }
 
-    //TODO
-    return 0;
+    memcpy(payload_tls, buf, len);
+    size_payload = len;
+
+    thread_wakeup(main_pid);
+
+    return len;
 }
 
 static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
-    if(VERBOSE){
-        int i;
+    int i;
 
-        printf("/*-------------------- CLIENT RECV -----------------*/\n");
+    printf("Server RECV... %d\n",len);
+
+    if(!offset){
+        mutex_lock(&server_lock);
+        count += 1;
+    }
+
+    memcpy(buf, payload_tls+offset, len);
+
+    offset += len;
+
+    if(VERBOSE){
+        printf("/*-------------------- SERVER RECV -----------------*/\n");
         for (i = 0; i < len; i++) {
             printf("%02x ", (unsigned char) buf[i]);
             if (i > 0 && (i % 16) == 0)
@@ -65,8 +99,30 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         printf("\n/*-------------------- END RECV -----------------*/\n");
     }
 
-    //TODO
-    return 0;
+/*
+        Why 2 and 3? This is the client's message seq ID in which the server has to do multiple recvs
+        without doing any send in the middle. Since it is typically the send function in charge to wake up
+        again the COAP thread which is waiting to perform a reply, we need another way. With
+        this cheap trick we can reset the mutex and wake up the COAP's thread in order to perform a reply.
+        TODO: it's not good practice AT ALL to have local counters. It will be a good idea to parse the seq
+        numbers directly from the packets and handle eventual packet loss.
+*/
+
+    if(offset == size_payload){
+        offset = 0;
+    }
+
+    if(count == -1){
+        if(wake_flag){
+            size_payload = 0;
+            thread_wakeup(main_pid);
+            wake_flag = 0;
+        } else {
+            wake_flag = 1;
+        }
+    }
+
+    return len;
 }
 
 int mbedtls_server_init()
@@ -188,9 +244,12 @@ int start_server(int argc, char **argv)
         if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
         {
             mbedtls_printf( " failed\n  ! mbedtls_ssl_handshake returned %d\n\n", ret );
-            break;
+            mbedtls_client_exit(ret);
+            return ret;
         }
     }
+
+    printf("SERVER CONNECTED SUCCESSFULLY!\n");
 
     mbedtls_server_exit(ret);
 
