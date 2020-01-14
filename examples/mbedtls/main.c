@@ -9,9 +9,55 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/debug.h"
 #include "mbedtls/error.h"
+#include "mbedtls/certs.h"
 
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
+
+#define VERBOSE 1
+
+static void my_debug( void *ctx, int level,
+                      const char *file, int line,
+                      const char *str )
+{
+    ((void) level);
+
+    mbedtls_fprintf( (FILE *) ctx, "%s:%04d: %s", file, line, str );
+    fflush(  (FILE *) ctx  );
+}
+
+int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
+{
+    if(VERBOSE){
+        int i;
+
+        printf("/*-------------------- CLIENT SEND -----------------*/\n");
+        for (i = 0; i < len; i++) {
+            printf("%02x ", (unsigned char) buf[i]);
+            if (i > 0 && (i % 16) == 0)
+                printf("\n");
+        }
+        printf("\n/*-------------------- END SEND -----------------*/\n");
+    }
+
+    return 0;
+}
+
+int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
+{
+    if(VERBOSE){
+        int i;
+
+        printf("/*-------------------- CLIENT RECV -----------------*/\n");
+        for (i = 0; i < len; i++) {
+            printf("%02x ", (unsigned char) buf[i]);
+            if (i > 0 && (i % 16) == 0)
+                printf("\n");
+        }
+        printf("\n/*-------------------- END RECV -----------------*/\n");
+    }
+    return 0;
+}
 
 int prova(int argc, char **argv)
 {
@@ -42,6 +88,54 @@ int prova(int argc, char **argv)
         goto exit;
     }
 
+    ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) mbedtls_test_cas_pem,
+                          mbedtls_test_cas_pem_len );
+    if( ret < 0 )
+    {
+        printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
+        goto exit;
+    }
+
+    if( ( ret = mbedtls_ssl_config_defaults( &conf,
+                    MBEDTLS_SSL_IS_CLIENT,
+                    MBEDTLS_SSL_TRANSPORT_STREAM,
+                    MBEDTLS_SSL_PRESET_DEFAULT ) ) != 0 )
+    {
+        printf( " failed\n  ! mbedtls_ssl_config_defaults returned %d\n\n", ret );
+        goto exit;
+    }
+
+    /* OPTIONAL is not optimal for security,
+     * but makes interop easier in this simplified example */
+    mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
+    mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
+    mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
+    mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
+
+    if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
+    {
+        mbedtls_printf( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
+        goto exit;
+    }
+
+    if( ( ret = mbedtls_ssl_set_hostname( &ssl, "mbed TLS Server 1" ) ) != 0 )
+    {
+        mbedtls_printf( " failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret );
+        goto exit;
+    }
+
+    //TODO read write callbacks
+    mbedtls_ssl_set_bio( &ssl, NULL, mbedtls_ssl_send, mbedtls_ssl_recv, NULL );
+
+    while( ( ret = mbedtls_ssl_handshake( &ssl ) ) != 0 )
+    {
+        if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
+        {
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", -ret );
+            goto exit;
+        }
+    }
+
 exit:
 
 #ifdef MBEDTLS_ERROR_C
@@ -58,6 +152,8 @@ exit:
     mbedtls_ssl_config_free( &conf );
     mbedtls_ctr_drbg_free( &ctr_drbg );
     mbedtls_entropy_free( &entropy );
+
+    printf("Exiting mbedtls...\n");
 
     return( ret );
 }
