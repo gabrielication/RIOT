@@ -4,9 +4,11 @@
 #include "shell.h"
 
 extern int start_client(int argc, char **argv);
+extern int start_server(int argc, char **argv);
 
 static const shell_command_t commands[] = {
     { "client", "Start mbedtls client", start_client},
+    { "server", "Start mbedtls server", start_server},
     { NULL, NULL, NULL }
 };
 

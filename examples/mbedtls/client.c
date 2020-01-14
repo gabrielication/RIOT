@@ -14,11 +14,11 @@
 
 #define VERBOSE 1
 
-mbedtls_entropy_context entropy;
-mbedtls_ctr_drbg_context ctr_drbg;
-mbedtls_ssl_context ssl;
-mbedtls_ssl_config conf;
-mbedtls_x509_crt cacert;
+static mbedtls_entropy_context entropy;
+static mbedtls_ctr_drbg_context ctr_drbg;
+static mbedtls_ssl_context ssl;
+static mbedtls_ssl_config conf;
+static mbedtls_x509_crt cacert;
 
 static void my_debug( void *ctx, int level,
                       const char *file, int line,
@@ -30,7 +30,7 @@ static void my_debug( void *ctx, int level,
     fflush(  (FILE *) ctx  );
 }
 
-int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
+static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
     if(VERBOSE){
         int i;
@@ -44,10 +44,11 @@ int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
         printf("\n/*-------------------- END SEND -----------------*/\n");
     }
 
+    //TODO
     return 0;
 }
 
-int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
+static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     if(VERBOSE){
         int i;
@@ -60,6 +61,8 @@ int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         }
         printf("\n/*-------------------- END RECV -----------------*/\n");
     }
+
+    //TODO
     return 0;
 }
 
@@ -84,7 +87,8 @@ static void mbedtls_client_exit(int ret)
     printf("Exiting mbedtls...\n");
 }
 
-int mbedtls_client_init(){
+int mbedtls_client_init()
+{
     int ret;
 
     const char *pers = "ssl_client1";
