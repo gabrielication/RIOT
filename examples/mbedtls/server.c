@@ -244,7 +244,7 @@ int start_server(int argc, char **argv)
         if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
         {
             mbedtls_printf( " failed\n  ! mbedtls_ssl_handshake returned %d\n\n", ret );
-            mbedtls_client_exit(ret);
+            mbedtls_server_exit(ret);
             return ret;
         }
     }
