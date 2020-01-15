@@ -2,6 +2,8 @@
 #include <string.h>
 
 //#include "mbedtls/net.h"
+#include "mbedtls/config.h"
+
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
@@ -250,12 +252,16 @@ int mbedtls_client_init()
         return ret;
     }
 
+    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MINOR_VERSION_4, MBEDTLS_SSL_MINOR_VERSION_4);
+
     /* OPTIONAL is not optimal for security,
      * but makes interop easier in this simplified example */
     mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
     mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
+
+    mbedtls_ssl_conf_ke(&conf,KEY_EXCHANGE_MODE_ECDHE_ECDSA);
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
@@ -297,6 +303,24 @@ int start_client(int argc, char **argv)
         mbedtls_client_exit(ret);
         return ret;
     }
+
+    /**
+    mbedtls_debug_set_threshold(5);
+
+    const int *list;
+
+    list = mbedtls_ssl_list_ciphersuites();
+        while( *list )
+        {
+            mbedtls_printf(" %-42s", mbedtls_ssl_get_ciphersuite_name( *list ) );
+            list++;
+            if( !*list )
+                break;
+            mbedtls_printf(" %s\n", mbedtls_ssl_get_ciphersuite_name( *list ) );
+            list++;
+        }
+    mbedtls_printf("\n");
+    **/
 
     printf("Proceeding to handshake...\n");
 

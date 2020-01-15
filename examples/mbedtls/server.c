@@ -2,6 +2,8 @@
 #include <string.h>
 
 //#include "mbedtls/net.h"
+#include "mbedtls/config.h"
+
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
@@ -181,6 +183,9 @@ int mbedtls_server_init()
         return ret;
     }
 
+    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MINOR_VERSION_4, MBEDTLS_SSL_MINOR_VERSION_4);
+    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MINOR_VERSION_4, MBEDTLS_SSL_MINOR_VERSION_4);
+
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
 
@@ -232,6 +237,8 @@ int start_server(int argc, char **argv)
 
     int ret;
 
+    printf("Initializing server...\n");
+
     ret = mbedtls_server_init();
     if( ret != 0){
         printf("mbedtls_client_init() failed!\n");
@@ -239,6 +246,25 @@ int start_server(int argc, char **argv)
         return ret;
     }
 
+    /**
+    mbedtls_debug_set_threshold(5);
+
+    const int *list;
+
+    list = mbedtls_ssl_list_ciphersuites();
+        while( *list )
+        {
+            mbedtls_printf(" %-42s", mbedtls_ssl_get_ciphersuite_name( *list ) );
+            list++;
+            if( !*list )
+                break;
+            mbedtls_printf(" %s\n", mbedtls_ssl_get_ciphersuite_name( *list ) );
+            list++;
+        }
+    mbedtls_printf("\n");
+    **/
+    
+    printf("Proceeding to handshake...\n");
     while( ( ret = mbedtls_ssl_handshake( &ssl ) ) != 0 )
     {
         if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
