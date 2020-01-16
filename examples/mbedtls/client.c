@@ -252,7 +252,7 @@ int mbedtls_client_init()
         return ret;
     }
 
-    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MINOR_VERSION_4, MBEDTLS_SSL_MINOR_VERSION_4);
+    //mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MINOR_VERSION_4, MBEDTLS_SSL_MINOR_VERSION_4);
 
     /* OPTIONAL is not optimal for security,
      * but makes interop easier in this simplified example */
@@ -261,7 +261,7 @@ int mbedtls_client_init()
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
 
-    mbedtls_ssl_conf_ke(&conf,KEY_EXCHANGE_MODE_ECDHE_ECDSA);
+    mbedtls_ssl_conf_ke(&conf,KEY_EXCHANGE_MODE_ALL);
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
@@ -305,8 +305,8 @@ int start_client(int argc, char **argv)
     }
 
     /**
-    mbedtls_debug_set_threshold(5);
-
+    mbedtls_debug_set_threshold(3);
+    
     const int *list;
 
     list = mbedtls_ssl_list_ciphersuites();

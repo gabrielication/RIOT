@@ -183,8 +183,8 @@ int mbedtls_server_init()
         return ret;
     }
 
-    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MINOR_VERSION_4, MBEDTLS_SSL_MINOR_VERSION_4);
-    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MINOR_VERSION_4, MBEDTLS_SSL_MINOR_VERSION_4);
+    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MINOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
+    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MINOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
 
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
@@ -248,7 +248,7 @@ int start_server(int argc, char **argv)
 
     /**
     mbedtls_debug_set_threshold(5);
-
+    
     const int *list;
 
     list = mbedtls_ssl_list_ciphersuites();
