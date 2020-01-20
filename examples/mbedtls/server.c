@@ -189,6 +189,8 @@ int mbedtls_server_init()
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
 
+    mbedtls_ssl_conf_ke(&conf,KEY_EXCHANGE_MODE_ECDHE_ECDSA);
+
     mbedtls_ssl_conf_ca_chain( &conf, srvcert.next, NULL );
     if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
     {
@@ -239,16 +241,16 @@ int start_server(int argc, char **argv)
 
     printf("Initializing server...\n");
 
+    //mbedtls_debug_set_threshold(5);
+
     ret = mbedtls_server_init();
     if( ret != 0){
         printf("mbedtls_client_init() failed!\n");
         mbedtls_server_exit(ret);
         return ret;
     }
-
-    /**
-    mbedtls_debug_set_threshold(5);
     
+    /**
     const int *list;
 
     list = mbedtls_ssl_list_ciphersuites();
