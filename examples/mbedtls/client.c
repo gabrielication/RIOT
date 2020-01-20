@@ -252,8 +252,8 @@ int mbedtls_client_init()
         return ret;
     }
 
-    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MINOR_VERSION_4, MBEDTLS_SSL_MINOR_VERSION_4);
-    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MINOR_VERSION_4, MBEDTLS_SSL_MINOR_VERSION_4);
+    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
+    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
 
     /* OPTIONAL is not optimal for security,
      * but makes interop easier in this simplified example */
@@ -298,7 +298,7 @@ int start_client(int argc, char **argv)
 
     printf("Initializing client...\n");
 
-    //mbedtls_debug_set_threshold(5);
+    //mbedtls_debug_set_threshold(3);
 
     ret = mbedtls_client_init();
     if( ret != 0){
