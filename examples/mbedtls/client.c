@@ -165,7 +165,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 
     printf("Client RECV...%d count %d\n",len,count_read);
 
-    if(count_read == 2 || count_read == 3 || count_read == 4 || count_read == 5){
+    if(count_read == -1){
         if(!get_flag) coap_get();
         get_flag = 1;
     }
@@ -252,7 +252,8 @@ int mbedtls_client_init()
         return ret;
     }
 
-    //mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MINOR_VERSION_4, MBEDTLS_SSL_MINOR_VERSION_4);
+    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MINOR_VERSION_4, MBEDTLS_SSL_MINOR_VERSION_4);
+    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MINOR_VERSION_4, MBEDTLS_SSL_MINOR_VERSION_4);
 
     /* OPTIONAL is not optimal for security,
      * but makes interop easier in this simplified example */
