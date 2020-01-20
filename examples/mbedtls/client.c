@@ -165,7 +165,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 
     printf("Client RECV...%d count %d\n",len,count_read);
 
-    if(count_read ==-1){
+    if(count_read == 2 || count_read == 3 || count_read == 4 || count_read == 5){
         if(!get_flag) coap_get();
         get_flag = 1;
     }
