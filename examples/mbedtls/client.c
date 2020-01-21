@@ -113,7 +113,7 @@ int coap_get(void)
 {
     last_post = 0;
     last_get = 1;
-    
+
     uint8_t buf_pdu[GCOAP_PDU_BUF_SIZE];
     coap_pkt_t pdu;
     size_t len;
@@ -136,7 +136,7 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 
     //printf("Client SEND... %d count %d\n",len,count_send);
 
-    if(count_send == -1) mutex_lock(&client_send_lock);
+    if(count_send == 3) mutex_lock(&client_send_lock);
 
     memcpy(payload_tls,buf,len);
     size_payload = len;
