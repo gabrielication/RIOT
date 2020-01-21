@@ -57,6 +57,9 @@ kernel_pid_t main_pid;
 char payload_tls[PAYLOAD_TLS_SIZE];
 int size_payload = 0;
 
+int last_post = 0;
+int last_get = 0;
+
 extern int coap_post();
 
 /* CoAP resources. Must be sorted by path (ASCII order). */
@@ -113,7 +116,11 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
 
     if (req_state == GCOAP_MEMO_TIMEOUT) {
         printf("gcoap: timeout for msg ID %02u\n", coap_get_id(pdu));
-        coap_post();
+        
+        //retry
+        if(last_post) coap_post();
+        else if (last_get) coap_get();
+
         return;
     }
     else if (req_state == GCOAP_MEMO_ERR) {

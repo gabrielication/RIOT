@@ -25,6 +25,9 @@
 
 #define GET_REQUEST "This is TLS 1.3 client!\n"
 
+extern int last_post;
+extern int last_get;
+
 static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
@@ -68,6 +71,9 @@ int coap_post(void)
         a PDU and the eventual payload.
     */
 
+    last_post = 1;
+    last_get = 0;
+
     // The GCOAP macro is 128B because it is typically enough to hold all the header options
     // But we have to be sure it is enoguh to hold also the payload!!!
     // We solve that by redefining it in the Makefile.
@@ -105,6 +111,9 @@ int coap_post(void)
 
 int coap_get(void)
 {
+    last_post = 0;
+    last_get = 1;
+    
     uint8_t buf_pdu[GCOAP_PDU_BUF_SIZE];
     coap_pkt_t pdu;
     size_t len;
