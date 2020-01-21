@@ -23,6 +23,8 @@
 
 #define PAYLOAD_TLS_SIZE 1024
 
+#define GET_REQUEST "This is TLS 1.3 client!\n"
+
 static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
@@ -165,7 +167,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 
     printf("Client RECV...%d count %d\n",len,count_read);
 
-    if(count_read == -1){
+    if(count_read == 2 || count_read == 3 || count_read == 4 || count_read == 5){
         if(!get_flag) coap_get();
         get_flag = 1;
     }
@@ -298,6 +300,8 @@ int start_client(int argc, char **argv)
     (void)argv;
 
     int ret;
+    unsigned char buf[MBEDTLS_SSL_MAX_CONTENT_LEN + 1];
+    int len;
 
     if (argc != 2) {
         usage(argv[0]);
@@ -347,8 +351,35 @@ int start_client(int argc, char **argv)
     }
 
     printf("CLIENT CONNECTED SUCCESSFULLY!\n");
+    printf("Protocol is %s \nCiphersuite is %s\nKey Exchange Mode is %s\n\n",
+        mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl), mbedtls_ssl_get_key_exchange_name(&ssl));
 
-    mbedtls_client_exit(ret);
+    len = sprintf( (char *) buf, GET_REQUEST );
+
+    while( ( ret = mbedtls_ssl_write( &ssl, buf, len ) ) <= 0 )
+    {
+        if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
+        {
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
+            mbedtls_client_exit(ret);
+            return ret;
+        }
+    }
+
+    len = ret;
+    printf( ">>> %d bytes written\n\n%s", len, (char *) buf );
+
+    len = sizeof( buf ) - 1;
+    memset( buf, 0, sizeof( buf ) );
+    ret = mbedtls_ssl_read( &ssl, buf, len );
+
+    len = ret;
+    buf[len] = '\0';
+    printf( ">>> %d bytes read\n\n%s\n", len, (char *) buf );
+
+    mbedtls_ssl_close_notify( &ssl );
+
+    printf("Exiting mbedtls...\n");
 
     return ret;
 }

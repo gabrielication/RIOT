@@ -21,6 +21,8 @@
 
 #define PAYLOAD_TLS_SIZE 1024
 
+#define RESPONSE "This is TLS 1.3 server!\n"
+
 static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
@@ -114,7 +116,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         offset = 0;
     }
 
-    if(count == -1){
+    if(count == 2){
         if(wake_flag){
             size_payload = 0;
             thread_wakeup(main_pid);
@@ -248,6 +250,8 @@ int start_server(int argc, char **argv)
     (void)argv;
 
     int ret;
+    int len;
+    unsigned char buf[MBEDTLS_SSL_MAX_CONTENT_LEN + 1];
 
     printf("Initializing server...\n");
 
@@ -287,9 +291,28 @@ int start_server(int argc, char **argv)
         }
     }
 
-    printf("SERVER CONNECTED SUCCESSFULLY!\n");
+    printf(">>> SERVER CONNECTED SUCCESSFULLY!\n");
+    printf("Protocol is %s \nCiphersuite is %s\nKey Exchange Mode is %s\n\n",
+        mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl), mbedtls_ssl_get_key_exchange_name(&ssl));
 
-    mbedtls_server_exit(ret);
+    len = sizeof(buf) - 1;
+    memset( buf, 0, sizeof(buf) );
+    ret = mbedtls_ssl_read( &ssl, buf, len );
+
+    len = ret;
+    buf[len] = '\0';
+    printf( ">>> %d bytes read\n\n%s\n", len, (char *) buf );
+
+    memset( buf, 0, sizeof(buf) );
+    len = sprintf( (char *) buf, RESPONSE );
+
+    ret = mbedtls_ssl_write( &ssl, buf, len );
+
+    len = ret;
+
+    mbedtls_ssl_close_notify( &ssl );
+
+    printf("Exiting mbedtls...\n");
 
     return ret;
 }
