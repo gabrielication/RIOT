@@ -56,7 +56,7 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
     int i;
 
-    printf("Server SEND... %d\n",len);
+    //printf("Server SEND... %d\n",len);
 
     mutex_lock(&server_req_lock);
 
@@ -82,7 +82,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    printf("Server RECV... %d\n",len);
+    //printf("Server RECV... %d\n",len);
 
     if(!offset){
         mutex_lock(&server_lock);
