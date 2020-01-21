@@ -58,9 +58,9 @@ You need to create two bridged tap interfaces in order to let client and server 
 
     ./../../dist/tools/tapsetup/tapsetup --create 1
 
-Compile and execute (for native):
+Compile for native:
 
-    make clean all term WERROR=0
+    make clean all WERROR=0
     
 Compile and flash for nrf:
 
@@ -95,7 +95,11 @@ Copy the `inet6 addr` for later. Then type:
     
 Which will start the TLS server on the background. Keep it open.
 
-You have to start the client now. Return to the native terminal and then type `client` followed by the previous address you copied from the server, like:
+You have to start the client now. Type in another terminal:
+
+    make term
+
+Type to the native terminal `client` followed by the previous address you copied from the server, like:
 
     > client fe80::ac4a:f4ff:fef7:b23d
     
