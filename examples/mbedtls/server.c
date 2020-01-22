@@ -215,28 +215,22 @@ int mbedtls_server_init()
      * Unhexify the pre-shared key if any is given
      */
 
-    const char *opt_psk;            /* the pre-shared key                       */
-    const char *opt_psk_identity;
-
-    opt_psk = DFL_PSK;
-    opt_psk_identity = DFL_PSK_IDENTITY;
-
-    if( strlen( opt_psk ) )
+    if( strlen( DFL_PSK ) )
     {
         unsigned char c;
         size_t j;
 
-        if( strlen( opt_psk ) % 2 != 0 )
+        if( strlen( DFL_PSK ) % 2 != 0 )
         {
             printf("pre-shared key not valid hex\n");
             return -1;
         }
 
-        psk_len = strlen( opt_psk ) / 2;
+        psk_len = strlen( DFL_PSK ) / 2;
 
-        for( j = 0; j < strlen( opt_psk ); j += 2 )
+        for( j = 0; j < strlen( DFL_PSK ); j += 2 )
         {
-            c = opt_psk[j];
+            c = DFL_PSK[j];
             if( c >= '0' && c <= '9' )
                 c -= '0';
             else if( c >= 'a' && c <= 'f' )
@@ -250,7 +244,7 @@ int mbedtls_server_init()
             }
             psk[ j / 2 ] = c << 4;
 
-            c = opt_psk[j + 1];
+            c = DFL_PSK[j + 1];
             if( c >= '0' && c <= '9' )
                 c -= '0';
             else if( c >= 'a' && c <= 'f' )
@@ -267,8 +261,8 @@ int mbedtls_server_init()
     }
 
     if( ( ret = mbedtls_ssl_conf_psk( &conf, psk, psk_len,
-                             (const unsigned char *) opt_psk_identity,
-                             strlen( opt_psk_identity ) ) ) != 0 )
+                             (const unsigned char *) DFL_PSK_IDENTITY,
+                             strlen( DFL_PSK_IDENTITY ) ) ) != 0 )
     {
         printf( " failed\n  ! mbedtls_ssl_conf_psk returned %d\n\n", ret );
         return ret;
