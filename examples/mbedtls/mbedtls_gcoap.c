@@ -31,15 +31,7 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-#ifdef MODULE_WOLFSSL_PSK
-
-#define PAYLOAD_TLS_SIZE 348
-
-#else
-
 #define PAYLOAD_TLS_SIZE 1024
-
-#endif
 
 static ssize_t _encode_link(const coap_resource_t *resource, char *buf,
                             size_t maxlen, coap_link_encoder_ctx_t *context);

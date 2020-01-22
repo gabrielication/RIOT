@@ -23,6 +23,15 @@
 
 #define RESPONSE "This is TLS 1.3 server!\n"
 
+//ONLY FOR TESTING PURPOSES!
+#define DFL_PSK                 "a66d258de75987d31a4537ecd1ff7a34517bf92f2c07abb20fa0fb517f2491f1"
+#define DFL_PSK_IDENTITY        "Client_identity"
+
+#if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
+    static unsigned char psk[MBEDTLS_PSK_MAX_LEN];
+    static size_t psk_len = 0;
+#endif
+
 static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
@@ -201,7 +210,74 @@ int mbedtls_server_init()
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
 
-    mbedtls_ssl_conf_ke(&conf,KEY_EXCHANGE_MODE_ECDHE_ECDSA);
+#if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
+    /*
+     * Unhexify the pre-shared key if any is given
+     */
+
+    const char *opt_psk;            /* the pre-shared key                       */
+    const char *opt_psk_identity;
+
+    opt_psk = DFL_PSK;
+    opt_psk_identity = DFL_PSK_IDENTITY;
+
+    if( strlen( opt_psk ) )
+    {
+        unsigned char c;
+        size_t j;
+
+        if( strlen( opt_psk ) % 2 != 0 )
+        {
+            printf("pre-shared key not valid hex\n");
+            return -1;
+        }
+
+        psk_len = strlen( opt_psk ) / 2;
+
+        for( j = 0; j < strlen( opt_psk ); j += 2 )
+        {
+            c = opt_psk[j];
+            if( c >= '0' && c <= '9' )
+                c -= '0';
+            else if( c >= 'a' && c <= 'f' )
+                c -= 'a' - 10;
+            else if( c >= 'A' && c <= 'F' )
+                c -= 'A' - 10;
+            else
+            {
+                printf("pre-shared key not valid hex\n");
+                return -1;
+            }
+            psk[ j / 2 ] = c << 4;
+
+            c = opt_psk[j + 1];
+            if( c >= '0' && c <= '9' )
+                c -= '0';
+            else if( c >= 'a' && c <= 'f' )
+                c -= 'a' - 10;
+            else if( c >= 'A' && c <= 'F' )
+                c -= 'A' - 10;
+            else
+            {
+                printf("pre-shared key not valid hex\n");
+                return -1;
+            }
+            psk[ j / 2 ] |= c;
+        }
+    }
+
+    if( ( ret = mbedtls_ssl_conf_psk( &conf, psk, psk_len,
+                             (const unsigned char *) opt_psk_identity,
+                             strlen( opt_psk_identity ) ) ) != 0 )
+    {
+        printf( " failed\n  ! mbedtls_ssl_conf_psk returned %d\n\n", ret );
+        return ret;
+    }
+
+#endif /* MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED */    
+
+    mbedtls_ssl_conf_ke(&conf,KEY_EXCHANGE_MODE_PSK_KE);
+    //mbedtls_ssl_conf_ke(&conf,KEY_EXCHANGE_MODE_ECDHE_ECDSA);
 
     mbedtls_ssl_conf_ca_chain( &conf, srvcert.next, NULL );
     if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
