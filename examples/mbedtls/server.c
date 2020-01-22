@@ -23,11 +23,11 @@
 
 #define RESPONSE "This is TLS 1.3 server!\n"
 
-//ONLY FOR TESTING PURPOSES!
-#define DFL_PSK                 "a66d258de75987d31a4537ecd1ff7a34517bf92f2c07abb20fa0fb517f2491f1"
-#define DFL_PSK_IDENTITY        "Client_identity"
-
 #if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
+    // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
+    #define DFL_PSK                 "a66d258de75987d31a4537ecd1ff7a34517bf92f2c07abb20fa0fb517f2491f1"
+    #define DFL_PSK_IDENTITY        "Client_identity"
+
     static unsigned char psk[MBEDTLS_PSK_MAX_LEN];
     static size_t psk_len = 0;
 #endif
@@ -161,6 +161,7 @@ int mbedtls_server_init()
         return ret;
     }
 
+    // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
     ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) mbedtls_test_srv_crt,
                           mbedtls_test_srv_crt_len );
     if( ret != 0 )
