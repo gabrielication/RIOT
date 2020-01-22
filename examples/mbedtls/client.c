@@ -42,6 +42,8 @@ static mbedtls_ssl_context ssl;
 static mbedtls_ssl_config conf;
 static mbedtls_x509_crt cacert;
 
+static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
+
 extern char payload_tls[];
 extern int size_payload;
 
@@ -59,7 +61,7 @@ static int get_flag = 0;
 
 static void usage(const char *cmd_name)
 {
-    LOG(LOG_ERROR, "Usage: %s <server-address>\n", cmd_name);
+    LOG(LOG_ERROR, "\nUsage: %s <server-address> optional: <key_exchange_mode>\n\n<key_exchange_mode>: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n", cmd_name);
 }
 
 static void my_debug( void *ctx, int level,
@@ -352,8 +354,7 @@ int mbedtls_client_init()
 
 #endif /* MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED */
 
-    mbedtls_ssl_conf_ke(&conf,KEY_EXCHANGE_MODE_PSK_KE);
-    //mbedtls_ssl_conf_ke(&conf,KEY_EXCHANGE_MODE_ECDHE_ECDSA);
+    mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
@@ -382,12 +383,29 @@ int start_client(int argc, char **argv)
     unsigned char buf[MBEDTLS_SSL_MAX_CONTENT_LEN + 1];
     int len;
 
-    if (argc != 2) {
+    if (argc < 2) {
         usage(argv[0]);
         return -1;
     }
 
     addr_str = argv[1];
+
+    if (argc > 2){
+        if (strcmp(argv[2], "psk") == 0)
+                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
+        else if (strcmp(argv[2], "psk_dhe") == 0)
+                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_DHE_KE;
+        else if (strcmp(argv[2], "ecdhe_ecdsa") == 0)
+                key_exchange_modes = KEY_EXCHANGE_MODE_ECDHE_ECDSA;
+        else if (strcmp(argv[2], "psk_all") == 0)
+                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_ALL;
+        else if (strcmp(argv[2], "all") == 0)
+                key_exchange_modes = KEY_EXCHANGE_MODE_ALL;
+        else{
+            usage(argv[0]);
+            return -1;
+        }
+    }
 
     printf("Initializing client...\n");
 

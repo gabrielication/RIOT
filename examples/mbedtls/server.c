@@ -14,6 +14,8 @@
 #include "mutex.h"
 #include "thread.h"
 
+#include "log.h"
+
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
@@ -50,6 +52,13 @@ extern kernel_pid_t main_pid;
 int count = 0;
 static int offset = 0;
 static int wake_flag = 0;
+
+static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
+
+static void usage(const char *cmd_name)
+{
+    LOG(LOG_ERROR, "\nUsage: %s optional: <key_exchange_mode>\n\n<key_exchange_mode>: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n", cmd_name);
+}
 
 static void my_debug( void *ctx, int level,
                       const char *file, int line,
@@ -271,8 +280,7 @@ int mbedtls_server_init()
 
 #endif /* MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED */    
 
-    mbedtls_ssl_conf_ke(&conf,KEY_EXCHANGE_MODE_PSK_KE);
-    //mbedtls_ssl_conf_ke(&conf,KEY_EXCHANGE_MODE_ECDHE_ECDSA);
+    mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
 
     mbedtls_ssl_conf_ca_chain( &conf, srvcert.next, NULL );
     if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
@@ -323,6 +331,23 @@ int start_server(int argc, char **argv)
     int ret;
     int len;
     unsigned char buf[MBEDTLS_SSL_MAX_CONTENT_LEN + 1];
+
+    if (argc > 1){
+        if (strcmp(argv[1], "psk") == 0)
+                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
+        else if (strcmp(argv[1], "psk_dhe") == 0)
+                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_DHE_KE;
+        else if (strcmp(argv[1], "ecdhe_ecdsa") == 0)
+                key_exchange_modes = KEY_EXCHANGE_MODE_ECDHE_ECDSA;
+        else if (strcmp(argv[1], "psk_all") == 0)
+                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_ALL;
+        else if (strcmp(argv[1], "all") == 0)
+                key_exchange_modes = KEY_EXCHANGE_MODE_ALL;
+        else{
+            usage(argv[0]);
+            return -1;
+        }
+    }
 
     printf("Initializing server...\n");
 
