@@ -47,7 +47,6 @@ extern mutex_t server_req_lock;
 
 extern kernel_pid_t main_pid;
 
-int count = 0;
 static int offset = 0;
 static int wake_flag = 0;
 
@@ -104,7 +103,6 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 
     if(!offset){
         mutex_lock(&server_lock);
-        count += 1;
     }
 
     memcpy(buf, payload_tls+offset, len);
@@ -121,20 +119,11 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         printf("\n/*-------------------- END RECV -----------------*/\n");
     }
 
-/*
-        Why 2 and 3? This is the client's message seq ID in which the server has to do multiple recvs
-        without doing any send in the middle. Since it is typically the send function in charge to wake up
-        again the COAP thread which is waiting to perform a reply, we need another way. With
-        this cheap trick we can reset the mutex and wake up the COAP's thread in order to perform a reply.
-        TODO: it's not good practice AT ALL to have local counters. It will be a good idea to parse the seq
-        numbers directly from the packets and handle eventual packet loss.
-*/
-
     if(offset == size_payload){
         offset = 0;
     }
 
-    if(ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER){
+    if(ssl.state == MBEDTLS_SSL_CLIENT_FINISHED){
         if(wake_flag){
             size_payload = 0;
             thread_wakeup(main_pid);

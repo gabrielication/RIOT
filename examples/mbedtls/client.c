@@ -52,8 +52,6 @@ extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
 char *addr_str;
 
-int count_read = 0;
-int count_send = 0;
 static int offset = 0;
 static int get_flag = 0;
 
@@ -140,7 +138,6 @@ int coap_get(void)
 
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
-    count_send += 1;
 
     //printf("Client SEND... %d count %d\n",len,count_send);
     //printf("SEND ssl state %d\n",ssl.state);
@@ -172,18 +169,6 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
-
-    /*  
-        Why 2, 3 and 5? They are the server's messages seq IDs in which the client needs to do more
-        reads without doing any writes between them. Without the the writes we can't have
-        any call to COAP's 'send' function because we don't actually have anything to send.
-        In order to have a request -> response mechanism (and in order to let the server know
-        the client's ip address when replying) we adopt this cheap trick calling a 'get'.
-        TODO: it's not good practice AT ALL to have local counters. It will be a good idea to parse the seq
-        numbers directly from the packets and handle eventual packet loss.
-    */
-
-    if(!offset) count_read += 1;
 
     //printf("Client RECV...%d count %d\n",len,count_read);
     //printf("RECV ssl state %d\n",ssl.state);
