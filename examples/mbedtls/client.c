@@ -143,11 +143,10 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
     count_send += 1;
 
     //printf("Client SEND... %d count %d\n",len,count_send);
+    printf("SEND ssl state %d\n",ssl.state);
 
-    if(key_exchange_modes == KEY_EXCHANGE_MODE_ECDHE_ECDSA){
-        if(count_send == 3) mutex_lock(&client_send_lock);
-    } else if(key_exchange_modes == KEY_EXCHANGE_MODE_PSK_KE){
-        if(count_send == 3) mutex_lock(&client_send_lock);
+    if(ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER){
+        mutex_lock(&client_send_lock);
     }
 
     memcpy(payload_tls,buf,len);
@@ -187,17 +186,11 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
     if(!offset) count_read += 1;
 
     //printf("Client RECV...%d count %d\n",len,count_read);
+    printf("RECV ssl state %d\n",ssl.state);
 
-    if(key_exchange_modes == KEY_EXCHANGE_MODE_ECDHE_ECDSA){
-        if(count_read == 2 || count_read == 3 || count_read == 4 || count_read == 5){
-            if(!get_flag) coap_get();
+    if(ssl.state > MBEDTLS_SSL_SERVER_HELLO && ssl.state < MBEDTLS_SSL_HANDSHAKE_OVER){
+        if(!get_flag) coap_get();
             get_flag = 1;
-        }
-    } else if(key_exchange_modes == KEY_EXCHANGE_MODE_PSK_KE){
-        if(count_read == 2 || count_read == 3 || count_read == -1 || count_read == -1){
-            if(!get_flag) coap_get();
-            get_flag = 1;
-        }
     }
 
     if(!offset) mutex_lock(&client_lock);
@@ -483,7 +476,8 @@ int start_client(int argc, char **argv)
     buf[len] = '\0';
     printf( ">>> %d bytes read\n\n%s\n", len, (char *) buf );
 
-    mbedtls_ssl_close_notify( &ssl );
+    //TODO!!!
+    //mbedtls_ssl_close_notify( &ssl );
 
     printf("Exiting mbedtls...\n");
 
