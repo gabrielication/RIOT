@@ -73,6 +73,7 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
     int i;
 
     //printf("Server SEND... %d\n",len);
+    //printf("SEND ssl state %d\n",ssl.state);
 
     mutex_lock(&server_req_lock);
 
@@ -99,6 +100,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
     int i;
 
     //printf("Server RECV... %d\n",len);
+    //printf("RECV ssl state %d\n",ssl.state);
 
     if(!offset){
         mutex_lock(&server_lock);
@@ -132,25 +134,13 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         offset = 0;
     }
 
-    if(key_exchange_modes == KEY_EXCHANGE_MODE_ECDHE_ECDSA){
-        if(count == 2){
-            if(wake_flag){
-                size_payload = 0;
-                thread_wakeup(main_pid);
-                wake_flag = 0;
-            } else {
-                wake_flag = 1;
-            }
-        }
-    } else if(key_exchange_modes == KEY_EXCHANGE_MODE_PSK_KE){
-        if(count == 2){
-            if(wake_flag){
-                size_payload = 0;
-                thread_wakeup(main_pid);
-                wake_flag = 0;
-            } else {
-                wake_flag = 1;
-            }
+    if(ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER){
+        if(wake_flag){
+            size_payload = 0;
+            thread_wakeup(main_pid);
+            wake_flag = 0;
+        } else {
+            wake_flag = 1;
         }
     }
 
@@ -400,7 +390,8 @@ int start_server(int argc, char **argv)
 
     len = ret;
 
-    mbedtls_ssl_close_notify( &ssl );
+    //TODO!!!
+    //mbedtls_ssl_close_notify( &ssl );
 
     printf("Exiting mbedtls...\n");
 

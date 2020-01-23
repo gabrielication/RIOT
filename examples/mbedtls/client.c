@@ -143,7 +143,7 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
     count_send += 1;
 
     //printf("Client SEND... %d count %d\n",len,count_send);
-    printf("SEND ssl state %d\n",ssl.state);
+    //printf("SEND ssl state %d\n",ssl.state);
 
     if(ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER){
         mutex_lock(&client_send_lock);
@@ -186,7 +186,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
     if(!offset) count_read += 1;
 
     //printf("Client RECV...%d count %d\n",len,count_read);
-    printf("RECV ssl state %d\n",ssl.state);
+    //printf("RECV ssl state %d\n",ssl.state);
 
     if(ssl.state > MBEDTLS_SSL_SERVER_HELLO && ssl.state < MBEDTLS_SSL_HANDSHAKE_OVER){
         if(!get_flag) coap_get();
