@@ -132,13 +132,25 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         offset = 0;
     }
 
-    if(count == 2){
-        if(wake_flag){
-            size_payload = 0;
-            thread_wakeup(main_pid);
-            wake_flag = 0;
-        } else {
-            wake_flag = 1;
+    if(key_exchange_modes == KEY_EXCHANGE_MODE_ECDHE_ECDSA){
+        if(count == 2){
+            if(wake_flag){
+                size_payload = 0;
+                thread_wakeup(main_pid);
+                wake_flag = 0;
+            } else {
+                wake_flag = 1;
+            }
+        }
+    } else if(key_exchange_modes == KEY_EXCHANGE_MODE_PSK_KE){
+        if(count == 2){
+            if(wake_flag){
+                size_payload = 0;
+                thread_wakeup(main_pid);
+                wake_flag = 0;
+            } else {
+                wake_flag = 1;
+            }
         }
     }
 

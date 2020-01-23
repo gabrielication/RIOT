@@ -144,7 +144,11 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 
     //printf("Client SEND... %d count %d\n",len,count_send);
 
-    if(count_send == 3) mutex_lock(&client_send_lock);
+    if(key_exchange_modes == KEY_EXCHANGE_MODE_ECDHE_ECDSA){
+        if(count_send == 3) mutex_lock(&client_send_lock);
+    } else if(key_exchange_modes == KEY_EXCHANGE_MODE_PSK_KE){
+        if(count_send == 3) mutex_lock(&client_send_lock);
+    }
 
     memcpy(payload_tls,buf,len);
     size_payload = len;
@@ -184,9 +188,16 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 
     //printf("Client RECV...%d count %d\n",len,count_read);
 
-    if(count_read == 2 || count_read == 3 || count_read == 4 || count_read == 5){
-        if(!get_flag) coap_get();
-        get_flag = 1;
+    if(key_exchange_modes == KEY_EXCHANGE_MODE_ECDHE_ECDSA){
+        if(count_read == 2 || count_read == 3 || count_read == 4 || count_read == 5){
+            if(!get_flag) coap_get();
+            get_flag = 1;
+        }
+    } else if(key_exchange_modes == KEY_EXCHANGE_MODE_PSK_KE){
+        if(count_read == 2 || count_read == 3 || count_read == -1 || count_read == -1){
+            if(!get_flag) coap_get();
+            get_flag = 1;
+        }
     }
 
     if(!offset) mutex_lock(&client_lock);
