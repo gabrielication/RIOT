@@ -21,8 +21,6 @@
 
 #define VERBOSE 1
 
-#define PAYLOAD_TLS_SIZE 1024
-
 #define GET_REQUEST "This is TLS 1.3 client!\n"
 
 #if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
@@ -33,8 +31,8 @@
     static size_t psk_len = 0;
 #endif
 
-extern int last_post;
-extern int last_get;
+extern unsigned char last_post;
+extern unsigned char last_get;
 
 static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;

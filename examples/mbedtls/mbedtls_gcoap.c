@@ -49,8 +49,8 @@ kernel_pid_t main_pid;
 char payload_tls[PAYLOAD_TLS_SIZE];
 int size_payload = 0;
 
-int last_post = 0;
-int last_get = 0;
+unsigned char last_post = 0;
+unsigned char last_get = 0;
 
 extern int coap_post();
 

@@ -21,8 +21,6 @@
 
 #define VERBOSE 1
 
-#define PAYLOAD_TLS_SIZE 1024
-
 #define RESPONSE "This is TLS 1.3 server!\n"
 
 #if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
@@ -359,22 +357,6 @@ int start_server(int argc, char **argv)
         mbedtls_server_exit(ret);
         return ret;
     }
-    
-    /**
-    const int *list;
-
-    list = mbedtls_ssl_list_ciphersuites();
-        while( *list )
-        {
-            mbedtls_printf(" %-42s", mbedtls_ssl_get_ciphersuite_name( *list ) );
-            list++;
-            if( !*list )
-                break;
-            mbedtls_printf(" %s\n", mbedtls_ssl_get_ciphersuite_name( *list ) );
-            list++;
-        }
-    mbedtls_printf("\n");
-    **/
     
     printf("Proceeding to handshake...\n");
     while( ( ret = mbedtls_ssl_handshake( &ssl ) ) != 0 )
