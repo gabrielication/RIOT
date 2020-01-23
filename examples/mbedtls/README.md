@@ -36,17 +36,25 @@ Iface  6  HWaddr: AE:4A:F4:F7:B2:3D
 
 Copy the `inet6 addr` for later. Then type:
 
-    > server
+    > tlss
     
-Which will start the TLS server on the background. Keep it open.
+Which will start the TLS server on the background. Here the default key exchange is PSK but you can change it using:
+
+    > tlss ecdhe_ecdsa
+
+Keep the terminal of the server open.
 
 You have to start the client now. Open a new terminal on the same folder. Type:
 
     PORT=tap1 make term
     
-And then type `client` followed by the previous address you copied from the server, like:
+And then type `tlsc` followed by the previous address you copied from the server and (optionally) the key exchange mode (default is PSK), like:
 
-    > client fe80::ac4a:f4ff:fef7:b23d
+    > tlsc fe80::ac4a:f4ff:fef7:b23d
+    
+If you prefer another key exchange mode you can type like:
+
+    > tlsc fe80::ac4a:f4ff:fef7:b23d ecdhe_ecdsa
     
 It will start by default in a verbose mode printing all the bytes sent and received (you can disable it by changing a flag in the code).
 
@@ -91,17 +99,25 @@ Iface  6  HWaddr: AE:4A:F4:F7:B2:3D
 
 Copy the `inet6 addr` for later. Then type:
 
-    > server
+    > tlss
     
-Which will start the TLS server on the background. Keep it open.
+Which will start the TLS server on the background. Here the default key exchange is PSK but you can change it using:
+
+    > tlss ecdhe_ecdsa
+
+Keep the terminal of the server open.
 
 You have to start the client now. Type in another terminal:
 
     make term
 
-Type to the native terminal `client` followed by the previous address you copied from the server, like:
+Type to the native terminal `tlsc` followed by the previous address you copied from the server and (optionally) the key exchange mode (default is PSK), like:
 
-    > client fe80::ac4a:f4ff:fef7:b23d
+    > tlsc fe80::ac4a:f4ff:fef7:b23d
+    
+If you prefer another key exchange mode you can type like:
+
+    > tlsc fe80::ac4a:f4ff:fef7:b23d ecdhe_ecdsa
     
 It will start by default in a verbose mode printing all the bytes sent and received (you can disable it by changing a flag in the code).
 
