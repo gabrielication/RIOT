@@ -43,6 +43,7 @@ static mbedtls_x509_crt cacert;
 static mbedtls_timing_delay_context timer;
 
 static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
+static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_3;
 
 extern char payload_tls[];
 extern int size_payload;
@@ -266,8 +267,8 @@ int mbedtls_client_init()
     mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
     **/
 
-    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
-    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
+    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, dtls_version);
+    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, dtls_version);
 
     /* OPTIONAL is not optimal for security,
      * but makes interop easier in this simplified example */
@@ -388,6 +389,17 @@ int start_client(int argc, char **argv)
                 key_exchange_modes = KEY_EXCHANGE_MODE_PSK_ALL;
         else if (strcmp(argv[2], "all") == 0)
                 key_exchange_modes = KEY_EXCHANGE_MODE_ALL;
+        else{
+            usage(argv[0]);
+            return -1;
+        }
+    }
+
+    if (argc > 3){
+        if (strcmp(argv[3], "dtls1_2") == 0)
+                dtls_version = MBEDTLS_SSL_MINOR_VERSION_3;
+        else if (strcmp(argv[3], "dtls1_3") == 0)
+                dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
         else{
             usage(argv[0]);
             return -1;

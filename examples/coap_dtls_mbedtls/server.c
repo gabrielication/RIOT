@@ -53,6 +53,7 @@ static int offset = 0;
 static int wake_flag = 0;
 
 static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
+static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_3;
 
 static void usage(const char *cmd_name)
 {
@@ -192,8 +193,8 @@ int mbedtls_server_init()
     mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
     **/
 
-    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
-    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
+    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, dtls_version);
+    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, dtls_version);
 
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
@@ -326,6 +327,17 @@ int start_server(int argc, char **argv)
                 key_exchange_modes = KEY_EXCHANGE_MODE_PSK_ALL;
         else if (strcmp(argv[1], "all") == 0)
                 key_exchange_modes = KEY_EXCHANGE_MODE_ALL;
+        else{
+            usage(argv[0]);
+            return -1;
+        }
+    }
+
+    if (argc > 2){
+        if (strcmp(argv[2], "dtls1_2") == 0)
+                dtls_version = MBEDTLS_SSL_MINOR_VERSION_3;
+        else if (strcmp(argv[2], "dtls1_3") == 0)
+                dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
         else{
             usage(argv[0]);
             return -1;
