@@ -60,7 +60,7 @@ static int get_flag = 0;
 
 static void usage(const char *cmd_name)
 {
-    LOG(LOG_ERROR, "\nUsage: %s <server-address> optional: <key_exchange_mode>\n\n<key_exchange_mode>: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n", cmd_name);
+    LOG(LOG_ERROR, "\nUsage: %s <server-address> [optional: <key_exchange_mode> <tls_version>]\n\n<key_exchange_mode: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n<tls_version: dtls1_2 (default), dtls1_3>\n", cmd_name);
 }
 
 static void my_debug( void *ctx, int level,
