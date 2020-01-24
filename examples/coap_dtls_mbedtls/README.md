@@ -1,7 +1,7 @@
-# ATLS over CoAP with Mbed TLS
+# ADTLS over CoAP with Mbed TLS
 
-This program provides an example of a TLS handshake and exchange of data using CoAP as a transport layer.
-The [mbed TLS](https://github.com/ARMmbed/mbedtls) library was used for the TLS 1.3 implementation and [gCoAP](https://riot-os.org/api/group__net__gcoap.html) as the CoAP implementation.
+This program provides an example of a DTLS handshake and exchange of data using CoAP as a transport layer.
+The [mbed TLS](https://github.com/ARMmbed/mbedtls) library was used for the DTLS (up to 1.3) implementation and [gCoAP](https://riot-os.org/api/group__net__gcoap.html) as the CoAP implementation.
 
 **KEEP IN MIND** that it is highly experimental at the moment and does suffer stability issues!
 
@@ -36,11 +36,11 @@ Iface  6  HWaddr: AE:4A:F4:F7:B2:3D
 
 Copy the `inet6 addr` for later. Then type:
 
-    > tlss
+    > dtlss
     
 Which will start the TLS server on the background. Here the default key exchange is PSK but you can change it using:
 
-    > tlss ecdhe_ecdsa
+    > dtlss ecdhe_ecdsa
 
 Keep the terminal of the server open.
 
@@ -48,13 +48,13 @@ You have to start the client now. Open a new terminal on the same folder. Type:
 
     PORT=tap1 make term
     
-And then type `tlsc` followed by the previous address you copied from the server and (optionally) the key exchange mode (default is PSK), like:
+And then type `dtlsc` followed by the previous address you copied from the server and (optionally) the key exchange mode (default is PSK), like:
 
-    > tlsc fe80::ac4a:f4ff:fef7:b23d
+    > dtlsc fe80::ac4a:f4ff:fef7:b23d
     
 If you prefer another key exchange mode you can type like:
 
-    > tlsc fe80::ac4a:f4ff:fef7:b23d ecdhe_ecdsa
+    > dtlsc fe80::ac4a:f4ff:fef7:b23d ecdhe_ecdsa
     
 It will start by default in a verbose mode printing all the bytes sent and received (you can disable it by changing a flag in the code).
 
