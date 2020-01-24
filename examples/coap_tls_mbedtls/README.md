@@ -1,6 +1,6 @@
-# ATLS 1.3 over CoAP with Mbed TLS
+# ATLS over CoAP with Mbed TLS
 
-This program provides an example of a TLS 1.3 handshake and exchange of data using CoAP as a transport layer.
+This program provides an example of a TLS handshake and exchange of data using CoAP as a transport layer.
 The [mbed TLS](https://github.com/ARMmbed/mbedtls) library was used for the TLS 1.3 implementation and [gCoAP](https://riot-os.org/api/group__net__gcoap.html) as the CoAP implementation.
 
 **KEEP IN MIND** that it is highly experimental at the moment and does suffer stability issues!

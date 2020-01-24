@@ -53,6 +53,7 @@ unsigned char last_post = 0;
 unsigned char last_get = 0;
 
 extern int coap_post();
+extern int coap_get();
 
 /* CoAP resources. Must be sorted by path (ASCII order). */
 static const coap_resource_t _resources[] = {
