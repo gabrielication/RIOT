@@ -41,6 +41,7 @@ static mbedtls_ssl_config conf;
 static mbedtls_x509_crt cacert;
 
 static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
+static int tls_version = MBEDTLS_SSL_MINOR_VERSION_4;
 
 extern char payload_tls[];
 extern int size_payload;
@@ -57,7 +58,7 @@ static int get_flag = 0;
 
 static void usage(const char *cmd_name)
 {
-    LOG(LOG_ERROR, "\nUsage: %s <server-address> optional: <key_exchange_mode>\n\n<key_exchange_mode>: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n", cmd_name);
+    LOG(LOG_ERROR, "\nUsage: %s <server-address> [optional: <key_exchange_mode> <tls_version>]\n\n<key_exchange_mode: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n<tls_version: tls1_2, tls1_3 (default)>\n", cmd_name);
 }
 
 static void my_debug( void *ctx, int level,
@@ -271,8 +272,8 @@ int mbedtls_client_init()
     mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
     **/
 
-    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
-    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
+    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, tls_version);
+    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, tls_version);
 
     /* OPTIONAL is not optimal for security,
      * but makes interop easier in this simplified example */
@@ -388,6 +389,17 @@ int start_client(int argc, char **argv)
                 key_exchange_modes = KEY_EXCHANGE_MODE_PSK_ALL;
         else if (strcmp(argv[2], "all") == 0)
                 key_exchange_modes = KEY_EXCHANGE_MODE_ALL;
+        else{
+            usage(argv[0]);
+            return -1;
+        }
+    }
+
+    if (argc > 3){
+        if (strcmp(argv[3], "tls1_2") == 0)
+                tls_version = MBEDTLS_SSL_MINOR_VERSION_3;
+        else if (strcmp(argv[3], "tls1_3") == 0)
+                tls_version = MBEDTLS_SSL_MINOR_VERSION_4;
         else{
             usage(argv[0]);
             return -1;
