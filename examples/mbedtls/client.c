@@ -139,10 +139,10 @@ int coap_get(void)
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
 
-    //printf("Client SEND... %d count %d\n",len,count_send);
+    //printf("Client SEND... %d\n",len);
     //printf("SEND ssl state %d\n",ssl.state);
 
-    if(ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER){
+    if(ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER && ssl.out_msgtype != MBEDTLS_SSL_MSG_ALERT){
         mutex_lock(&client_send_lock);
     }
 
@@ -170,7 +170,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    //printf("Client RECV...%d count %d\n",len,count_read);
+    //printf("Client RECV...%d\n",len);
     //printf("RECV ssl state %d\n",ssl.state);
 
     if(ssl.state > MBEDTLS_SSL_SERVER_HELLO && ssl.state < MBEDTLS_SSL_HANDSHAKE_OVER){
@@ -461,10 +461,9 @@ int start_client(int argc, char **argv)
     buf[len] = '\0';
     printf( ">>> %d bytes read\n\n%s\n", len, (char *) buf );
 
-    //TODO!!!
-    //mbedtls_ssl_close_notify( &ssl );
+    mbedtls_ssl_close_notify( &ssl );
 
-    printf("Exiting mbedtls...\n");
+    mbedtls_client_exit(0);
 
     return ret;
 }

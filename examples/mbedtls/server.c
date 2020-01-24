@@ -379,10 +379,13 @@ int start_server(int argc, char **argv)
 
     len = ret;
 
-    //TODO!!!
-    //mbedtls_ssl_close_notify( &ssl );
+    len = sizeof(buf) - 1;
+    memset( buf, 0, sizeof(buf) );
+    ret = mbedtls_ssl_read( &ssl, buf, len );
 
-    printf("Exiting mbedtls...\n");
+    mbedtls_ssl_close_notify( &ssl );
+
+    mbedtls_server_exit(0);
 
     return ret;
 }
