@@ -41,6 +41,10 @@ Copy the `inet6 addr` for later. Then type:
 Which will start the TLS server on the background. Here the default key exchange is PSK but you can change it using:
 
     > dtlss ecdhe_ecdsa
+    
+You can also choose your TLS version like:
+
+    > dtlss ecdhe_ecdsa dtls1_3
 
 Keep the terminal of the server open.
 
@@ -55,6 +59,10 @@ And then type `dtlsc` followed by the previous address you copied from the serve
 If you prefer another key exchange mode you can type like:
 
     > dtlsc fe80::ac4a:f4ff:fef7:b23d ecdhe_ecdsa
+    
+You can also choose your TLS version like:
+
+    > dtlsc fe80::ac4a:f4ff:fef7:b23d ecdhe_ecdsa dtls1_3
     
 It will start by default in a verbose mode printing all the bytes sent and received (you can disable it by changing a flag in the code).
 
@@ -104,6 +112,10 @@ Copy the `inet6 addr` for later. Then type:
 Which will start the TLS server on the background. Here the default key exchange is PSK but you can change it using:
 
     > dtlss ecdhe_ecdsa
+    
+You can also choose your TLS version like:
+
+    > dtlss fe80::ac4a:f4ff:fef7:b23d ecdhe_ecdsa dtls1_3
 
 Keep the terminal of the server open.
 
@@ -118,6 +130,10 @@ Type to the native terminal `tlsc` followed by the previous address you copied f
 If you prefer another key exchange mode you can type like:
 
     > dtlsc fe80::ac4a:f4ff:fef7:b23d ecdhe_ecdsa
+    
+You can also choose your TLS version like:
+
+    > dtlsc fe80::ac4a:f4ff:fef7:b23d ecdhe_ecdsa dtls1_3
     
 It will start by default in a verbose mode printing all the bytes sent and received (you can disable it by changing a flag in the code).
 
