@@ -119,7 +119,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 
     if(ssl.state == MBEDTLS_SSL_CLIENT_FINISHED){
         //size_payload = 0;
-        thread_wakeup(main_pid);
+        //thread_wakeup(main_pid);
     }
 
     return size_payload;
