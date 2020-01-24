@@ -146,7 +146,7 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 
     
     if(ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER && ssl.out_msgtype != MBEDTLS_SSL_MSG_ALERT){
-        mutex_lock(&client_send_lock);
+        //mutex_lock(&client_send_lock);
     }
 
     memcpy(payload_tls,buf,len);
@@ -437,6 +437,10 @@ int start_client(int argc, char **argv)
     printf("CLIENT CONNECTED SUCCESSFULLY!\n");
     printf("Protocol is %s \nCiphersuite is %s\nKey Exchange Mode is %s\n\n",
         mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl), mbedtls_ssl_get_key_exchange_name(&ssl));
+
+    len = sizeof( buf ) - 1;
+    memset( buf, 0, sizeof( buf ) );
+    ret = mbedtls_ssl_read( &ssl, buf, len );
 
     len = sprintf( (char *) buf, GET_REQUEST );
 
