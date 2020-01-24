@@ -10,6 +10,7 @@
 #include "mbedtls/debug.h"
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
+#include "mbedtls/timing.h"
 
 #include "mutex.h"
 #include "thread.h"
@@ -38,6 +39,7 @@ static mbedtls_ssl_context ssl;
 static mbedtls_ssl_config conf;
 static mbedtls_x509_crt srvcert;
 static mbedtls_pk_context pkey;
+static mbedtls_timing_delay_context timer;
 
 extern char payload_tls[];
 extern int size_payload;
@@ -71,8 +73,8 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
     int i;
 
-    //printf("Server SEND... %d\n",len);
-    //printf("SEND ssl state %d\n",ssl.state);
+    printf("Server SEND... %d\n",len);
+    printf("SEND ssl state %d\n",ssl.state);
 
     mutex_lock(&server_req_lock);
 
@@ -98,20 +100,16 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    //printf("Server RECV... %d\n",len);
-    //printf("RECV ssl state %d\n",ssl.state);
+    printf("Server RECV... %d\n",len);
+    printf("RECV ssl state %d\n",ssl.state);
 
-    if(!offset){
-        mutex_lock(&server_lock);
-    }
+    mutex_lock(&server_lock);
 
-    memcpy(buf, payload_tls+offset, len);
-
-    offset += len;
+    memcpy(buf, payload_tls, len);
 
     if(VERBOSE){
         printf("/*-------------------- SERVER RECV -----------------*/\n");
-        for (i = 0; i < len; i++) {
+        for (i = 0; i < size_payload; i++) {
             printf("%02x ", (unsigned char) buf[i]);
             if (i > 0 && (i % 16) == 0)
                 printf("\n");
@@ -119,21 +117,12 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         printf("\n/*-------------------- END RECV -----------------*/\n");
     }
 
-    if(offset == size_payload){
-        offset = 0;
-    }
-
     if(ssl.state == MBEDTLS_SSL_CLIENT_FINISHED){
-        if(wake_flag){
-            size_payload = 0;
-            thread_wakeup(main_pid);
-            wake_flag = 0;
-        } else {
-            wake_flag = 1;
-        }
+        //size_payload = 0;
+        thread_wakeup(main_pid);
     }
 
-    return len;
+    return size_payload;
 }
 
 int mbedtls_server_init()
@@ -186,7 +175,7 @@ int mbedtls_server_init()
 
     if( ( ret = mbedtls_ssl_config_defaults( &conf,
                     MBEDTLS_SSL_IS_SERVER,
-                    MBEDTLS_SSL_TRANSPORT_STREAM,
+                    MBEDTLS_SSL_TRANSPORT_DATAGRAM,
                     MBEDTLS_SSL_PRESET_DEFAULT ) ) != 0 )
     {
         mbedtls_printf( " failed\n  ! mbedtls_ssl_config_defaults returned %d\n\n", ret );
@@ -203,8 +192,8 @@ int mbedtls_server_init()
     mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
     **/
 
-    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
-    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
+    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
+    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
 
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
@@ -270,6 +259,11 @@ int mbedtls_server_init()
 #endif /* MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED */    
 
     mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
+
+#if defined(MBEDTLS_TIMING_C)
+    mbedtls_ssl_set_timer_cb( &ssl, &timer, mbedtls_timing_set_delay,
+                                            mbedtls_timing_get_delay );
+#endif
 
     mbedtls_ssl_conf_ca_chain( &conf, srvcert.next, NULL );
     if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
