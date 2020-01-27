@@ -19,7 +19,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #define GET_REQUEST "This is ATLS client!\n"
 
@@ -344,6 +344,24 @@ int mbedtls_client_init()
 
     mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
 
+    int cipher[2];
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_128_CCM_SHA256");
+    cipher[1] = 0;
+
+    if (cipher[0] == 0)
+            {
+                mbedtls_printf("forced ciphersuite not found\n");
+                ret = 2;
+                return ret;
+    }
+
+    const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
+    ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
+
+    //printf("name %s min %d max %d\n", ciphersuite_info->name, ciphersuite_info->min_minor_ver, ciphersuite_info->max_minor_ver);
+
+    mbedtls_ssl_conf_ciphersuites( &conf, cipher );
+
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
         mbedtls_printf( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
@@ -408,7 +426,7 @@ int start_client(int argc, char **argv)
 
     printf("Initializing client...\n");
 
-    //mbedtls_debug_set_threshold(3);
+    mbedtls_debug_set_threshold(3);
 
     ret = mbedtls_client_init();
     if( ret != 0){
