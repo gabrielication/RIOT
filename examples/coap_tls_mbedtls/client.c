@@ -49,6 +49,8 @@ extern int size_payload;
 extern mutex_t client_lock;
 extern mutex_t client_send_lock;
 
+static int cipher[2];
+
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
 char *addr_str;
@@ -344,8 +346,7 @@ int mbedtls_client_init()
 
     mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
 
-    int cipher[2];
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_128_CCM_SHA256");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_256_GCM_SHA384");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -357,8 +358,6 @@ int mbedtls_client_init()
 
     const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
     ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
-
-    //printf("name %s min %d max %d\n", ciphersuite_info->name, ciphersuite_info->min_minor_ver, ciphersuite_info->max_minor_ver);
 
     mbedtls_ssl_conf_ciphersuites( &conf, cipher );
 

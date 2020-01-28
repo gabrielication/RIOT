@@ -53,6 +53,8 @@ static int wake_flag = 0;
 static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
 static int tls_version = MBEDTLS_SSL_MINOR_VERSION_4;
 
+static int cipher[2];
+
 static void usage(const char *cmd_name)
 {
     LOG(LOG_ERROR, "\nUsage: %s [optional: <key_exchange_mode> <tls_version>]\n\n<key_exchange_mode: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n<tls_version: tls1_2, tls1_3 (default)>\n", cmd_name);
@@ -272,8 +274,7 @@ int mbedtls_server_init()
 
     mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
 
-    int cipher[2];
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_128_CCM_SHA256");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_256_GCM_SHA384");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -285,8 +286,6 @@ int mbedtls_server_init()
 
     const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
     ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
-
-    //printf("name %s min %d max %d\n", ciphersuite_info->name, ciphersuite_info->min_minor_ver, ciphersuite_info->max_minor_ver);
 
     mbedtls_ssl_conf_ciphersuites( &conf, cipher );
 
