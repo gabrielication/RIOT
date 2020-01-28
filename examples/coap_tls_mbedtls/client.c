@@ -223,7 +223,7 @@ static void mbedtls_client_exit(int ret)
     #if defined(MBEDTLS_X509_CRT_PARSE_C)
         mbedtls_x509_crt_free( &cacert );
     #endif
-    
+
     mbedtls_ssl_free( &ssl );
     mbedtls_ssl_config_free( &conf );
     mbedtls_ctr_drbg_free( &ctr_drbg );
@@ -363,7 +363,7 @@ int mbedtls_client_init()
 
     mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_256_GCM_SHA384");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_128_CCM_SHA256");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -384,13 +384,16 @@ int mbedtls_client_init()
         return ret;
     }
 
-    if( ( ret = mbedtls_ssl_set_hostname( &ssl, "ssl_server" ) ) != 0 )
-    {
-        mbedtls_printf( " failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret );
-        return ret;
-    }
+    #if defined(MBEDTLS_X509_CRT_PARSE_C)
 
-    //TODO read write callbacks
+        if( ( ret = mbedtls_ssl_set_hostname( &ssl, "ssl_server" ) ) != 0 )
+        {
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret );
+            return ret;
+        }
+
+    #endif
+
     mbedtls_ssl_set_bio( &ssl, NULL, mbedtls_ssl_send, mbedtls_ssl_recv, NULL );
 
     return ret;
@@ -442,7 +445,7 @@ int start_client(int argc, char **argv)
 
     printf("Initializing client...\n");
 
-    mbedtls_debug_set_threshold(3);
+    //mbedtls_debug_set_threshold(3);
 
     ret = mbedtls_client_init();
     if( ret != 0){

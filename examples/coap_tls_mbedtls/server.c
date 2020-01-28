@@ -36,8 +36,11 @@ static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
 static mbedtls_ssl_config conf;
-static mbedtls_x509_crt srvcert;
-static mbedtls_pk_context pkey;
+
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
+    static mbedtls_x509_crt srvcert;
+    static mbedtls_pk_context pkey;
+#endif
 
 extern char payload_tls[];
 extern int size_payload;
@@ -148,9 +151,7 @@ int mbedtls_server_init()
 
     mbedtls_ssl_init( &ssl );
     mbedtls_ssl_config_init( &conf );
-    mbedtls_x509_crt_init( &srvcert );
     mbedtls_ctr_drbg_init( &ctr_drbg );
-    mbedtls_pk_init( &pkey );
 
     mbedtls_entropy_init( &entropy );
 
@@ -162,30 +163,35 @@ int mbedtls_server_init()
         return ret;
     }
 
-    // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
-    ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) mbedtls_test_srv_crt,
-                          mbedtls_test_srv_crt_len );
-    if( ret != 0 )
-    {
-        mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", ret );
-        return ret;
-    }
+    #if defined(MBEDTLS_X509_CRT_PARSE_C)
+        mbedtls_x509_crt_init( &srvcert );
+        mbedtls_pk_init( &pkey );
 
-    ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) mbedtls_test_cas_pem,
-                          mbedtls_test_cas_pem_len );
-    if( ret != 0 )
-    {
-        mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", ret );
-        return ret;
-    }
+        // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
+        ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) mbedtls_test_srv_crt,
+                              mbedtls_test_srv_crt_len );
+        if( ret != 0 )
+        {
+            mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", ret );
+            return ret;
+        }
 
-    ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) mbedtls_test_srv_key,
-                         mbedtls_test_srv_key_len, NULL, 0 );
-    if( ret != 0 )
-    {
-        mbedtls_printf( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", ret );
-        return ret;
-    }
+        ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) mbedtls_test_cas_pem,
+                              mbedtls_test_cas_pem_len );
+        if( ret != 0 )
+        {
+            mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", ret );
+            return ret;
+        }
+
+        ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) mbedtls_test_srv_key,
+                             mbedtls_test_srv_key_len, NULL, 0 );
+        if( ret != 0 )
+        {
+            mbedtls_printf( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", ret );
+            return ret;
+        }
+    #endif
 
     if( ( ret = mbedtls_ssl_config_defaults( &conf,
                     MBEDTLS_SSL_IS_SERVER,
@@ -274,7 +280,7 @@ int mbedtls_server_init()
 
     mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_256_GCM_SHA384");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_128_CCM_SHA256");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -289,12 +295,16 @@ int mbedtls_server_init()
 
     mbedtls_ssl_conf_ciphersuites( &conf, cipher );
 
-    mbedtls_ssl_conf_ca_chain( &conf, srvcert.next, NULL );
-    if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
-    {
-        mbedtls_printf( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
-        return ret;
-    }
+    #if defined(MBEDTLS_X509_CRT_PARSE_C)
+
+        mbedtls_ssl_conf_ca_chain( &conf, srvcert.next, NULL );
+        if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
+        {
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
+            return ret;
+        }
+
+    #endif
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
@@ -320,8 +330,11 @@ void mbedtls_server_exit(int ret)
     }
 #endif
 
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
     mbedtls_x509_crt_free( &srvcert );
     mbedtls_pk_free( &pkey );
+#endif
+
     mbedtls_ssl_free( &ssl );
     mbedtls_ssl_config_free( &conf );
     mbedtls_ctr_drbg_free( &ctr_drbg );
@@ -369,7 +382,7 @@ int start_server(int argc, char **argv)
 
     printf("Initializing server...\n");
 
-    mbedtls_debug_set_threshold(3);
+    //mbedtls_debug_set_threshold(3);
 
     ret = mbedtls_server_init();
     if( ret != 0){
