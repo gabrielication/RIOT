@@ -95,7 +95,7 @@ int coap_post(void)
     paylen = size_payload;
 
     // Code '2' is POST
-    gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, 2, "/.well-known/atls");
+    gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, COAP_POST, "/.well-known/atls");
 
     coap_opt_add_format(&pdu, COAP_FORMAT_TEXT);
     len = coap_opt_finish(&pdu, COAP_OPT_FINISH_PAYLOAD);
@@ -128,7 +128,7 @@ int coap_get(void)
     size_t len;
 
     // Code '1' is GET
-    gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, 1, "/.well-known/atls");
+    gcoap_req_init(&pdu, &buf_pdu[0], GCOAP_PDU_BUF_SIZE, COAP_GET, "/.well-known/atls");
     len = coap_opt_finish(&pdu, COAP_OPT_FINISH_NONE);
 
     if (!_send(&buf_pdu[0], len, addr_str, "5683")){

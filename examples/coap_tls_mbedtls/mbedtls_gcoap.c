@@ -31,6 +31,9 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
+#define COAP_POST 2
+#define COAP_GET 1
+
 #define PAYLOAD_TLS_SIZE 1024
 
 static ssize_t _encode_link(const coap_resource_t *resource, char *buf,
