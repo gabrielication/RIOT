@@ -37,8 +37,12 @@ static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
 static mbedtls_ssl_config conf;
-static mbedtls_x509_crt srvcert;
-static mbedtls_pk_context pkey;
+
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
+    static mbedtls_x509_crt srvcert;
+    static mbedtls_pk_context pkey;
+#endif
+
 static mbedtls_timing_delay_context timer;
 
 extern char payload_tls[];
@@ -135,9 +139,7 @@ int mbedtls_server_init()
 
     mbedtls_ssl_init( &ssl );
     mbedtls_ssl_config_init( &conf );
-    mbedtls_x509_crt_init( &srvcert );
     mbedtls_ctr_drbg_init( &ctr_drbg );
-    mbedtls_pk_init( &pkey );
 
     mbedtls_entropy_init( &entropy );
 
@@ -149,6 +151,9 @@ int mbedtls_server_init()
         return ret;
     }
 
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
+    mbedtls_x509_crt_init( &srvcert );
+    mbedtls_pk_init( &pkey );
     // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
     ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) mbedtls_test_srv_crt,
                           mbedtls_test_srv_crt_len );
@@ -173,6 +178,7 @@ int mbedtls_server_init()
         mbedtls_printf( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", ret );
         return ret;
     }
+#endif
 
     if( ( ret = mbedtls_ssl_config_defaults( &conf,
                     MBEDTLS_SSL_IS_SERVER,
@@ -266,12 +272,16 @@ int mbedtls_server_init()
                                             mbedtls_timing_get_delay );
 #endif
 
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
+
     mbedtls_ssl_conf_ca_chain( &conf, srvcert.next, NULL );
     if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
     {
         mbedtls_printf( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
         return ret;
     }
+
+#endif
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
@@ -297,8 +307,11 @@ void mbedtls_server_exit(int ret)
     }
 #endif
 
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
     mbedtls_x509_crt_free( &srvcert );
     mbedtls_pk_free( &pkey );
+#endif
+    
     mbedtls_ssl_free( &ssl );
     mbedtls_ssl_config_free( &conf );
     mbedtls_ctr_drbg_free( &ctr_drbg );
