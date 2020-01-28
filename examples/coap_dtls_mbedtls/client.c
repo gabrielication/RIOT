@@ -43,7 +43,7 @@ static mbedtls_x509_crt cacert;
 static mbedtls_timing_delay_context timer;
 
 static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
-static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_3;
+static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
 
 extern char payload_tls[];
 extern int size_payload;
@@ -60,7 +60,7 @@ static int get_flag = 0;
 
 static void usage(const char *cmd_name)
 {
-    LOG(LOG_ERROR, "\nUsage: %s <server-address> [optional: <key_exchange_mode> <tls_version>]\n\n<key_exchange_mode: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n<tls_version: dtls1_2 (default), dtls1_3>\n", cmd_name);
+    LOG(LOG_ERROR, "\nUsage: %s <server-address> [optional: <key_exchange_mode> <tls_version>]\n\n<key_exchange_mode: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n<tls_version: dtls1_2, dtls1_3 (default)>\n", cmd_name);
 }
 
 static void my_debug( void *ctx, int level,
