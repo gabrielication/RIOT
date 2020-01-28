@@ -38,7 +38,10 @@ static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
 static mbedtls_ssl_config conf;
-static mbedtls_x509_crt cacert;
+
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
+    static mbedtls_x509_crt cacert;
+#endif
 
 static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
 static int tls_version = MBEDTLS_SSL_MINOR_VERSION_4;
@@ -217,7 +220,10 @@ static void mbedtls_client_exit(int ret)
     }
 #endif
 
-    mbedtls_x509_crt_free( &cacert );
+    #if defined(MBEDTLS_X509_CRT_PARSE_C)
+        mbedtls_x509_crt_free( &cacert );
+    #endif
+    
     mbedtls_ssl_free( &ssl );
     mbedtls_ssl_config_free( &conf );
     mbedtls_ctr_drbg_free( &ctr_drbg );
@@ -234,7 +240,6 @@ int mbedtls_client_init()
 
     mbedtls_ssl_init( &ssl );
     mbedtls_ssl_config_init( &conf );
-    mbedtls_x509_crt_init( &cacert );
     mbedtls_ctr_drbg_init( &ctr_drbg );
 
     mbedtls_entropy_init( &entropy );
@@ -246,14 +251,20 @@ int mbedtls_client_init()
         return ret;
     }
 
-    // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
-    ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) mbedtls_test_cas_pem,
-                          mbedtls_test_cas_pem_len );
-    if( ret < 0 )
-    {
-        printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
-        return ret;
-    }
+    #if defined(MBEDTLS_X509_CRT_PARSE_C)
+
+        mbedtls_x509_crt_init( &cacert );
+        // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
+        ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) mbedtls_test_cas_pem,
+                              mbedtls_test_cas_pem_len );
+
+        if( ret < 0 )
+        {
+            printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
+            return ret;
+        }
+
+    #endif
 
     if( ( ret = mbedtls_ssl_config_defaults( &conf,
                     MBEDTLS_SSL_IS_CLIENT,
@@ -280,7 +291,13 @@ int mbedtls_client_init()
     /* OPTIONAL is not optimal for security,
      * but makes interop easier in this simplified example */
     mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
-    mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
+
+    #if defined(MBEDTLS_X509_CRT_PARSE_C)
+
+        mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
+
+    #endif
+
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
 
