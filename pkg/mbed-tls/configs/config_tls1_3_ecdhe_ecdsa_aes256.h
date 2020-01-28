@@ -461,7 +461,7 @@
 * Enable the PSK based ciphersuite modes.
 *
 */
-#define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
+//#define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
 
 
 /**
@@ -489,7 +489,7 @@
 *      MBEDTLS_TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256
 *      MBEDTLS_TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256
 */
-#define MBEDTLS_KEY_EXCHANGE_ECDHE_PSK_ENABLED
+//#define MBEDTLS_KEY_EXCHANGE_ECDHE_PSK_ENABLED
 
 
 /**
@@ -514,7 +514,7 @@
 *      MBEDTLS_TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA
 *      MBEDTLS_TLS_ECDHE_ECDSA_WITH_RC4_128_SHA
 */
-//#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
 
 
 /**
@@ -995,7 +995,7 @@
 *
 * Comment this macro to disable support for server name indication in SSL
 */
-//#define MBEDTLS_SSL_SERVER_NAME_INDICATION
+#define MBEDTLS_SSL_SERVER_NAME_INDICATION
 
 
 /**
@@ -1067,7 +1067,7 @@
 *
 * Comment to skip keyUsage checking for both CA and leaf certificates.
 */
-//#define MBEDTLS_X509_CHECK_KEY_USAGE
+#define MBEDTLS_X509_CHECK_KEY_USAGE
 
 /**
 * \def MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE
@@ -1080,7 +1080,7 @@
 *
 * Comment to skip extendedKeyUsage checking for certificates.
 */
-//#define MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE
+#define MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE
 
 /**
 * \def MBEDTLS_X509_RSASSA_PSS_SUPPORT
@@ -1843,7 +1843,7 @@
 *
 * This module is required for the X.509 parsing modules.
 */
-//#define MBEDTLS_X509_USE_C
+#define MBEDTLS_X509_USE_C
 
 /**
 * \def MBEDTLS_X509_CRT_PARSE_C
@@ -1859,7 +1859,7 @@
 *
 * This module is required for X.509 certificate parsing.
 */
-//#define MBEDTLS_X509_CRT_PARSE_C
+#define MBEDTLS_X509_CRT_PARSE_C
 
 /**
 * \def MBEDTLS_X509_CRL_PARSE_C
@@ -1873,7 +1873,7 @@
 *
 * This module is required for X.509 CRL parsing.
 */
-//#define MBEDTLS_X509_CRL_PARSE_C
+#define MBEDTLS_X509_CRL_PARSE_C
 
 /**
 * \def MBEDTLS_X509_CSR_PARSE_C
@@ -2004,9 +2004,9 @@
 //#define MBEDTLS_SSL_MAX_CONTENT_LEN             16384 /**< Maxium fragment length in bytes, determines the size of each of the two internal I/O buffers */
 #define MBEDTLS_SSL_MAX_CONTENT_LEN             2048 /**< Maxium fragment length in bytes, determines the size of each of the two internal I/O buffers */
 #define MBEDTLS_SSL_DEFAULT_TICKET_LIFETIME     86400 /**< Lifetime of session tickets (if enabled) */
-#define MBEDTLS_PSK_MAX_LEN               48 /**< Max size of TLS pre-shared keys, in bytes (default 384 bits) */
+//#define MBEDTLS_PSK_MAX_LEN               48 /**< Max size of TLS pre-shared keys, in bytes (default 384 bits) */
 #define MBEDTLS_SSL_COOKIE_TIMEOUT        60 /**< Default expiration delay of DTLS cookies, in seconds if HAVE_TIME, or in number of cookies issued */
-#define MBEDTLS_PSK_IDENTITY_MAX_LEN     250 /**< Max size of psk identity, in bytes */
+//#define MBEDTLS_PSK_IDENTITY_MAX_LEN     250 /**< Max size of psk identity, in bytes */
 /**
 * Complete list of ciphersuites to use, in order of preference.
 *
