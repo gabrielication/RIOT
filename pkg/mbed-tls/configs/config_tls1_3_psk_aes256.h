@@ -402,7 +402,7 @@
 *
 * Comment this macro to disable the MBEDTLS_ECDSA_SECP256r1_SHA256 signature algo
 */
-#define MBEDTLS_ECDSA_SECP256r1_SHA256
+//#define MBEDTLS_ECDSA_SECP256r1_SHA256
 
 /**
 * \def MBEDTLS_ECDSA_SECP384r1_SHA384
@@ -414,7 +414,7 @@
 *
 * Comment this macro to disable the MBEDTLS_ECDSA_SECP384r1_SHA384 signature algo
 */
-#define MBEDTLS_ECDSA_SECP384r1_SHA384
+//#define MBEDTLS_ECDSA_SECP384r1_SHA384
 
 
 /**
@@ -427,7 +427,7 @@
 *
 * Comment this macro to disable the MBEDTLS_ECDSA_SECP521r1_SHA512 signature algo
 */
-#define MBEDTLS_ECDSA_SECP521r1_SHA512
+//#define MBEDTLS_ECDSA_SECP521r1_SHA512
 
 
 /**
@@ -453,7 +453,7 @@
 *
 * Comment this macro to disable deterministic ECDSA.
 */
-#define MBEDTLS_ECDSA_DETERMINISTIC
+//#define MBEDTLS_ECDSA_DETERMINISTIC
 
 /**
 * \def MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
@@ -489,7 +489,7 @@
 *      MBEDTLS_TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256
 *      MBEDTLS_TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256
 */
-#define MBEDTLS_KEY_EXCHANGE_ECDHE_PSK_ENABLED
+//#define MBEDTLS_KEY_EXCHANGE_ECDHE_PSK_ENABLED
 
 
 /**
@@ -1202,7 +1202,7 @@
 *          library/pkcs5.c
 *          library/pkparse.c
 */
-#define MBEDTLS_ASN1_PARSE_C
+//#define MBEDTLS_ASN1_PARSE_C
 
 /**
 * \def MBEDTLS_ASN1_WRITE_C
@@ -1216,7 +1216,7 @@
 *          library/x509write_crt.c
 *          library/mbedtls_x509write_csr.c
 */
-#define MBEDTLS_ASN1_WRITE_C
+//#define MBEDTLS_ASN1_WRITE_C
 
 /**
 * \def MBEDTLS_BASE64_C
@@ -1272,7 +1272,7 @@
 *
 * This module is used for testing (ssl_client/server).
 */
-#define MBEDTLS_CERTS_C
+//#define MBEDTLS_CERTS_C
 
 /**
 * \def MBEDTLS_CIPHER_C
@@ -1329,7 +1329,7 @@
 *
 * Requires: MBEDTLS_ECP_C
 */
-#define MBEDTLS_ECDH_C
+//#define MBEDTLS_ECDH_C
 
 /**
 * \def MBEDTLS_ECDSA_C
@@ -1345,7 +1345,7 @@
 * Requires: MBEDTLS_ECP_C, MBEDTLS_ASN1_WRITE_C, MBEDTLS_ASN1_PARSE_C
 * (In TLS 1.3 we do not necessarily require ASN.1 routines in some cases.)
 */
-#define MBEDTLS_ECDSA_C
+//#define MBEDTLS_ECDSA_C
 
 
 /**
@@ -1360,7 +1360,7 @@
 *
 * Requires: MBEDTLS_BIGNUM_C and at least one MBEDTLS_ECP_DP_XXX_ENABLED
 */
-#define MBEDTLS_ECP_C
+//#define MBEDTLS_ECP_C
 
 /**
 * \def MBEDTLS_ENTROPY_C
@@ -1500,7 +1500,7 @@
 *
 * This modules translates between OIDs and internal values.
 */
-#define MBEDTLS_OID_C
+//#define MBEDTLS_OID_C
 
 /**
 * \def MBEDTLS_PADLOCK_C
@@ -1532,7 +1532,7 @@
 *
 * This modules adds support for decoding / parsing PEM files.
 */
-#define MBEDTLS_PEM_PARSE_C
+//#define MBEDTLS_PEM_PARSE_C
 
 /**
 * \def MBEDTLS_PEM_WRITE_C
@@ -1564,7 +1564,7 @@
 *
 * Uncomment to enable generic public key wrappers.
 */
-#define MBEDTLS_PK_C
+//#define MBEDTLS_PK_C
 
 /**
 * \def MBEDTLS_PK_PARSE_C
@@ -1579,7 +1579,7 @@
 *
 * Uncomment to enable generic public key parse functions.
 */
-#define MBEDTLS_PK_PARSE_C
+//#define MBEDTLS_PK_PARSE_C
 
 /**
 * \def MBEDTLS_PK_WRITE_C
