@@ -44,7 +44,7 @@ ifneq ($(BOARD),native)
   # BOARDS LIKE nrf52dk will not work
   CFLAGS += -DTHREAD_STACKSIZE_DEFAULT=2048
 endif
-CFLAGS += -DTHREAD_STACKSIZE_MAIN=\(3*THREAD_STACKSIZE_DEFAULT\)
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=\(5*THREAD_STACKSIZE_DEFAULT\)
 
 # Add also the shell, some shell commands
 USEMODULE += shell
