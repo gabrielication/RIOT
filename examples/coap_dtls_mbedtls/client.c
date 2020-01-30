@@ -20,7 +20,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #define GET_REQUEST "This is ATLS client!\n"
 
@@ -54,6 +54,8 @@ extern int size_payload;
 
 extern mutex_t client_lock;
 extern mutex_t client_send_lock;
+
+static int cipher[2];
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
@@ -146,8 +148,8 @@ int coap_get(void)
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
 
-    printf("Client SEND... %d\n",len);
-    printf("SEND ssl state %d\n",ssl.state);
+    //printf("Client SEND... %d\n",len);
+    //printf("SEND ssl state %d\n",ssl.state);
 
     
     if(ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER && ssl.out_msgtype != MBEDTLS_SSL_MSG_ALERT){
@@ -178,8 +180,8 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    printf("Client RECV...%d\n",len);
-    printf("RECV ssl state %d\n",ssl.state);
+    //printf("Client RECV...%d\n",len);
+    //printf("RECV ssl state %d\n",ssl.state);
 
     if(ssl.state > MBEDTLS_SSL_SERVER_HELLO && ssl.state < MBEDTLS_SSL_HANDSHAKE_OVER){
         coap_get();
@@ -361,6 +363,23 @@ int mbedtls_client_init()
     mbedtls_ssl_set_timer_cb( &ssl, &timer, mbedtls_timing_set_delay,
                                             mbedtls_timing_get_delay );
 #endif
+
+    mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
+
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_128_CCM_SHA256");
+    cipher[1] = 0;
+
+    if (cipher[0] == 0)
+            {
+                mbedtls_printf("forced ciphersuite not found\n");
+                ret = 2;
+                return ret;
+    }
+
+    const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
+    ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
+
+    mbedtls_ssl_conf_ciphersuites( &conf, cipher );
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {

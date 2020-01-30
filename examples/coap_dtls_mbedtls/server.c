@@ -20,7 +20,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #define RESPONSE "This is ATLS server!\n"
 
@@ -59,6 +59,8 @@ static int wake_flag = 0;
 static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
 static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
 
+static int cipher[2];
+
 static void usage(const char *cmd_name)
 {
     LOG(LOG_ERROR, "\nUsage: %s [optional: <key_exchange_mode> <tls_version>]\n\n<key_exchange_mode: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n<tls_version: dtls1_2, dtls1_3 (default)>\n", cmd_name);
@@ -78,8 +80,8 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
     int i;
 
-    printf("Server SEND... %d\n",len);
-    printf("SEND ssl state %d\n",ssl.state);
+    //printf("Server SEND... %d\n",len);
+    //printf("SEND ssl state %d\n",ssl.state);
 
     mutex_lock(&server_req_lock);
 
@@ -105,8 +107,8 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    printf("Server RECV... %d\n",len);
-    printf("RECV ssl state %d\n",ssl.state);
+    //printf("Server RECV... %d\n",len);
+    //printf("RECV ssl state %d\n",ssl.state);
 
     mutex_lock(&server_lock);
 
@@ -266,6 +268,21 @@ int mbedtls_server_init()
 #endif /* MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED */    
 
     mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
+
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_128_CCM_SHA256");
+    cipher[1] = 0;
+
+    if (cipher[0] == 0)
+            {
+                mbedtls_printf("forced ciphersuite not found\n");
+                ret = 2;
+                return ret;
+    }
+
+    const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
+    ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
+
+    mbedtls_ssl_conf_ciphersuites( &conf, cipher );
 
 #if defined(MBEDTLS_TIMING_C)
     mbedtls_ssl_set_timer_cb( &ssl, &timer, mbedtls_timing_set_delay,

@@ -648,7 +648,7 @@
 *
 * Uncomment this macro to print handshake hash information
 */
-#define MBEDTLS_SSL_DEBUG_HANDSHAKE_HASHES 
+//#define MBEDTLS_SSL_DEBUG_HANDSHAKE_HASHES 
 
 
 /**
@@ -745,7 +745,7 @@
 * a timing side-channel.
 *
 */
-#define MBEDTLS_SSL_DEBUG_ALL
+//#define MBEDTLS_SSL_DEBUG_ALL
 
 
 /**
@@ -1312,7 +1312,7 @@
 *
 * This module provides debugging functions.
 */
-#define MBEDTLS_DEBUG_C
+//#define MBEDTLS_DEBUG_C
 
 
 /**
