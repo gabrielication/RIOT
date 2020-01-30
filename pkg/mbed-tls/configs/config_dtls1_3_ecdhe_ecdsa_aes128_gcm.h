@@ -648,7 +648,7 @@
 *
 * Uncomment this macro to print handshake hash information
 */
-#define MBEDTLS_SSL_DEBUG_HANDSHAKE_HASHES 
+//#define MBEDTLS_SSL_DEBUG_HANDSHAKE_HASHES 
 
 
 /**
@@ -745,7 +745,7 @@
 * a timing side-channel.
 *
 */
-#define MBEDTLS_SSL_DEBUG_ALL
+//#define MBEDTLS_SSL_DEBUG_ALL
 
 
 /**
@@ -1260,7 +1260,7 @@
 * enabled as well.
 */
 // TBD: Should actually be called MBEDTLS_CIPHER_MODE_CCM
-#define MBEDTLS_CCM_C
+//#define MBEDTLS_CCM_C
 
 /**
 * \def MBEDTLS_CERTS_C
@@ -1312,7 +1312,7 @@
 *
 * This module provides debugging functions.
 */
-#define MBEDTLS_DEBUG_C
+//#define MBEDTLS_DEBUG_C
 
 
 /**
@@ -1692,7 +1692,7 @@
 *
 * This module adds support for SHA-512 and SHA-384.
 */
-#define MBEDTLS_SHA512_C
+//#define MBEDTLS_SHA512_C
 
 /**
 * \def MBEDTLS_SSL_CACHE_C
