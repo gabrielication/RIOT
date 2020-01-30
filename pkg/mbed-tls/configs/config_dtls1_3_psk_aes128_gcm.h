@@ -1260,7 +1260,7 @@
 * enabled as well.
 */
 // TBD: Should actually be called MBEDTLS_CIPHER_MODE_CCM
-#define MBEDTLS_CCM_C
+//#define MBEDTLS_CCM_C
 
 /**
 * \def MBEDTLS_CERTS_C
