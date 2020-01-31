@@ -22,11 +22,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <wolfssl/ssl.h>
+#include <wolfssl/internal.h>
 #include "log.h"
 #include "net/gcoap.h"
 #include "mutex.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -55,9 +56,6 @@ extern char payload_dtls[];
 extern int size_payload;
 
 char *addr_str;
-
-int count_read = 0;
-int count_send = 0;
 
 extern mutex_t client_lock;
 extern mutex_t client_send_lock;
@@ -173,18 +171,7 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     //printf("CLIENT SEND...\n");
 
-    /*
-        Why 4? They are the client's messages seq IDs in which the server needs to do more
-        reads without doing any writes between them. We need someone in charge to restore
-        COAP - TLS mutexes synchronization.
-
-        TODO: it's not good practice AT ALL to have local counters. It will be a good idea to parse the seq
-        numbers directly from the packets and handle eventual packet loss.
-    */
-
-    count_send += 1;
-
-    if(count_send == 4) mutex_lock(&client_send_lock);
+    if(ssl->options.connectState == FIRST_REPLY_FOURTH) mutex_lock(&client_send_lock);
 
     memcpy(payload_dtls,buf,sz);
     size_payload = sz;
@@ -216,28 +203,9 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     //printf("CLIENT RECV...\n");
 
-    /*  
-        Why 2, 3 and 5? They are the server's messages seq IDs in which the client needs to do more
-        reads without doing any writes between them. Without the the writes we can't have
-        any call to COAP's 'send' function because we don't actually have anything to send.
-        In order to have a request -> response mechanism (and in order to let the server know
-        the client's ip address when replying) we adopt this cheap trick calling a 'get'.
-
-        TODO: it's not good practice AT ALL to have local counters. It will be a good idea to parse the seq
-        numbers directly from the packets and handle eventual packet loss.
-    */
-
-    count_read += 1;
-
-    #ifndef MODULE_WOLFSSL_PSK
-        if(count_read == 3 || count_read == 4 || count_read == 5){
+    if((ssl->options.serverState > SERVER_HELLOVERIFYREQUEST_COMPLETE) && (ssl->options.serverState < SERVER_HELLODONE_COMPLETE)){
             coap_get();
-        }
-    #else
-        if(count_read == 3 || count_read == 4){
-            coap_get();
-        }
-    #endif
+    }
     
     mutex_lock(&client_lock);
 
@@ -335,6 +303,8 @@ int start_dtls_client(int argc, char **argv)
     int ret = SSL_FAILURE;
 
     char buf[PAYLOAD_DTLS_SIZE];
+
+    //wolfSSL_Debugging_ON();
 
     wolfSSL_Init();
 

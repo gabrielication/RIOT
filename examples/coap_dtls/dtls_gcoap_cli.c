@@ -57,8 +57,6 @@ kernel_pid_t main_pid;
 char payload_dtls[PAYLOAD_DTLS_SIZE];
 int size_payload = 0;
 
-extern int server_count;
-
 /* CoAP resources. Must be sorted by path (ASCII order). */
 static const coap_resource_t _resources[] = {
     { "/.well-known/atls", COAP_GET | COAP_POST, _atls_handler, NULL},
@@ -213,7 +211,7 @@ static ssize_t _atls_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, void *ct
 
     // The payload len tells how many bytes are free for the payload. If we have
     // enough space we can copy our message inside it.
-    if (server_count == 3){ //TODO: maybe something less cheap?
+    if (!size_payload){
         printf("COAP replied %d bytes\n", len);
         return gcoap_response(pdu, buf, len, COAP_CODE_CHANGED);
     }
