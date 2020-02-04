@@ -216,24 +216,17 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
         LOG(LOG_ERROR, "Failed to load private key from memory.\r\n");
         return NULL;
     }
-
-    #ifdef MODULE_WOLFCRYPT_ECC
-
-        //TODO: to be refined
-
-        config_index = 1;
-        if (( ret = wolfSSL_CTX_set_cipher_list(ctx, config[config_index])) != SSL_SUCCESS) {
-            printf("ret = %d\n", ret);
-            printf("Error :can't set cipher\n");
-            wolfSSL_CTX_free(ctx);
-            return NULL;
-        }
-        
-    #endif
 #else
     wolfSSL_CTX_set_psk_server_callback(ctx, my_psk_server_cb);
     wolfSSL_CTX_use_psk_identity_hint(ctx, "hint");
 #endif /* MODULE_WOLFSSL_PSK */
+
+    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, "TLS13-AES128-CCM-SHA256")) != SSL_SUCCESS) {
+            printf("ret = %d\n", ret);
+            printf("Error :can't set cipher\n");
+            wolfSSL_CTX_free(ctx);
+            return NULL;
+    }
 
     wolfSSL_SetIORecv(ctx, server_recv);
     wolfSSL_SetIOSend(ctx, server_send);
@@ -261,6 +254,8 @@ int start_tls_server(int argc, char **argv)
     int ret, msgSz;
     WOLFSSL* sslServ;
     WOLFSSL_CTX* ctxServ = NULL;
+
+    wolfSSL_Debugging_ON();
 
     wolfSSL_Init();
 
@@ -291,6 +286,9 @@ int start_tls_server(int argc, char **argv)
     }
 
     printf("SERVER CONNECTED SUCCESSFULLY!\n");
+    printf("TLS version is %s\n", wolfSSL_get_version(sslServ));
+    printf("Cipher Suite is %s\n",
+           wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslServ)));
 
     char reply[] = "TLS 1.3 OK!";
 

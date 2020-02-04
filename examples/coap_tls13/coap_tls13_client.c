@@ -293,23 +293,16 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
         return NULL;
     }
 
-    #ifdef MODULE_WOLFCRYPT_ECC
+#else /* !def MODULE_WOLFSSL_PSK */
+    wolfSSL_CTX_set_psk_client_callback(ctx, my_psk_client_cb);
+#endif
 
-        //TODO: to be refined
-
-        config_index = 1;
-        if (( ret = wolfSSL_CTX_set_cipher_list(ctx, config[config_index])) != SSL_SUCCESS) {
+    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, "TLS13-AES128-CCM-SHA256")) != SSL_SUCCESS) {
             printf("ret = %d\n", ret);
             printf("Error :can't set cipher\n");
             wolfSSL_CTX_free(ctx);
             return NULL;
-        }
-        
-    #endif
-
-#else /* !def MODULE_WOLFSSL_PSK */
-    wolfSSL_CTX_set_psk_client_callback(ctx, my_psk_client_cb);
-#endif
+    }
 
     wolfSSL_SetIORecv(ctx, client_recv);
     wolfSSL_SetIOSend(ctx, client_send);
@@ -350,6 +343,8 @@ int start_tls_client(int argc, char **argv)
 
     char buf[PAYLOAD_TLS_SIZE];
 
+    wolfSSL_Debugging_ON();
+
     wolfSSL_Init();
 
     //  Example usage (not implemented)
@@ -380,6 +375,9 @@ int start_tls_client(int argc, char **argv)
     }
 
     printf("CLIENT CONNECTED SUCCESSFULLY!\n");
+    printf("TLS version is %s\n", wolfSSL_get_version(sslCli));
+    printf("Cipher Suite is %s\n",
+           wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslCli)));
 
     char send_msg[] = "Hello from TLS 1.3 client!";
 

@@ -23,8 +23,8 @@ extern "C" {
 #define NO_OLD_RNGNAME
 
 /* Uncomment the next two lines to enable wolfSSL debug */
-// #define DEBUG_WOLFSSL
-// #define WOLFSSL_LOG_PRINTF
+#define DEBUG_WOLFSSL
+#define WOLFSSL_LOG_PRINTF
 
 /* Single precision math */
 #define WOLFSSL_SP_MATH
