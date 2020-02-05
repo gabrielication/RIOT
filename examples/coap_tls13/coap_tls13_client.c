@@ -39,7 +39,7 @@
 #endif
 
 static int config_index = 0;
-static char *config[] = {"PSK", "TLS13-AES128-GCM-SHA256", "TLS13-AES256-GCM-SHA384"};
+static char *config[] = {"TLS13-AES128-CCM-SHA256", "TLS13-AES128-GCM-SHA256", "TLS13-AES256-GCM-SHA384"};
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
@@ -68,7 +68,7 @@ extern mutex_t client_send_lock;
 
 static inline unsigned int my_psk_client_cb(WOLFSSL* ssl, const char* hint,
         char* identity, unsigned int id_max_len, unsigned char* key,
-        unsigned int key_max_len)
+        unsigned int key_max_len, const char** ciphersuite)
 {
     (void)ssl;
     (void)hint;
@@ -77,28 +77,18 @@ static inline unsigned int my_psk_client_cb(WOLFSSL* ssl, const char* hint,
     /* see internal.h MAX_PSK_ID_LEN for PSK identity limit */
     strncpy(identity, kIdentityStr, id_max_len);
 
-    if (wolfSSL_GetVersion(ssl) < WOLFSSL_TLSV1_3) {
-        /* test key in hex is 0x1a2b3c4d , in decimal 439,041,101 , we're using
-           unsigned binary */
-        key[0] = 0x1a;
-        key[1] = 0x2b;
-        key[2] = 0x3c;
-        key[3] = 0x4d;
+    int i;
+    int b = 0x01;
 
-        return 4;   /* length of key in octets or 0 for error */
+    for (i = 0; i < 32; i++, b += 0x22) {
+        if (b >= 0x100)
+            b = 0x01;
+        key[i] = b;
     }
-    else {
-        int i;
-        int b = 0x01;
 
-        for (i = 0; i < 32; i++, b += 0x22) {
-            if (b >= 0x100)
-                b = 0x01;
-            key[i] = b;
-        }
+    *ciphersuite = config[config_index];
 
-        return 32;   /* length of key in octets or 0 for error */
-    }
+    return 32;   /* length of key in octets or 0 for error */
 }
 #endif
 
@@ -294,10 +284,10 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
     }
 
 #else /* !def MODULE_WOLFSSL_PSK */
-    wolfSSL_CTX_set_psk_client_callback(ctx, my_psk_client_cb);
+    wolfSSL_CTX_set_psk_client_tls13_callback(ctx, my_psk_client_cb);
 #endif
 
-    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, "TLS13-AES128-CCM-SHA256")) != SSL_SUCCESS) {
+    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, config[config_index])) != SSL_SUCCESS) {
             printf("ret = %d\n", ret);
             printf("Error :can't set cipher\n");
             wolfSSL_CTX_free(ctx);
@@ -343,7 +333,7 @@ int start_tls_client(int argc, char **argv)
 
     char buf[PAYLOAD_TLS_SIZE];
 
-    wolfSSL_Debugging_ON();
+    //wolfSSL_Debugging_ON();
 
     wolfSSL_Init();
 
@@ -379,7 +369,7 @@ int start_tls_client(int argc, char **argv)
     printf("Cipher Suite is %s\n",
            wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslCli)));
 
-    char send_msg[] = "Hello from TLS 1.3 client!";
+    char send_msg[] = "This is ATLS client!\n";
 
     printf("Sending hello message...\n");
     wolfSSL_write(sslCli, send_msg, strlen(send_msg));
