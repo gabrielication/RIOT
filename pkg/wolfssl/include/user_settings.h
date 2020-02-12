@@ -94,6 +94,12 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define HAVE_AESCCM
 #endif
 
+#undef HAVE_AESGCM
+#ifdef MODULE_WOLFCRYPT_AESGCM
+#define HAVE_AESGCM
+#define GCM_SMALL
+#endif
+
 #undef HAVE_FFDHE_2048
 #ifdef MODULE_WOLFCRYPT_FFDHE_2048
 #define HAVE_FFDHE_2048
