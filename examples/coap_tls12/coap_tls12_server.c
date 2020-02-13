@@ -41,7 +41,7 @@
 #endif
 
 static int config_index = 0;
-static char *config[] = {"PSK-AES256-CCM-8", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES256-CCM-8"};
+static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
@@ -215,14 +215,6 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
         LOG(LOG_ERROR, "Failed to load private key from memory.\r\n");
         return NULL;
     }
-
-    #ifdef MODULE_WOLFCRYPT_ECC
-
-        //TODO: to be refined
-
-        config_index = 2;
-        
-    #endif
     
 #else
     wolfSSL_CTX_set_psk_server_callback(ctx, my_psk_server_cb);
@@ -263,6 +255,8 @@ int start_tls_server(int argc, char **argv)
     WOLFSSL* sslServ;
     WOLFSSL_CTX* ctxServ = NULL;
 
+    wolfSSL_Debugging_ON();
+
     wolfSSL_Init();
 
     sslServ = Server(ctxServ, NULL, 0);
@@ -292,8 +286,11 @@ int start_tls_server(int argc, char **argv)
     }
 
     printf("SERVER CONNECTED SUCCESSFULLY!\n");
+    printf("TLS version is %s\n", wolfSSL_get_version(sslServ));
+    printf("Cipher Suite is %s\n",
+           wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslServ)));
 
-    char reply[] = "TLS 1.2 OK!";
+    char reply[] = "Hello from DTLS 1.2 server!";
 
     wolfSSL_read(sslServ, buf, PAYLOAD_TLS_SIZE);
     buf[size_payload] = (char)0;

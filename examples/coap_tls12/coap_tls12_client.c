@@ -42,7 +42,7 @@
 static const char* kIdentityStr = "Client_identity";
 
 static int config_index = 0;
-static char *config[] = {"PSK-AES256-CCM-8", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES256-CCM-8"};
+static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
@@ -289,14 +289,6 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
         return NULL;
     }
 
-    #ifdef MODULE_WOLFCRYPT_ECC
-
-        //TODO: to be refined
-
-        config_index = 2;
-        
-    #endif
-
 #else /* !def MODULE_WOLFSSL_PSK */
     wolfSSL_CTX_set_psk_client_callback(ctx, my_psk_client_cb);
 #endif
@@ -347,6 +339,8 @@ int start_tls_client(int argc, char **argv)
 
     char buf[PAYLOAD_TLS_SIZE];
 
+    wolfSSL_Debugging_ON();
+
     wolfSSL_Init();
 
     //  Example usage (not implemented)
@@ -377,6 +371,9 @@ int start_tls_client(int argc, char **argv)
     }
 
     printf("CLIENT CONNECTED SUCCESSFULLY!\n");
+    printf("TLS version is %s\n", wolfSSL_get_version(sslCli));
+    printf("Cipher Suite is %s\n",
+           wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslCli)));
 
     char send_msg[] = "Hello from TLS 1.2 client!";
 
