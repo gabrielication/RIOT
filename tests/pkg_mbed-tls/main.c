@@ -183,7 +183,7 @@ int main( int argc, char *argv[] )
         return( ret );
 #endif
 
-#if defined(MBEDTLS_X509_USE_C)
+#if defined(MBEDTLS_CERTS_C) && defined(MBEDTLS_SHA1_C)
     if( ( ret = mbedtls_x509_self_test( v ) ) != 0 )
         return( ret );
 #endif
