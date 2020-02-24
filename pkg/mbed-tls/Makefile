@@ -1,6 +1,6 @@
 PKG_NAME=mbed-tls
-PKG_URL=git@github.com:ARMmbed/mbed-tls-tls-1.3-prototype.git
-PKG_VERSION=e3a6a8cd8dc18ab58f3a3095b8fa4fab8231c0a8
+PKG_URL=https://github.com/ARMmbed/mbedtls.git
+PKG_VERSION=0fce215851cc069c5b5def12fcc18725055fa6cf
 
 .PHONY: all
 
