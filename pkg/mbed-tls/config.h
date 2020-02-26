@@ -514,7 +514,7 @@
 *      MBEDTLS_TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA
 *      MBEDTLS_TLS_ECDHE_ECDSA_WITH_RC4_128_SHA
 */
-#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
+//#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
 
 
 /**
@@ -995,7 +995,7 @@
 *
 * Comment this macro to disable support for server name indication in SSL
 */
-#define MBEDTLS_SSL_SERVER_NAME_INDICATION
+//#define MBEDTLS_SSL_SERVER_NAME_INDICATION
 
 
 /**
@@ -1067,7 +1067,7 @@
 *
 * Comment to skip keyUsage checking for both CA and leaf certificates.
 */
-#define MBEDTLS_X509_CHECK_KEY_USAGE
+//#define MBEDTLS_X509_CHECK_KEY_USAGE
 
 /**
 * \def MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE
@@ -1080,7 +1080,7 @@
 *
 * Comment to skip extendedKeyUsage checking for certificates.
 */
-#define MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE
+//#define MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE
 
 /**
 * \def MBEDTLS_X509_RSASSA_PSS_SUPPORT
@@ -1843,7 +1843,7 @@
 *
 * This module is required for the X.509 parsing modules.
 */
-#define MBEDTLS_X509_USE_C
+//#define MBEDTLS_X509_USE_C
 
 /**
 * \def MBEDTLS_X509_CRT_PARSE_C
@@ -1859,7 +1859,7 @@
 *
 * This module is required for X.509 certificate parsing.
 */
-#define MBEDTLS_X509_CRT_PARSE_C
+//#define MBEDTLS_X509_CRT_PARSE_C
 
 /**
 * \def MBEDTLS_X509_CRL_PARSE_C
@@ -1873,7 +1873,7 @@
 *
 * This module is required for X.509 CRL parsing.
 */
-#define MBEDTLS_X509_CRL_PARSE_C
+//#define MBEDTLS_X509_CRL_PARSE_C
 
 /**
 * \def MBEDTLS_X509_CSR_PARSE_C

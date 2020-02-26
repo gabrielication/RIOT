@@ -19,7 +19,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #define RESPONSE "This is ATLS server!\n"
 
@@ -53,10 +53,11 @@ extern kernel_pid_t main_pid;
 static int offset = 0;
 static int wake_flag = 0;
 
-static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
-static int tls_version = MBEDTLS_SSL_MINOR_VERSION_4;
+static int tls_version = MBEDTLS_SSL_MINOR_VERSION_3;
 
 static int cipher[2];
+
+static int recv_count;
 
 static void usage(const char *cmd_name)
 {
@@ -104,7 +105,11 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    //printf("Server RECV... %d\n",len);
+    printf("Server RECV... %d\n",recv_count);
+
+    if(recv_count == 4){
+        //thread_wakeup(main_pid);
+    }
     //printf("RECV ssl state %d\n",ssl.state);
 
     if(!offset){
@@ -125,13 +130,10 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         printf("\n/*-------------------- END RECV -----------------*/\n");
     }
 
-    if(offset == size_payload){
-        offset = 0;
-    }
-
-    if(ssl.state == MBEDTLS_SSL_CLIENT_FINISHED){
+    if(recv_count == 1 || recv_count == 2){
         if(wake_flag){
             size_payload = 0;
+            offset = 0;
             thread_wakeup(main_pid);
             wake_flag = 0;
         } else {
@@ -139,10 +141,15 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         }
     }
 
+    if(offset == size_payload){
+        offset = 0;
+        recv_count += 1;
+    }
+
     return len;
 }
 
-int mbedtls_server_init()
+int mbedtls_server_init(void)
 {
     int ret;
 
@@ -278,8 +285,7 @@ int mbedtls_server_init()
 
 #endif /* MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED */    
 
-    mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
-
+/*
     cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_128_CCM_SHA256");
     cipher[1] = 0;
 
@@ -294,7 +300,7 @@ int mbedtls_server_init()
     ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
 
     mbedtls_ssl_conf_ciphersuites( &conf, cipher );
-
+*/
     #if defined(MBEDTLS_X509_CRT_PARSE_C)
 
         mbedtls_ssl_conf_ca_chain( &conf, srvcert.next, NULL );
@@ -352,34 +358,6 @@ int start_server(int argc, char **argv)
     int len;
     unsigned char buf[MBEDTLS_SSL_MAX_CONTENT_LEN + 1];
 
-    if (argc > 1){
-        if (strcmp(argv[1], "psk") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
-        else if (strcmp(argv[1], "psk_dhe") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_DHE_KE;
-        else if (strcmp(argv[1], "ecdhe_ecdsa") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_ECDHE_ECDSA;
-        else if (strcmp(argv[1], "psk_all") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_ALL;
-        else if (strcmp(argv[1], "all") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_ALL;
-        else{
-            usage(argv[0]);
-            return -1;
-        }
-    }
-
-    if (argc > 2){
-        if (strcmp(argv[2], "tls1_2") == 0)
-                tls_version = MBEDTLS_SSL_MINOR_VERSION_3;
-        else if (strcmp(argv[2], "tls1_3") == 0)
-                tls_version = MBEDTLS_SSL_MINOR_VERSION_4;
-        else{
-            usage(argv[0]);
-            return -1;
-        }
-    }
-
     printf("Initializing server...\n");
 
     //mbedtls_debug_set_threshold(3);
@@ -403,8 +381,8 @@ int start_server(int argc, char **argv)
     }
 
     printf(">>> SERVER CONNECTED SUCCESSFULLY!\n");
-    printf("Protocol is %s \nCiphersuite is %s\nKey Exchange Mode is %s\n\n",
-        mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl), mbedtls_ssl_get_key_exchange_name(&ssl));
+    printf("Protocol is %s \nCiphersuite is %s\n\n",
+        mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl));
 
     len = sizeof(buf) - 1;
     memset( buf, 0, sizeof(buf) );
@@ -418,12 +396,6 @@ int start_server(int argc, char **argv)
     len = sprintf( (char *) buf, RESPONSE );
 
     ret = mbedtls_ssl_write( &ssl, buf, len );
-
-    len = ret;
-
-    len = sizeof(buf) - 1;
-    memset( buf, 0, sizeof(buf) );
-    ret = mbedtls_ssl_read( &ssl, buf, len );
 
     mbedtls_ssl_close_notify( &ssl );
 

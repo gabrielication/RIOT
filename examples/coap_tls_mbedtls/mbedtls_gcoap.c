@@ -113,10 +113,11 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
     if (req_state == GCOAP_MEMO_TIMEOUT) {
         printf("gcoap: timeout for msg ID %02u\n", coap_get_id(pdu));
         
-        //retry
+        /*retry
         if(last_post) coap_post();
         else if (last_get) coap_get();
-
+        */
+        
         return;
     }
     else if (req_state == GCOAP_MEMO_ERR) {
