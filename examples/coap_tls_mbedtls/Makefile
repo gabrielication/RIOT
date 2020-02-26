@@ -35,7 +35,7 @@ USEMODULE += gnrc_icmpv6_echo
 USEMODULE += od
 USEMODULE += fmt
 
-CFLAGS += -DGCOAP_PDU_BUF_SIZE=2048
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=1024
 
 # A larger stack size is required if using ECC or RSA
 ifneq ($(BOARD),native)

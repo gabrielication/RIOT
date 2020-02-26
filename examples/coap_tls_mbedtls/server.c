@@ -285,8 +285,13 @@ int mbedtls_server_init(void)
 
 #endif /* MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED */    
 
-/*
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_128_CCM_SHA256");
+/**
+    PSK:    TLS-PSK-WITH-AES-128-CCM
+            TLS-PSK-WITH-AES-128-GCM-SHA256 
+            TLS-PSK-WITH-AES-256-GCM-SHA384
+**/
+
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-PSK-WITH-AES-128-CCM");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -300,7 +305,7 @@ int mbedtls_server_init(void)
     ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
 
     mbedtls_ssl_conf_ciphersuites( &conf, cipher );
-*/
+
     #if defined(MBEDTLS_X509_CRT_PARSE_C)
 
         mbedtls_ssl_conf_ca_chain( &conf, srvcert.next, NULL );
