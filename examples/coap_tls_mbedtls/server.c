@@ -19,7 +19,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #define RESPONSE "This is ATLS server!\n"
 
@@ -105,11 +105,8 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    printf("Server RECV... %d\n",recv_count);
+    //printf("Server RECV... %d\n",recv_count);
 
-    if(recv_count == 4){
-        //thread_wakeup(main_pid);
-    }
     //printf("RECV ssl state %d\n",ssl.state);
 
     if(!offset){
@@ -289,7 +286,7 @@ int mbedtls_server_init(void)
     PSK:    TLS-PSK-WITH-AES-128-CCM
             TLS-PSK-WITH-AES-128-GCM-SHA256 
             TLS-PSK-WITH-AES-256-GCM-SHA384
-**/
+
 
     cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-PSK-WITH-AES-128-CCM");
     cipher[1] = 0;
@@ -305,7 +302,7 @@ int mbedtls_server_init(void)
     ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
 
     mbedtls_ssl_conf_ciphersuites( &conf, cipher );
-
+**/
     #if defined(MBEDTLS_X509_CRT_PARSE_C)
 
         mbedtls_ssl_conf_ca_chain( &conf, srvcert.next, NULL );

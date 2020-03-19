@@ -19,7 +19,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #define GET_REQUEST "This is ATLS client!\n"
 
@@ -147,7 +147,7 @@ int coap_get(void)
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
 
-    printf("Client SEND... %d\n",send_count);
+    //printf("Client SEND... %d\n",send_count);
     //printf("SEND ssl state %d\n",ssl.state);
 
     if (send_count == 2 || send_count == 3){
@@ -180,10 +180,14 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    printf("Client RECV...%d\n",recv_count);
+    //printf("Client RECV...%d\n",recv_count);
     //printf("RECV ssl state %d\n",ssl.state);
 
+#if defined(MBEDTLS_CERTS_C)
+    if(recv_count == 1 || recv_count == 2 || recv_count == 3 || recv_count == 5){
+#else
     if(recv_count == 1 || recv_count == 3){
+#endif
         if(!get_flag) coap_get();
             get_flag = 1;
     }
@@ -370,7 +374,7 @@ int mbedtls_client_init(void)
     PSK:    TLS-PSK-WITH-AES-128-CCM
             TLS-PSK-WITH-AES-128-GCM-SHA256 
             TLS-PSK-WITH-AES-256-GCM-SHA384
-**/
+
 
     cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-PSK-WITH-AES-128-CCM");
     cipher[1] = 0;
@@ -383,6 +387,7 @@ int mbedtls_client_init(void)
     }
 
     mbedtls_ssl_conf_ciphersuites( &conf, cipher );
+**/
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
