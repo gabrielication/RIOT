@@ -150,7 +150,6 @@ int mbedtls_server_init(void)
 {
     int ret;
 
-    unsigned char buf[1024];
     const char *pers = "ssl_server";
 
     mbedtls_ssl_init( &ssl );

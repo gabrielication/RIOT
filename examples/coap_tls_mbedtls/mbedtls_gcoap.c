@@ -34,7 +34,7 @@
 #define COAP_POST 2
 #define COAP_GET 1
 
-#define PAYLOAD_TLS_SIZE 2048
+#define PAYLOAD_TLS_SIZE 1256
 
 static ssize_t _encode_link(const coap_resource_t *resource, char *buf,
                             size_t maxlen, coap_link_encoder_ctx_t *context);
