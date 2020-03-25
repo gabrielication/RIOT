@@ -375,8 +375,13 @@ int mbedtls_client_init(void)
             TLS-PSK-WITH-AES-128-GCM-SHA256 
             TLS-PSK-WITH-AES-256-GCM-SHA384
 
+            TLS-ECDHE-ECDSA-WITH-AES-128-CCM
+            TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256
+            TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-PSK-WITH-AES-128-CCM");
+**/
+
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -387,7 +392,7 @@ int mbedtls_client_init(void)
     }
 
     mbedtls_ssl_conf_ciphersuites( &conf, cipher );
-**/
+
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
