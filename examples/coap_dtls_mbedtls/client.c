@@ -20,7 +20,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #define GET_REQUEST "This is ATLS client!\n"
 
@@ -40,14 +40,13 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
 static mbedtls_ssl_config conf;
 
+static mbedtls_timing_delay_context timer;
+
 #if defined(MBEDTLS_X509_CRT_PARSE_C)
     static mbedtls_x509_crt cacert;
 #endif
 
-static mbedtls_timing_delay_context timer;
-
-static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
-static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
+static int tls_version = MBEDTLS_SSL_MINOR_VERSION_3;
 
 extern char payload_tls[];
 extern int size_payload;
@@ -64,9 +63,12 @@ char *addr_str;
 static int offset = 0;
 static int get_flag = 0;
 
+static int send_count = 0;
+static int recv_count = 0;
+
 static void usage(const char *cmd_name)
 {
-    LOG(LOG_ERROR, "\nUsage: %s <server-address> [optional: <key_exchange_mode> <tls_version>]\n\n<key_exchange_mode: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n<tls_version: dtls1_2, dtls1_3 (default)>\n", cmd_name);
+    LOG(LOG_ERROR, "\nUsage: %s <server-address> [optional: <key_exchange_mode> <tls_version>]\n\n<key_exchange_mode: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n<tls_version: tls1_2, tls1_3 (default)>\n", cmd_name);
 }
 
 static void my_debug( void *ctx, int level,
@@ -148,12 +150,11 @@ int coap_get(void)
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
 
-    //printf("Client SEND... %d\n",len);
+    printf("Client SEND... %d\n",send_count);
     //printf("SEND ssl state %d\n",ssl.state);
 
-    
-    if(ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER && ssl.out_msgtype != MBEDTLS_SSL_MSG_ALERT){
-        //mutex_lock(&client_send_lock);
+    if (send_count == -2 || send_count == -3){
+        mutex_lock(&client_send_lock);
     }
 
     memcpy(payload_tls,buf,len);
@@ -173,6 +174,8 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 
     coap_post();
 
+    send_count += 1;
+
     return len;
 }
 
@@ -180,10 +183,14 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    //printf("Client RECV...%d\n",len);
+    printf("Client RECV...%d\n",recv_count);
     //printf("RECV ssl state %d\n",ssl.state);
 
-    if(ssl.state > MBEDTLS_SSL_SERVER_HELLO && ssl.state < MBEDTLS_SSL_HANDSHAKE_OVER){
+#if defined(MBEDTLS_CERTS_C)
+    if(recv_count == 1 || recv_count == -2 || recv_count == -3 || recv_count == -5){
+#else
+    if(recv_count == 1 || recv_count == 3){
+#endif
         coap_get();
     }
 
@@ -192,16 +199,18 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
     memcpy(buf, payload_tls, len);
 
     if(VERBOSE){
-        printf("/*-------------------- CLIENT RECV -----------------*/\n");
+        printf("/-------------------- CLIENT RECV -----------------/\n");
         for (i = 0; i < size_payload; i++) {
             printf("%02x ", (unsigned char) buf[i]);
             if (i > 0 && (i % 16) == 0)
                 printf("\n");
         }
-        printf("\n/*-------------------- END RECV -----------------*/\n");
+        printf("\n/-------------------- END RECV -----------------/\n");
     }
+
+    recv_count += 1;
     
-    return size_payload;
+    return len;
 }
 
 static void mbedtls_client_exit(int ret)
@@ -216,9 +225,9 @@ static void mbedtls_client_exit(int ret)
     }
 #endif
 
-#if defined(MBEDTLS_X509_CRT_PARSE_C)
-    mbedtls_x509_crt_free( &cacert );
-#endif
+    #if defined(MBEDTLS_X509_CRT_PARSE_C)
+        mbedtls_x509_crt_free( &cacert );
+    #endif
 
     mbedtls_ssl_free( &ssl );
     mbedtls_ssl_config_free( &conf );
@@ -228,7 +237,7 @@ static void mbedtls_client_exit(int ret)
     printf("Exiting mbedtls...\n");
 }
 
-int mbedtls_client_init()
+int mbedtls_client_init(void)
 {
     int ret;
 
@@ -236,7 +245,6 @@ int mbedtls_client_init()
 
     mbedtls_ssl_init( &ssl );
     mbedtls_ssl_config_init( &conf );
-    
     mbedtls_ctr_drbg_init( &ctr_drbg );
 
     mbedtls_entropy_init( &entropy );
@@ -248,19 +256,20 @@ int mbedtls_client_init()
         return ret;
     }
 
-#if defined(MBEDTLS_X509_CRT_PARSE_C)
+    #if defined(MBEDTLS_X509_CRT_PARSE_C)
 
-    mbedtls_x509_crt_init( &cacert );
-    // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
-    ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) mbedtls_test_cas_pem,
-                          mbedtls_test_cas_pem_len );
-    if( ret < 0 )
-    {
-        printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
-        return ret;
-    }
+        mbedtls_x509_crt_init( &cacert );
+        // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
+        ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) mbedtls_test_cas_pem,
+                              mbedtls_test_cas_pem_len );
 
-#endif
+        if( ret < 0 )
+        {
+            printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
+            return ret;
+        }
+
+    #endif
 
     if( ( ret = mbedtls_ssl_config_defaults( &conf,
                     MBEDTLS_SSL_IS_CLIENT,
@@ -281,18 +290,23 @@ int mbedtls_client_init()
     mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
     **/
 
-    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, dtls_version);
-    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, dtls_version);
+    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, tls_version);
+    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, tls_version);
 
     /* OPTIONAL is not optimal for security,
      * but makes interop easier in this simplified example */
     mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
 
-#if defined(MBEDTLS_X509_CRT_PARSE_C)
-
-    mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
-
+#if defined(MBEDTLS_TIMING_C)
+    mbedtls_ssl_set_timer_cb( &ssl, &timer, mbedtls_timing_set_delay,
+                                            mbedtls_timing_get_delay );
 #endif
+
+    #if defined(MBEDTLS_X509_CRT_PARSE_C)
+
+        mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
+
+    #endif
 
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
@@ -357,16 +371,18 @@ int mbedtls_client_init()
 
 #endif /* MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED */
 
-    mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
+/**
+    PSK:    TLS-PSK-WITH-AES-128-CCM
+            TLS-PSK-WITH-AES-128-GCM-SHA256 
+            TLS-PSK-WITH-AES-256-GCM-SHA384
 
-#if defined(MBEDTLS_TIMING_C)
-    mbedtls_ssl_set_timer_cb( &ssl, &timer, mbedtls_timing_set_delay,
-                                            mbedtls_timing_get_delay );
-#endif
+            TLS-ECDHE-ECDSA-WITH-AES-128-CCM
+            TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256
+            TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384
 
-    mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_128_CCM_SHA256");
+
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -376,10 +392,8 @@ int mbedtls_client_init()
                 return ret;
     }
 
-    const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
-    ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
-
     mbedtls_ssl_conf_ciphersuites( &conf, cipher );
+**/
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
@@ -387,14 +401,16 @@ int mbedtls_client_init()
         return ret;
     }
 
-#if defined(MBEDTLS_X509_CRT_PARSE_C)
-    if( ( ret = mbedtls_ssl_set_hostname( &ssl, "ssl_server" ) ) != 0 )
-    {
-        mbedtls_printf( " failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret );
-        return ret;
-    }
-#endif
-    
+    #if defined(MBEDTLS_X509_CRT_PARSE_C)
+
+        if( ( ret = mbedtls_ssl_set_hostname( &ssl, "ssl_server" ) ) != 0 )
+        {
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret );
+            return ret;
+        }
+
+    #endif
+
     mbedtls_ssl_set_bio( &ssl, NULL, mbedtls_ssl_send, mbedtls_ssl_recv, NULL );
 
     return ret;
@@ -416,37 +432,9 @@ int start_client(int argc, char **argv)
 
     addr_str = argv[1];
 
-    if (argc > 2){
-        if (strcmp(argv[2], "psk") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
-        else if (strcmp(argv[2], "psk_dhe") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_DHE_KE;
-        else if (strcmp(argv[2], "ecdhe_ecdsa") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_ECDHE_ECDSA;
-        else if (strcmp(argv[2], "psk_all") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_ALL;
-        else if (strcmp(argv[2], "all") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_ALL;
-        else{
-            usage(argv[0]);
-            return -1;
-        }
-    }
-
-    if (argc > 3){
-        if (strcmp(argv[3], "dtls1_2") == 0)
-                dtls_version = MBEDTLS_SSL_MINOR_VERSION_3;
-        else if (strcmp(argv[3], "dtls1_3") == 0)
-                dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
-        else{
-            usage(argv[0]);
-            return -1;
-        }
-    }
-
     printf("Initializing client...\n");
 
-    //mbedtls_debug_set_threshold(3);
+    //mbedtls_debug_set_threshold(5);
 
     ret = mbedtls_client_init();
     if( ret != 0){
@@ -485,24 +473,12 @@ int start_client(int argc, char **argv)
     }
 
     printf("CLIENT CONNECTED SUCCESSFULLY!\n");
-    printf("Protocol is %s \nCiphersuite is %s\nKey Exchange Mode is %s\n\n",
-        mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl), mbedtls_ssl_get_key_exchange_name(&ssl));
-
-    len = sizeof( buf ) - 1;
-    memset( buf, 0, sizeof( buf ) );
-    ret = mbedtls_ssl_read( &ssl, buf, len );
+    printf("Protocol is %s \nCiphersuite is %s\n\n",
+        mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl));
 
     len = sprintf( (char *) buf, GET_REQUEST );
 
-    while( ( ret = mbedtls_ssl_write( &ssl, buf, len ) ) <= 0 )
-    {
-        if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
-        {
-            mbedtls_printf( " failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
-            mbedtls_client_exit(ret);
-            return ret;
-        }
-    }
+    ret = mbedtls_ssl_write( &ssl, buf, len );
 
     len = ret;
 

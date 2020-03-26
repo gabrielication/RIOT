@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = coap_dtls_mbedtls
+APPLICATION = coap_tls_mbedtls
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
@@ -35,7 +35,7 @@ USEMODULE += gnrc_icmpv6_echo
 USEMODULE += od
 USEMODULE += fmt
 
-CFLAGS += -DGCOAP_PDU_BUF_SIZE=1024
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=1512
 
 # A larger stack size is required if using ECC or RSA
 ifneq ($(BOARD),native)

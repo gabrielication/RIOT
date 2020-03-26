@@ -31,10 +31,10 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-#define PAYLOAD_TLS_SIZE 1024
-
 #define COAP_POST 2
 #define COAP_GET 1
+
+#define PAYLOAD_TLS_SIZE 1512
 
 static ssize_t _encode_link(const coap_resource_t *resource, char *buf,
                             size_t maxlen, coap_link_encoder_ctx_t *context);
@@ -113,10 +113,11 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
     if (req_state == GCOAP_MEMO_TIMEOUT) {
         printf("gcoap: timeout for msg ID %02u\n", coap_get_id(pdu));
         
-        //retry
+        /*retry
         if(last_post) coap_post();
         else if (last_get) coap_get();
-
+        */
+        
         return;
     }
     else if (req_state == GCOAP_MEMO_ERR) {
