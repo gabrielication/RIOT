@@ -332,7 +332,7 @@ int start_dtls_client(int argc, char **argv)
     printf("Cipher Suite is %s\n",
            wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslCli)));
 
-    char send_msg[] = "Hello from DTLS 1.2 client!";
+    char send_msg[] = "This is ATLS client!";
 
     printf("Sending hello message...\n");
     wolfSSL_write(sslCli, send_msg, strlen(send_msg));

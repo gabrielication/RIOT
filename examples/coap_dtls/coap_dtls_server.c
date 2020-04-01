@@ -139,13 +139,13 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) ctx;
 
     int i;
-    printf("SERVER RECV...\n");
+    //printf("SERVER RECV...\n");
 
     mutex_lock(&server_lock);
 
     sz = size_payload;
 
-    printf("sz %d payload %d\n",sz,size_payload);
+    //printf("sz %d payload %d\n",sz,size_payload);
 
     memcpy(buf, payload_dtls, size_payload);
 
@@ -271,7 +271,7 @@ int start_dtls_server(int argc, char **argv)
     printf("Cipher Suite is %s\n",
            wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslServ)));
 
-    char reply[] = "DTLS 1.2 OK!";
+    char reply[] = "This is ATLS server!";
 
     wolfSSL_read(sslServ, buf, PAYLOAD_DTLS_SIZE);
     buf[size_payload] = (char)0;
