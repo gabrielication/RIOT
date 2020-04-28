@@ -28,7 +28,7 @@
 #include "thread.h"
 
 #define DEBUG 1
-#define VERBOSE 1
+#define VERBOSE 0
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -40,7 +40,7 @@
 
 #endif
 
-static int config_index = 0;
+static int config_index = 5;
 static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
@@ -255,7 +255,7 @@ int start_tls_server(int argc, char **argv)
     WOLFSSL* sslServ;
     WOLFSSL_CTX* ctxServ = NULL;
 
-    wolfSSL_Debugging_ON();
+    //wolfSSL_Debugging_ON();
 
     wolfSSL_Init();
 
@@ -290,7 +290,7 @@ int start_tls_server(int argc, char **argv)
     printf("Cipher Suite is %s\n",
            wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslServ)));
 
-    char reply[] = "Hello from DTLS 1.2 server!";
+    char reply[] = "This is ATLS server!";
 
     wolfSSL_read(sslServ, buf, PAYLOAD_TLS_SIZE);
     buf[size_payload] = (char)0;

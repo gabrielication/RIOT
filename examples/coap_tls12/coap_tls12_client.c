@@ -26,7 +26,7 @@
 #include "net/gcoap.h"
 #include "mutex.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -41,7 +41,7 @@
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
 
-static int config_index = 0;
+static int config_index = 5;
 static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
@@ -339,7 +339,7 @@ int start_tls_client(int argc, char **argv)
 
     char buf[PAYLOAD_TLS_SIZE];
 
-    wolfSSL_Debugging_ON();
+    //wolfSSL_Debugging_ON();
 
     wolfSSL_Init();
 
@@ -375,7 +375,7 @@ int start_tls_client(int argc, char **argv)
     printf("Cipher Suite is %s\n",
            wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslCli)));
 
-    char send_msg[] = "Hello from TLS 1.2 client!";
+    char send_msg[] = "This is ATLS client!";
 
     printf("Sending hello message...\n");
     wolfSSL_write(sslCli, send_msg, strlen(send_msg));
