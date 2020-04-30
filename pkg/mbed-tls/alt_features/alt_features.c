@@ -27,10 +27,15 @@ int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t 
 {
     ((void) data);
 
+#ifdef MODULE_PERIPH_HWRNG
     hwrng_read((void*) output, len);
 
     *olen = len;
-
+#else
+    *output= random_uint32();
+    *olen = 4;
+#endif
+    
     return 0;
 }
 
