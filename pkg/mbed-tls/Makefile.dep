@@ -1,5 +1,6 @@
-USEMODULE += periph_hwrng
+FEATURES_OPTIONAL += periph_hwrng
 USEMODULE += mbed_alt_features
+USEMODULE += random
 
 ifneq ($(BOARD),native)
   USEMODULE += periph_rtt
