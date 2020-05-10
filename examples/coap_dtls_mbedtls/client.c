@@ -20,7 +20,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #define GET_REQUEST "This is ATLS client!\n"
 
@@ -432,7 +432,7 @@ int start_client(int argc, char **argv)
 
     printf("Initializing client...\n");
 
-    //mbedtls_debug_set_threshold(5);
+    mbedtls_debug_set_threshold(5);
 
     ret = mbedtls_client_init();
     if( ret != 0){

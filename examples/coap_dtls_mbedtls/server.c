@@ -10,6 +10,7 @@
 #include "mbedtls/debug.h"
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
+#include "mbedtls/ssl_cookie.h"
 #include "mbedtls/timing.h"
 
 #include "mutex.h"
@@ -20,7 +21,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #define RESPONSE "This is ATLS server!\n"
 
@@ -37,6 +38,8 @@ static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
 static mbedtls_ssl_config conf;
+static mbedtls_ssl_cookie_ctx cookie_ctx;
+static unsigned char info[5] = {'c', 'o', 'a', 'p', '\0'};
 
 static mbedtls_timing_delay_context timer;
 
@@ -143,6 +146,7 @@ int mbedtls_server_init(void)
 
     mbedtls_ssl_init( &ssl );
     mbedtls_ssl_config_init( &conf );
+    mbedtls_ssl_cookie_init( &cookie_ctx );
     mbedtls_ctr_drbg_init( &ctr_drbg );
 
     mbedtls_entropy_init( &entropy );
@@ -158,7 +162,7 @@ int mbedtls_server_init(void)
     #if defined(MBEDTLS_TIMING_C)
     mbedtls_ssl_set_timer_cb( &ssl, &timer, mbedtls_timing_set_delay,
                                             mbedtls_timing_get_delay );
-#endif
+    #endif
 
     #if defined(MBEDTLS_X509_CRT_PARSE_C)
         mbedtls_x509_crt_init( &srvcert );
@@ -311,6 +315,22 @@ int mbedtls_server_init(void)
 
     #endif
 
+    if( ( ret = mbedtls_ssl_cookie_setup( &cookie_ctx,
+                                  mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
+    {
+        printf( " failed\n  ! mbedtls_ssl_cookie_setup returned %d\n\n", ret );
+        return ret;
+    }
+
+    mbedtls_ssl_conf_dtls_cookies( &conf, mbedtls_ssl_cookie_write, mbedtls_ssl_cookie_check,
+                               &cookie_ctx );
+
+    if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
+    {
+        printf( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
+        return ret;
+    }
+
     mbedtls_ssl_set_mtu( &ssl, 1000 );
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
@@ -361,7 +381,7 @@ int start_server(int argc, char **argv)
 
     printf("Initializing server...\n");
 
-    //mbedtls_debug_set_threshold(5);
+    mbedtls_debug_set_threshold(5);
 
     ret = mbedtls_server_init();
     if( ret != 0){
@@ -369,11 +389,28 @@ int start_server(int argc, char **argv)
         mbedtls_server_exit(ret);
         return ret;
     }
+
+reset:
+    mbedtls_ssl_session_reset( &ssl );
+
+    if( ( ret = mbedtls_ssl_set_client_transport_id( &ssl,
+                    info, sizeof(info) ) ) != 0 )
+    {
+        printf( " failed\n  ! "
+                "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", -ret );
+        return ret;
+    }
     
     printf("Proceeding to handshake...\n");
     while( ( ret = mbedtls_ssl_handshake( &ssl ) ) != 0 )
     {
-        if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
+        if( ret == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
+        {
+            printf( " hello verification requested\n" );
+            ret = 0;
+            goto reset;
+        }
+        else if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
         {
             mbedtls_printf( " failed\n  ! mbedtls_ssl_handshake returned %d\n\n", ret );
             mbedtls_server_exit(ret);
