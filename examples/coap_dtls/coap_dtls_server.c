@@ -41,7 +41,7 @@
 
 #endif
 
-static int config_index = 5;
+static int config_index = 0;
 static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
@@ -158,7 +158,7 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         }
         printf("\n/*-------------------- END RECV -----------------*/\n");
     }
-
+/*
     if(ssl->options.acceptState == SERVER_HELLO_DONE){
         if(!thread_wakeup_flag){
             size_payload = 0;
@@ -166,7 +166,7 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
             thread_wakeup(main_pid);
         }
     }
-
+*/
     return sz;
 }
 
@@ -211,6 +211,8 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
 
     wolfSSL_SetIORecv(ctx, server_recv);
     wolfSSL_SetIOSend(ctx, server_send);
+
+    wolfSSL_CTX_set_group_messages(ctx);
 
     if ((ssl = wolfSSL_new(ctx)) == NULL) {
         printf("issue when creating ssl\n");

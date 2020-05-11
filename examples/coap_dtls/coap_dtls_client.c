@@ -39,7 +39,7 @@
 
 #endif
 
-static int config_index = 5;
+static int config_index = 0;
 static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
@@ -171,7 +171,7 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     //printf("CLIENT SEND...\n");
 
-    if(ssl->options.connectState == FIRST_REPLY_FOURTH) mutex_lock(&client_send_lock);
+    //if(ssl->options.connectState == FIRST_REPLY_FOURTH) mutex_lock(&client_send_lock);
 
     memcpy(payload_dtls,buf,sz);
     size_payload = sz;
@@ -202,11 +202,11 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     int i;
 
     //printf("CLIENT RECV...\n");
-
+/*
     if((ssl->options.serverState > SERVER_HELLOVERIFYREQUEST_COMPLETE) && (ssl->options.serverState < SERVER_HELLODONE_COMPLETE)){
             coap_get();
     }
-    
+*/    
     mutex_lock(&client_lock);
 
     memcpy(buf, payload_dtls, size_payload);
@@ -259,6 +259,8 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
 
     wolfSSL_SetIORecv(ctx, client_recv);
     wolfSSL_SetIOSend(ctx, client_send);
+
+    wolfSSL_CTX_set_group_messages(ctx);
 
     if ((ssl = wolfSSL_new(ctx)) == NULL) {
         printf("issue when creating ssl\n");
