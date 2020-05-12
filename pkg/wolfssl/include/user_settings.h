@@ -182,7 +182,6 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define WOLFSSL_HAVE_SP_ECC
 #define ECC_TIMING_RESISTANT
 #define HAVE_SUPPORTED_CURVES
-#define HAVE_AESCCM
 #endif
 
 #undef HAVE_BLAKE2B
@@ -309,9 +308,6 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 
 #define NO_OLD_TLS
 #define HAVE_AES_DECRYPT
-#define HAVE_AESGCM
-#define GCM_SMALL
-#define HAVE_AESCCM
 #define WOLFSSL_AES_COUNTER
 #define WOLFSSL_AES_DIRECT
 

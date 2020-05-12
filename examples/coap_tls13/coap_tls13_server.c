@@ -41,7 +41,7 @@
 
 #endif
 
-static int config_index = 0;
+static int config_index = 1;
 static char *config[] = {"TLS13-AES128-CCM-SHA256", "TLS13-AES128-GCM-SHA256", "TLS13-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);

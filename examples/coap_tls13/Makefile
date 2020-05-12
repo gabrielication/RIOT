@@ -57,6 +57,10 @@ USEMODULE += wolfcrypt_ecc
 USEMODULE += wolfssl_psk
 CFLAGS += -DGCOAP_PDU_BUF_SIZE=384
 
+#USEMODULE += wolfcrypt_aesccm
+USEMODULE += wolfcrypt_aesgcm
+#USEMODULE += wolfcrypt_sha512
+
 CFLAGS += -Wno-unused-parameter -Wno-unused-variable
 
 # A larger stack size is required if using ECC or RSA
