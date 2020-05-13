@@ -41,7 +41,7 @@
 
 #endif
 
-static int config_index = 0;
+static int config_index = 3;
 static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
@@ -109,7 +109,7 @@ int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
-    //printf("SERVER SEND...\n");
+    //printf("SERVER SEND... %d\n",sz);
 
     mutex_lock(&server_req_lock);
 

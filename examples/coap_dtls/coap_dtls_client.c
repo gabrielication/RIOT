@@ -35,11 +35,11 @@
 
 #else
 
-#define PAYLOAD_DTLS_SIZE 1024
+#define PAYLOAD_DTLS_SIZE 1280
 
 #endif
 
-static int config_index = 0;
+static int config_index = 3;
 static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
