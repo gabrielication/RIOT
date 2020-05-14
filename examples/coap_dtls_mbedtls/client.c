@@ -187,7 +187,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
     //printf("RECV ssl state %d\n",ssl.state);
 
 #if defined(MBEDTLS_CERTS_C)
-    if(recv_count == 1){
+    if(recv_count == 2){
         coap_get();
     }
 #endif
@@ -380,7 +380,7 @@ int mbedtls_client_init(void)
 **/
 
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-PSK-WITH-AES-128-CCM");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-128-CCM");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
