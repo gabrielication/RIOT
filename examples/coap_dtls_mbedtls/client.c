@@ -150,7 +150,7 @@ int coap_get(void)
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
 
-    printf("Client SEND... %d\n",send_count);
+    //printf("Client SEND... %d\n",send_count);
     //printf("SEND ssl state %d\n",ssl.state);
 
     if (send_count == -2 || send_count == -3){
@@ -183,7 +183,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    printf("Client RECV...%d\n",recv_count);
+    //printf("Client RECV...%d\n",recv_count);
     //printf("RECV ssl state %d\n",ssl.state);
 
 #if defined(MBEDTLS_CERTS_C)
@@ -432,7 +432,7 @@ int start_client(int argc, char **argv)
 
     printf("Initializing client...\n");
 
-    mbedtls_debug_set_threshold(5);
+    //mbedtls_debug_set_threshold(5);
 
     ret = mbedtls_client_init();
     if( ret != 0){

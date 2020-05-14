@@ -84,7 +84,7 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
     int i;
 
-    printf("Server SEND... %d\n",len);
+    //printf("Server SEND... %d\n",len);
     //printf("SEND ssl state %d\n",ssl.state);
 
     mutex_lock(&server_req_lock);
@@ -111,7 +111,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    printf("Server RECV... %d\n",recv_count);
+    //printf("Server RECV... %d\n",recv_count);
 
     //printf("RECV ssl state %d\n",ssl.state);
 
@@ -381,7 +381,7 @@ int start_server(int argc, char **argv)
 
     printf("Initializing server...\n");
 
-    mbedtls_debug_set_threshold(5);
+    //mbedtls_debug_set_threshold(5);
 
     ret = mbedtls_server_init();
     if( ret != 0){
