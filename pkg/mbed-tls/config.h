@@ -1260,7 +1260,7 @@
 * enabled as well.
 */
 // TBD: Should actually be called MBEDTLS_CIPHER_MODE_CCM
-#define MBEDTLS_CCM_C
+//#define MBEDTLS_CCM_C
 
 /**
 * \def MBEDTLS_CERTS_C
@@ -1400,7 +1400,7 @@
 * This module enables the AES-GCM and CAMELLIA-GCM ciphersuites, if other
 * requisites are enabled as well.
 */
-//#define MBEDTLS_GCM_C
+#define MBEDTLS_GCM_C
 
 /**
 * \def MBEDTLS_HAVEGE_C
@@ -1692,7 +1692,7 @@
 *
 * This module adds support for SHA-512 and SHA-384.
 */
-//#define MBEDTLS_SHA512_C
+#define MBEDTLS_SHA512_C
 
 /**
 * \def MBEDTLS_SSL_CACHE_C

@@ -150,7 +150,7 @@ int coap_get(void)
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
 
-    //printf("Client SEND... %d\n",send_count);
+    printf("Client SEND... %d\n",send_count);
     //printf("SEND ssl state %d\n",ssl.state);
 
     if (send_count == -2 || send_count == -3){
@@ -183,11 +183,15 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    //printf("Client RECV...%d\n",recv_count);
+    printf("Client RECV...%d\n",recv_count);
     //printf("RECV ssl state %d\n",ssl.state);
 
 #if defined(MBEDTLS_CERTS_C)
-    if(recv_count == 2){
+    if(recv_count == -2 || recv_count == 3 || recv_count == 4 || recv_count == -6){
+        coap_get();
+    }
+#else
+    if(recv_count == 2 || recv_count == 4){
         coap_get();
     }
 #endif
@@ -380,7 +384,7 @@ int mbedtls_client_init(void)
 **/
 
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-128-CCM");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -410,6 +414,8 @@ int mbedtls_client_init(void)
     #endif
 
     mbedtls_ssl_set_bio( &ssl, NULL, mbedtls_ssl_send, mbedtls_ssl_recv, NULL );
+
+    //mbedtls_ssl_set_datagram_packing (&ssl, 0);
 
     return ret;
 }

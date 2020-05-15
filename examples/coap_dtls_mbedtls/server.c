@@ -289,7 +289,7 @@ int mbedtls_server_init(void)
             TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384
 **/
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-128-CCM");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -331,7 +331,7 @@ int mbedtls_server_init(void)
         return ret;
     }
 
-    mbedtls_ssl_set_mtu( &ssl, 1000 );
+    //mbedtls_ssl_set_mtu( &ssl, 1000 );
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
@@ -342,6 +342,8 @@ int mbedtls_server_init(void)
     mbedtls_ssl_session_reset( &ssl );
 
     mbedtls_ssl_set_bio( &ssl, NULL, mbedtls_ssl_send, mbedtls_ssl_recv, NULL );
+
+    mbedtls_ssl_set_datagram_packing (&ssl, 0);
 
     return ret;
 }
