@@ -183,7 +183,7 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
 #ifndef MODULE_WOLFSSL_PSK
     /* Load certificate file for the TLS server */
     if (wolfSSL_CTX_use_certificate_buffer(ctx, server_cert,
-                server_cert_len, SSL_FILETYPE_ASN1 ) != SSL_SUCCESS)
+                server_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
     {
         LOG(LOG_ERROR, "Failed to load certificate from memory.\r\n");
         return NULL;
@@ -191,7 +191,7 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
 
     /* Load the private key */
     if (wolfSSL_CTX_use_PrivateKey_buffer(ctx, server_key,
-                server_key_len, SSL_FILETYPE_ASN1 ) != SSL_SUCCESS)
+                server_key_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
     {
         LOG(LOG_ERROR, "Failed to load private key from memory.\r\n");
         return NULL;

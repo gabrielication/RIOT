@@ -240,7 +240,7 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
 
     /* Load certificate file for the TLS client */
     if (wolfSSL_CTX_use_certificate_buffer(ctx, server_cert,
-                server_cert_len, SSL_FILETYPE_ASN1 ) != SSL_SUCCESS)
+                server_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
     {
         LOG(LOG_ERROR, "Error loading cert buffer\n");
         return NULL;
