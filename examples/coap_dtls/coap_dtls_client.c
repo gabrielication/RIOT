@@ -261,7 +261,7 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
     }
 
     ret = wolfSSL_CTX_UseSNI(ctx, WOLFSSL_SNI_HOST_NAME, "www.prova.com",
-    strlen("www.yassl.com"));
+    strlen("www.prova.com"));
     if (ret != SSL_SUCCESS) {
         printf("ret = %d\n", ret);
         printf("Error :can't set SNI\n");
