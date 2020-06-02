@@ -52,6 +52,12 @@ extern const unsigned char server_key[];
 extern unsigned int server_cert_len;
 extern unsigned int server_key_len;
 
+extern const unsigned char client_cert[];
+extern const int client_cert_len;
+
+extern const unsigned char client_key[];
+extern const int client_key_len;
+
 extern const unsigned char ca_cert[];
 extern const int ca_cert_len;
 
@@ -239,13 +245,32 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
 
 #ifndef MODULE_WOLFSSL_PSK
     /* Disable certificate validation from the client side */
-    wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, 0);
+    //wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, 0);
+
+    wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER |
+                     SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
 
     /* Load certificate file for the TLS client */
     if (wolfSSL_CTX_load_verify_buffer(ctx, ca_cert,
                 ca_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
     {
         LOG(LOG_ERROR, "Error loading cert buffer\n");
+        return NULL;
+    }
+
+    /* Load certificate file for the TLS server */
+    if (wolfSSL_CTX_use_certificate_buffer(ctx, client_cert,
+                client_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
+    {
+        LOG(LOG_ERROR, "Failed to load certificate from memory.\r\n");
+        return NULL;
+    }
+
+    /* Load the private key */
+    if (wolfSSL_CTX_use_PrivateKey_buffer(ctx, client_key,
+                client_key_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
+    {
+        LOG(LOG_ERROR, "Failed to load private key from memory.\r\n");
         return NULL;
     }
 

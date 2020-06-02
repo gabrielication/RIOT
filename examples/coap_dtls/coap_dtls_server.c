@@ -51,6 +51,9 @@ extern const unsigned char server_key[];
 extern unsigned int server_cert_len;
 extern unsigned int server_key_len;
 
+extern const unsigned char ca_cert[];
+extern const int ca_cert_len;
+
 extern char payload_dtls[];
 extern int size_payload;
 
@@ -181,6 +184,18 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
     }
 
 #ifndef MODULE_WOLFSSL_PSK
+
+    wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER |
+                     SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
+
+    /* Load certificate file for the TLS client */
+    if (wolfSSL_CTX_load_verify_buffer(ctx, ca_cert,
+                ca_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
+    {
+        LOG(LOG_ERROR, "Error loading cert buffer\n");
+        return NULL;
+    }
+
     /* Load certificate file for the TLS server */
     if (wolfSSL_CTX_use_certificate_buffer(ctx, server_cert,
                 server_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
