@@ -77,6 +77,7 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define TFM_TIMING_RESISTANT
 #define USE_CERT_BUFFERS_2048
 #define NO_RC4
+#define NO_OLD_TLS
 
 /* Modules */
 #undef WC_NO_RNG
@@ -305,14 +306,6 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define HAVE_TLS13
 #define WOLFSSL_TLS13
 #define HAVE_HKDF
-
-#define NO_OLD_TLS
-#define HAVE_AES_DECRYPT
-#define WOLFSSL_AES_COUNTER
-#define WOLFSSL_AES_DIRECT
-
-#define NO_MD5
-
 #endif
 
 #ifdef __cplusplus
