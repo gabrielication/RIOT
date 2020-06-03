@@ -27,7 +27,7 @@
 #include "net/gcoap.h"
 #include "mutex.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -176,13 +176,13 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) sz;
     (void) ctx;
 
-    printf("CLIENT SEND... %d\n", send_count);
+    //printf("CLIENT SEND... %d\n", send_count);
 
-    //if(ssl->options.connectState == FIRST_REPLY_FOURTH) mutex_lock(&client_send_lock);
+    /* if(ssl->options.connectState == FIRST_REPLY_FOURTH) mutex_lock(&client_send_lock);
 
     if(send_count == 3 || send_count == 4 || send_count == 5){
         mutex_lock(&client_send_lock);
-    }
+    } */
 
     memcpy(payload_dtls,buf,sz);
     size_payload = sz;
@@ -214,17 +214,17 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) ctx;
     int i;
 
-    printf("CLIENT RECV... %d\n", recv_count);
+    //printf("CLIENT RECV... %d\n", recv_count);
 /*
     if((ssl->options.serverState > SERVER_HELLOVERIFYREQUEST_COMPLETE) && (ssl->options.serverState < SERVER_HELLODONE_COMPLETE)){
             coap_get();
     }
-*/  
+
 
     if(recv_count == 2 || recv_count == 3 || recv_count == 4 || recv_count == 5){
             coap_get();
     }
-
+*/  
     mutex_lock(&client_lock);
 
     memcpy(buf, payload_dtls, size_payload);
@@ -308,7 +308,7 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
     wolfSSL_SetIORecv(ctx, client_recv);
     wolfSSL_SetIOSend(ctx, client_send);
 
-    //wolfSSL_CTX_set_group_messages(ctx);
+    wolfSSL_CTX_set_group_messages(ctx);
 
     if ((ssl = wolfSSL_new(ctx)) == NULL) {
         printf("issue when creating ssl\n");

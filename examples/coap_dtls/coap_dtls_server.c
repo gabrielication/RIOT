@@ -28,8 +28,7 @@
 #include "mutex.h"
 #include "thread.h"
 
-#define DEBUG 1
-#define VERBOSE 1
+#define VERBOSE 0
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -145,7 +144,7 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) ctx;
 
     int i;
-    printf("SERVER RECV... %d\n", recv_count);
+    //printf("SERVER RECV... %d\n", recv_count);
 
     mutex_lock(&server_lock);
 
@@ -172,13 +171,13 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
             thread_wakeup(main_pid);
         }
     }
-*/
+
 
     if(recv_count == 2 || recv_count == 3 || recv_count == 4){
         size_payload = 0;
         thread_wakeup(main_pid);
     }
-
+*/
     recv_count++;
 
     return sz;
@@ -247,7 +246,7 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
     wolfSSL_SetIORecv(ctx, server_recv);
     wolfSSL_SetIOSend(ctx, server_send);
 
-    //wolfSSL_CTX_set_group_messages(ctx);
+    wolfSSL_CTX_set_group_messages(ctx);
 
     if ((ssl = wolfSSL_new(ctx)) == NULL) {
         printf("issue when creating ssl\n");
