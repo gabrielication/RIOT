@@ -118,6 +118,7 @@ In the end they should both print a configuration message from both client and s
 ## Known Bugs:
 
 - CoAP can hang up sometimes. Currently working on a retransmission mechanism.
+- Ethos can work only as a Server right now.
 
 ## Want to know more?
 
