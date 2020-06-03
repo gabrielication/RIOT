@@ -66,7 +66,15 @@ Compile and flash for nrf:
 
     BOARD=nrf52840dk make clean all flash
     
-Ethos has to be started using one script in the tools folder. Just execute:
+Ethos has to be started using one script in the tools folder. First, you need to compile `ethos`.
+
+Go to `/dist/tools/ethos` and type:
+
+```bash
+make clean all
+```
+
+Then go back to your example folder and just execute:
 
     sudo sh ../../dist/tools/ethos/start_network_wo_uhcpd.sh /dev/ttyACM0 tap1 2001:db8::/64
 
