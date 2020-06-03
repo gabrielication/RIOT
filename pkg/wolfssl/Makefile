@@ -1,8 +1,8 @@
 PKG_NAME=wolfssl
 PKG_URL=https://github.com/wolfssl/wolfssl.git
 
-# Current version: v4.1.0+
-PKG_VERSION=eaeaaf12c11dd52ab0cd6833252ed559656e9826
+# Current version: v4.4.0+
+PKG_VERSION=d22016838483df80b60d4d6430b48969cc575937
 PKG_LICENSE=GPLv2
 
 .PHONY: all

@@ -78,6 +78,7 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define NO_RC4
 #define NO_OLD_TLS
 #define HAVE_SNI
+#define NO_ASN_TIME
 
 /* Modules */
 #undef WC_NO_RNG
