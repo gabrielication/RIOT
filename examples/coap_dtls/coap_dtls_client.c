@@ -27,7 +27,7 @@
 #include "net/gcoap.h"
 #include "mutex.h"
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -47,11 +47,6 @@ static const char* kIdentityStr = "Client_identity";
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
-extern const unsigned char server_cert[];
-extern const unsigned char server_key[];
-extern unsigned int server_cert_len;
-extern unsigned int server_key_len;
-
 extern const unsigned char client_cert[];
 extern const int client_cert_len;
 
@@ -65,6 +60,9 @@ extern char payload_dtls[];
 extern int size_payload;
 
 char *addr_str;
+
+static unsigned int recv_count = 0;
+static unsigned int send_count = 0;
 
 extern mutex_t client_lock;
 extern mutex_t client_send_lock;
@@ -178,9 +176,13 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) sz;
     (void) ctx;
 
-    //printf("CLIENT SEND...\n");
+    printf("CLIENT SEND... %d\n", send_count);
 
     //if(ssl->options.connectState == FIRST_REPLY_FOURTH) mutex_lock(&client_send_lock);
+
+    if(send_count == 3 || send_count == 4 || send_count == 5){
+        mutex_lock(&client_send_lock);
+    }
 
     memcpy(payload_dtls,buf,sz);
     size_payload = sz;
@@ -199,6 +201,8 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     coap_post();
 
+    send_count++;
+
     return sz;
 }
 
@@ -210,12 +214,17 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) ctx;
     int i;
 
-    //printf("CLIENT RECV...\n");
+    printf("CLIENT RECV... %d\n", recv_count);
 /*
     if((ssl->options.serverState > SERVER_HELLOVERIFYREQUEST_COMPLETE) && (ssl->options.serverState < SERVER_HELLODONE_COMPLETE)){
             coap_get();
     }
-*/    
+*/  
+
+    if(recv_count == 2 || recv_count == 3 || recv_count == 4 || recv_count == 5){
+            coap_get();
+    }
+
     mutex_lock(&client_lock);
 
     memcpy(buf, payload_dtls, size_payload);
@@ -229,6 +238,8 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         }
         printf("\n/*-------------------- END RECV -----------------*/\n");
     }
+
+    recv_count++;
     
     return size_payload;
 }
@@ -297,7 +308,7 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
     wolfSSL_SetIORecv(ctx, client_recv);
     wolfSSL_SetIOSend(ctx, client_send);
 
-    wolfSSL_CTX_set_group_messages(ctx);
+    //wolfSSL_CTX_set_group_messages(ctx);
 
     if ((ssl = wolfSSL_new(ctx)) == NULL) {
         printf("issue when creating ssl\n");
@@ -370,7 +381,7 @@ int start_dtls_client(int argc, char **argv)
     printf("TLS version is %s\n", wolfSSL_get_version(sslCli));
     printf("Cipher Suite is %s\n",
            wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslCli)));
-
+/*
     char send_msg[] = "This is ATLS client!";
 
     printf("Sending hello message...\n");
@@ -383,7 +394,7 @@ int start_dtls_client(int argc, char **argv)
     //  can print random chars
     
     LOG(LOG_INFO, "Received: '%s'\r\n", buf);
-
+*/
     /* Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
 

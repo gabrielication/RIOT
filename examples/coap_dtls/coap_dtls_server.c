@@ -29,7 +29,7 @@
 #include "thread.h"
 
 #define DEBUG 1
-#define VERBOSE 0
+#define VERBOSE 1
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -48,8 +48,8 @@ extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
 extern const unsigned char server_cert[];
 extern const unsigned char server_key[];
-extern unsigned int server_cert_len;
-extern unsigned int server_key_len;
+extern int server_cert_len;
+extern int server_key_len;
 
 extern const unsigned char ca_cert[];
 extern const int ca_cert_len;
@@ -62,6 +62,9 @@ extern mutex_t server_req_lock;
 extern kernel_pid_t main_pid;
 
 static unsigned char thread_wakeup_flag = 0;
+
+static unsigned int recv_count = 0;
+static unsigned int send_count = 0;
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
@@ -142,7 +145,7 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) ctx;
 
     int i;
-    //printf("SERVER RECV...\n");
+    printf("SERVER RECV... %d\n", recv_count);
 
     mutex_lock(&server_lock);
 
@@ -170,6 +173,14 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         }
     }
 */
+
+    if(recv_count == 2 || recv_count == 3 || recv_count == 4){
+        size_payload = 0;
+        thread_wakeup(main_pid);
+    }
+
+    recv_count++;
+
     return sz;
 }
 
@@ -236,7 +247,7 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
     wolfSSL_SetIORecv(ctx, server_recv);
     wolfSSL_SetIOSend(ctx, server_send);
 
-    wolfSSL_CTX_set_group_messages(ctx);
+    //wolfSSL_CTX_set_group_messages(ctx);
 
     if ((ssl = wolfSSL_new(ctx)) == NULL) {
         printf("issue when creating ssl\n");
@@ -296,7 +307,7 @@ int start_dtls_server(int argc, char **argv)
     printf("TLS version is %s\n", wolfSSL_get_version(sslServ));
     printf("Cipher Suite is %s\n",
            wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslServ)));
-
+/*
     char reply[] = "This is ATLS server!";
 
     wolfSSL_read(sslServ, buf, PAYLOAD_DTLS_SIZE);
@@ -307,10 +318,10 @@ int start_dtls_server(int argc, char **argv)
     
     LOG(LOG_INFO, "Received '%s'\r\n", buf);
 
-    /* Send reply */
+     Send reply 
     LOG(LOG_INFO, "Sending 'DTLS OK'...\r\n");
     wolfSSL_write(sslServ, reply, strlen(reply));
-
+*/
     /* Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
 
