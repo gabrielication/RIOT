@@ -48,13 +48,68 @@ And then type `dtlsc` followed by the previous address you copied from the serve
 
     > dtlsc fe80::ac4a:f4ff:fef7:b23d
     
-It will start by default in a verbose mode printing all the bytes sent and received (you can disable it by changing a flag in the code).
+It will start printing all the bytes sent and received.
 
-In the end they should both print a test message from both client and server and exit from the DTLS session.
+In the end they should both print a configuration message from both client and server and exit from the DTLS session.
+
+### On ethos:
+
+You need to create two bridged tap interfaces in order to let client and server communicate. We use this script to initialize only the bridge and the tap for a native client. The tap for the server will be done later:
+
+    ./../../dist/tools/tapsetup/tapsetup --create 1
+
+Compile for native:
+
+    make clean all
+    
+Compile and flash for nrf:
+
+    BOARD=nrf52840dk make clean all flash
+    
+Ethos has to be started using one script in the tools folder. Just execute:
+
+    sudo sh ../../dist/tools/ethos/start_network_wo_uhcpd.sh /dev/ttyACM0 tap1 2001:db8::/64
+
+The ethos device has to be bridged, type on another terminal:
+
+    sudo ip link set dev tap1 master tapbr0
+
+The first device **MUST** be the server. You have to grab its ip address first. Just type on the ethos terminal:
+
+    > ifconfig
+    
+Which will output something like:
+
+```
+Iface  6  HWaddr: AE:4A:F4:F7:B2:3D 
+          L2-PDU:1500 MTU:1500  HL:64  Source address length: 6
+          Link type: wired
+          inet6 addr: fe80::ac4a:f4ff:fef7:b23d  scope: link  VAL
+          inet6 group: ff02::1
+          inet6 group: ff02::1:fff7:b23d
+```
+
+Copy the `inet6 addr` for later. Then type:
+
+    > dtlss
+
+Keep the terminal of the server open.
+
+You have to start the client now. Type in another terminal:
+
+    make term
+
+And then type `dtlsc` followed by the previous address you copied from the server, like:
+
+    > dtlsc fe80::ac4a:f4ff:fef7:b23d
+    
+It will start printing all the bytes sent and received.
+
+In the end they should both print a configuration message from both client and server and exit from the DTLS session.
 
 ## Known Bugs:
 
-The last print of test messages can print also some random characters. I just have to find where to put correctly the string terminators.
+- CoAP can hang up sometimes. Currently working on a retransmission mechanism.
 
 ## Want to know more?
 
