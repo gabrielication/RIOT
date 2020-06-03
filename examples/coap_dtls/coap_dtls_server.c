@@ -202,7 +202,7 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
     if (wolfSSL_CTX_load_verify_buffer(ctx, ca_cert,
                 ca_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
     {
-        LOG(LOG_ERROR, "Error loading cert buffer\n");
+        LOG(LOG_ERROR, "Error loading CA cert buffer\n");
         return NULL;
     }
 
