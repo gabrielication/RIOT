@@ -41,7 +41,7 @@
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
 
-static int config_index = 5;
+static int config_index = 0;
 static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
@@ -49,10 +49,14 @@ extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 extern char payload_tls[];
 extern int size_payload;
 
-extern const unsigned char server_cert[];
-extern const unsigned char server_key[];
-extern unsigned int server_cert_len;
-extern unsigned int server_key_len;
+extern const unsigned char client_cert[];
+extern const int client_cert_len;
+
+extern const unsigned char client_key[];
+extern const int client_key_len;
+
+extern const unsigned char ca_cert[];
+extern const int ca_cert_len;
 
 char *addr_str;
 
@@ -173,7 +177,7 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) sz;
     (void) ctx;
 
-    //printf("SEND\n");
+    //printf("SEND %d\n",count_send);
 
     /*
         Why 3 and 4? They are the client's messages seq IDs in which the server needs to do more
@@ -183,10 +187,11 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         TODO: it's not good practice AT ALL to have local counters. It will be a good idea to parse the seq
         numbers directly from the packets and handle eventual packet loss.
     */
-
-    count_send += 1;
-
-    if(count_send == 3 || count_send == 4) mutex_lock(&client_send_lock);
+    #ifndef MODULE_WOLFSSL_PSK
+        if(count_send == 2 || count_send == 3 || count_send == 4 || count_send == 5) mutex_lock(&client_send_lock);
+    #else
+        if(count_send == 2 || count_send == 3) mutex_lock(&client_send_lock);
+    #endif
 
     memcpy(payload_tls,buf,sz);
     size_payload = sz;
@@ -205,6 +210,8 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     coap_post();
 
+    count_send += 1;
+
     return sz;
 }
 
@@ -216,7 +223,7 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     (void) ctx;
     int i;
 
-    //printf("RECV\n");
+    //printf("RECV %d\n", count_read);
 
     /*  
         Why 2, 3 and 5? They are the server's messages seq IDs in which the client needs to do more
@@ -229,15 +236,13 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         numbers directly from the packets and handle eventual packet loss.
     */
 
-    if(!offset) count_read += 1;
-
     #ifndef MODULE_WOLFSSL_PSK
-        if(count_read == 2 || count_read == 3 || count_read == 4 || count_read == 6){
+        if(count_read == 1 || count_read == 2 || count_read == 3 || count_read == 4 || count_read == 6){
             if(!get_flag) coap_get();
             get_flag = 1;
         }
     #else
-        if(count_read == 2 || count_read == 3 || count_read == 5){
+        if(count_read == 1 || count_read == 2 || count_read == 4){
             if(!get_flag) coap_get();
             get_flag = 1;
         }
@@ -263,6 +268,8 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         offset = 0;
         get_flag = 0;
     }
+
+    if(!offset) count_read += 1;
     
     return sz;
 }
@@ -279,13 +286,30 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
 
 #ifndef MODULE_WOLFSSL_PSK
     /* Disable certificate validation from the client side */
-    wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, 0);
+    wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER |
+                     SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
 
-    /* Load certificate file for the TLS client */
-    if (wolfSSL_CTX_use_certificate_buffer(ctx, server_cert,
-                server_cert_len, SSL_FILETYPE_ASN1 ) != SSL_SUCCESS)
+    /* Load certificate file for the TLS CA */
+    if (wolfSSL_CTX_load_verify_buffer(ctx, ca_cert,
+                ca_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
     {
-        LOG(LOG_ERROR, "Error loading cert buffer\n");
+        LOG(LOG_ERROR, "Error loading CA cert buffer\n");
+        return NULL;
+    }
+
+    /* Load certificate file for the TLS server */
+    if (wolfSSL_CTX_use_certificate_buffer(ctx, client_cert,
+                client_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
+    {
+        LOG(LOG_ERROR, "Failed to load certificate from memory.\r\n");
+        return NULL;
+    }
+
+    /* Load the private key */
+    if (wolfSSL_CTX_use_PrivateKey_buffer(ctx, client_key,
+                client_key_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
+    {
+        LOG(LOG_ERROR, "Failed to load private key from memory.\r\n");
         return NULL;
     }
 
@@ -298,6 +322,15 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
             printf("Error :can't set cipher\n");
             wolfSSL_CTX_free(ctx);
             return NULL;
+    }
+
+    ret = wolfSSL_CTX_UseSNI(ctx, WOLFSSL_SNI_HOST_NAME, "www.prova.com",
+    strlen("www.prova.com"));
+    if (ret != SSL_SUCCESS) {
+        printf("ret = %d\n", ret);
+        printf("Error :can't set SNI\n");
+        wolfSSL_CTX_free(ctx);
+        return NULL;
     }
 
     wolfSSL_SetIORecv(ctx, client_recv);
@@ -374,7 +407,7 @@ int start_tls_client(int argc, char **argv)
     printf("TLS version is %s\n", wolfSSL_get_version(sslCli));
     printf("Cipher Suite is %s\n",
            wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslCli)));
-
+/*
     char send_msg[] = "This is ATLS client!";
 
     printf("Sending hello message...\n");
@@ -388,7 +421,7 @@ int start_tls_client(int argc, char **argv)
     
     LOG(LOG_INFO, "Received: '%s'\r\n", buf);
 
-    /* Clean up and exit. */
+     Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
 
     client_cleanup(sslCli,ctxCli);

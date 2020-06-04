@@ -27,7 +27,6 @@
 #include "mutex.h"
 #include "thread.h"
 
-#define DEBUG 1
 #define VERBOSE 0
 
 #ifdef MODULE_WOLFSSL_PSK
@@ -40,7 +39,7 @@
 
 #endif
 
-static int config_index = 5;
+static int config_index = 0;
 static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
@@ -49,6 +48,9 @@ extern const unsigned char server_cert[];
 extern const unsigned char server_key[];
 extern unsigned int server_cert_len;
 extern unsigned int server_key_len;
+
+extern const unsigned char ca_cert[];
+extern const int ca_cert_len;
 
 extern char payload_tls[];
 extern int size_payload;
@@ -141,11 +143,10 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 
     int i;
 
-    //printf("RECV\n");
+    //printf("RECV %d\n",count);
 
     if(!offset){
         mutex_lock(&server_lock);
-        count += 1;
     }
 
     memcpy(buf, payload_tls+offset, sz);
@@ -176,15 +177,29 @@ int server_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         offset = 0;
     }
 
-    if(count == 2 || count == 3){
-        if(wake_flag){
-            size_payload = 0;
-            thread_wakeup(main_pid);
-            wake_flag = 0;
-        } else {
-            wake_flag = 1;
+    #ifndef MODULE_WOLFSSL_PSK
+        if(count == 1 || count == 2 || count == 3 || count == 4){
+            if(wake_flag){
+                size_payload = 0;
+                thread_wakeup(main_pid);
+                wake_flag = 0;
+            } else {
+                wake_flag = 1;
+            }
         }
-    }
+    #else
+        if(count == 1 || count == 2){
+            if(wake_flag){
+                size_payload = 0;
+                thread_wakeup(main_pid);
+                wake_flag = 0;
+            } else {
+                wake_flag = 1;
+            }
+        }
+    #endif
+
+    if(!offset) count += 1;
 
     return sz;
 }
@@ -200,9 +215,21 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
     }
 
 #ifndef MODULE_WOLFSSL_PSK
+
+    wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER |
+                     SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
+
+    /* Load certificate file for the TLS client */
+    if (wolfSSL_CTX_load_verify_buffer(ctx, ca_cert,
+                ca_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
+    {
+        LOG(LOG_ERROR, "Error loading CA cert buffer\n");
+        return NULL;
+    }
+
     /* Load certificate file for the TLS server */
     if (wolfSSL_CTX_use_certificate_buffer(ctx, server_cert,
-                server_cert_len, SSL_FILETYPE_ASN1 ) != SSL_SUCCESS)
+                server_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
     {
         LOG(LOG_ERROR, "Failed to load certificate from memory.\r\n");
         return NULL;
@@ -210,7 +237,7 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
 
     /* Load the private key */
     if (wolfSSL_CTX_use_PrivateKey_buffer(ctx, server_key,
-                server_key_len, SSL_FILETYPE_ASN1 ) != SSL_SUCCESS)
+                server_key_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
     {
         LOG(LOG_ERROR, "Failed to load private key from memory.\r\n");
         return NULL;
@@ -226,6 +253,15 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
             printf("Error :can't set cipher\n");
             wolfSSL_CTX_free(ctx);
             return NULL;
+    }
+
+    ret = wolfSSL_CTX_UseSNI(ctx, WOLFSSL_SNI_HOST_NAME, "www.prova.com",
+    strlen("www.prova.com"));
+    if (ret != SSL_SUCCESS) {
+        printf("ret = %d\n", ret);
+        printf("Error :can't set SNI\n");
+        wolfSSL_CTX_free(ctx);
+        return NULL;
     }
 
     wolfSSL_SetIORecv(ctx, server_recv);
@@ -289,7 +325,7 @@ int start_tls_server(int argc, char **argv)
     printf("TLS version is %s\n", wolfSSL_get_version(sslServ));
     printf("Cipher Suite is %s\n",
            wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslServ)));
-
+/*
     char reply[] = "This is ATLS server!";
 
     wolfSSL_read(sslServ, buf, PAYLOAD_TLS_SIZE);
@@ -300,9 +336,10 @@ int start_tls_server(int argc, char **argv)
     
     LOG(LOG_INFO, "Received '%s'\r\n", buf);
 
-    /* Send reply */
+     Send reply 
     LOG(LOG_INFO, "Sending 'TLS OK'...\r\n");
     wolfSSL_write(sslServ, reply, strlen(reply));
+*/
 
     /* Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
