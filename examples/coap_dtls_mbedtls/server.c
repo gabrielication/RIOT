@@ -50,6 +50,19 @@ static mbedtls_timing_delay_context timer;
     static mbedtls_pk_context pkey;
 
     static mbedtls_x509_crt cacert;
+
+    typedef struct _sni_entry sni_entry;
+
+    struct _sni_entry {
+    const char *name;
+        mbedtls_x509_crt *cert;
+        mbedtls_pk_context *key;
+        mbedtls_x509_crt* ca;
+        mbedtls_x509_crl* crl;
+        int authmode;
+        sni_entry *next;
+    };
+
 #endif
 
 extern char payload_tls[];
@@ -83,6 +96,24 @@ static void my_debug( void *ctx, int level,
     mbedtls_fprintf( (FILE *) ctx, "%s:%04d: %s", file, line, str );
     fflush(  (FILE *) ctx  );
 }
+
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
+
+int sni_callback( void *p_info, mbedtls_ssl_context *ssl,
+                  const unsigned char *name, size_t name_len )
+{
+    int ret;
+
+    if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
+        {
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
+        }
+
+    return ret;
+
+}
+
+#endif
 
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
@@ -153,6 +184,10 @@ int mbedtls_server_init(void)
     mbedtls_ssl_cookie_init( &cookie_ctx );
     mbedtls_ctr_drbg_init( &ctr_drbg );
 
+#if defined(MBEDTLS_X509_CRT_PARSE_C)
+    sni_entry *sni_info = NULL;
+#endif
+    
     mbedtls_entropy_init( &entropy );
 
     if( ( ret = mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy,
@@ -294,7 +329,7 @@ int mbedtls_server_init(void)
             TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384
 **/
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-PSK-WITH-AES-128-CCM");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -313,11 +348,7 @@ int mbedtls_server_init(void)
 
         mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
 
-        if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
-        {
-            mbedtls_printf( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
-            return ret;
-        }
+        mbedtls_ssl_conf_sni( &conf, sni_callback, sni_info );
 
         mbedtls_ssl_conf_authmode(&conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
 

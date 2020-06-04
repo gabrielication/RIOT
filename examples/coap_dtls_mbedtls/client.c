@@ -413,7 +413,7 @@ int mbedtls_client_init(void)
 **/
 
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-PSK-WITH-AES-128-CCM");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -434,7 +434,7 @@ int mbedtls_client_init(void)
 
     #if defined(MBEDTLS_X509_CRT_PARSE_C)
 
-        if( ( ret = mbedtls_ssl_set_hostname( &ssl, "ssl_server" ) ) != 0 )
+        if( ( ret = mbedtls_ssl_set_hostname( &ssl, "www.prova.com" ) ) != 0 )
         {
             mbedtls_printf( " failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret );
             return ret;
