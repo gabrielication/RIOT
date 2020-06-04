@@ -23,8 +23,8 @@ extern "C" {
 #define NO_OLD_RNGNAME
 
 /* Uncomment the next two lines to enable wolfSSL debug */
-#define DEBUG_WOLFSSL
-#define WOLFSSL_LOG_PRINTF
+//#define DEBUG_WOLFSSL
+//#define WOLFSSL_LOG_PRINTF
 
 /* Single precision math */
 #define WOLFSSL_SP_MATH
@@ -79,6 +79,7 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define NO_OLD_TLS
 #define HAVE_SNI
 #define NO_ASN_TIME
+#define NO_MD5
 
 /* Modules */
 #undef WC_NO_RNG
@@ -270,11 +271,6 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #undef NO_RABBIT
 #ifndef MODULE_WOLFCRYPT_RABBIT
 #define NO_RABBIT
-#endif
-
-#undef NO_MD5
-#ifndef MODULE_WOLFCRYPT_MD5
-#define NO_MD5
 #endif
 
 #undef WOLFSSL_RIPEMD

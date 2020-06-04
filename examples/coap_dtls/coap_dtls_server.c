@@ -40,7 +40,7 @@
 
 #endif
 
-static int config_index = 3;
+static int config_index = 5;
 static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
@@ -68,6 +68,8 @@ static unsigned int send_count = 0;
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
 
+#define DFL_PSK "01020304"
+
 #ifdef MODULE_WOLFSSL_PSK
 
 static inline unsigned int my_psk_server_cb(WOLFSSL* ssl, const char* identity,
@@ -76,32 +78,22 @@ static inline unsigned int my_psk_server_cb(WOLFSSL* ssl, const char* identity,
     (void)ssl;
     (void)key_max_len;
 
+    //printf("key max %d\n",key_max_len);
+
     /* see internal.h MAX_PSK_ID_LEN for PSK identity limit */
     if (strncmp(identity, kIdentityStr, strlen(kIdentityStr)) != 0)
         return 0;
 
-    if (wolfSSL_GetVersion(ssl) < WOLFSSL_TLSV1_3) {
-        /* test key in hex is 0x1a2b3c4d , in decimal 439,041,101 , we're using
-           unsigned binary */
-        key[0] = 0x1a;
-        key[1] = 0x2b;
-        key[2] = 0x3c;
-        key[3] = 0x4d;
+    int i;
+    int b = 0x01;
 
-        return 4;   /* length of key in octets or 0 for error */
+    for (i = 0; i < 64; i++, b += 0x22) {
+        if (b >= 0x100)
+            b = 0x01;
+        key[i] = b;
     }
-    else {
-        int i;
-        int b = 0x01;
 
-        for (i = 0; i < 32; i++, b += 0x22) {
-            if (b >= 0x100)
-                b = 0x01;
-            key[i] = b;
-        }
-
-        return 32;   /* length of key in octets or 0 for error */
-    }
+    return 64;   /* length of key in octets or 0 for error */
 }
 #endif /* MODULE_WOLFSSL_PSK */
 

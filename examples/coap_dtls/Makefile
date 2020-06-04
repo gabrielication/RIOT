@@ -55,9 +55,9 @@ CFLAGS += -DGCOAP_PDU_BUF_SIZE=1280
 #USEMODULE += wolfssl_psk
 #CFLAGS += -DGCOAP_PDU_BUF_SIZE=256
 
-USEMODULE += wolfcrypt_aesccm
-#USEMODULE += wolfcrypt_aesgcm
-#USEMODULE += wolfcrypt_sha512
+#USEMODULE += wolfcrypt_aesccm
+USEMODULE += wolfcrypt_aesgcm
+USEMODULE += wolfcrypt_sha512
 
 # DTLS stuff
 CFLAGS += -DDTLS_DEFAULT_PORT=$(DTLS_PORT) -DDTLS_WOLFSSL -Wno-unused-parameter -Wno-unused-variable
