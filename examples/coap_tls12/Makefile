@@ -46,7 +46,6 @@ USEMODULE += ps
 USEPKG += wolfssl
 USEMODULE += wolfcrypt
 USEMODULE += wolfssl
-USEMODULE += wolfssl_dtls
 
 # Select public key algorithm (or PSK) support for ciphersuites:
 # You have to redefine also the PDU_BUF_SIZE

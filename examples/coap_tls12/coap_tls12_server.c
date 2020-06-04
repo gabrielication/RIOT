@@ -78,28 +78,16 @@ static inline unsigned int my_psk_server_cb(WOLFSSL* ssl, const char* identity,
     if (strncmp(identity, kIdentityStr, strlen(kIdentityStr)) != 0)
         return 0;
 
-    if (wolfSSL_GetVersion(ssl) < WOLFSSL_TLSV1_3) {
-        /* test key in hex is 0x1a2b3c4d , in decimal 439,041,101 , we're using
-           unsigned binary */
-        key[0] = 0x1a;
-        key[1] = 0x2b;
-        key[2] = 0x3c;
-        key[3] = 0x4d;
+    int i;
+    int b = 0x01;
 
-        return 4;   /* length of key in octets or 0 for error */
+    for (i = 0; i < 64; i++, b += 0x22) {
+        if (b >= 0x100)
+            b = 0x01;
+        key[i] = b;
     }
-    else {
-        int i;
-        int b = 0x01;
 
-        for (i = 0; i < 32; i++, b += 0x22) {
-            if (b >= 0x100)
-                b = 0x01;
-            key[i] = b;
-        }
-
-        return 32;   /* length of key in octets or 0 for error */
-    }
+    return 64;   /* length of key in octets or 0 for error */
 }
 #endif /* MODULE_WOLFSSL_PSK */
 
