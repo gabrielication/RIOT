@@ -26,7 +26,7 @@
 #include "net/gcoap.h"
 #include "mutex.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -38,16 +38,20 @@
 
 #endif
 
-static int config_index = 1;
+static int config_index = 2;
 static char *config[] = {"TLS13-AES128-CCM-SHA256", "TLS13-AES128-GCM-SHA256", "TLS13-AES256-GCM-SHA384"};
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
 
-extern const unsigned char server_cert[];
-extern const unsigned char server_key[];
-extern unsigned int server_cert_len;
-extern unsigned int server_key_len;
+extern const unsigned char client_cert[];
+extern const int client_cert_len;
+
+extern const unsigned char client_key[];
+extern const int client_key_len;
+
+extern const unsigned char ca_cert[];
+extern const int ca_cert_len;
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
@@ -80,7 +84,7 @@ static inline unsigned int my_psk_client_cb(WOLFSSL* ssl, const char* hint,
     int i;
     int b = 0x01;
 
-    for (i = 0; i < 32; i++, b += 0x22) {
+    for (i = 0; i < 64; i++, b += 0x22) {
         if (b >= 0x100)
             b = 0x01;
         key[i] = b;
@@ -88,7 +92,7 @@ static inline unsigned int my_psk_client_cb(WOLFSSL* ssl, const char* hint,
 
     *ciphersuite = config[config_index];
 
-    return 32;   /* length of key in octets or 0 for error */
+    return 64;   /* length of key in octets or 0 for error */
 }
 #endif
 
@@ -172,11 +176,17 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         numbers directly from the packets and handle eventual packet loss.
     */
 
-    count_send += 1;
+    printf("Client SEND... %d\n",count_send);
 
-    //printf("Client SEND... %d count %d\n",sz,count_send);
+    #ifndef MODULE_WOLFSSL_PSK
 
-    if(count_send == 3) mutex_lock(&client_send_lock);
+    if(count_send == 2 || count_send == 3 || count_send == 4) mutex_lock(&client_send_lock);
+
+    #else 
+
+    if(count_send == 2 || count_send == -3) mutex_lock(&client_send_lock);
+
+    #endif
 
     memcpy(payload_tls,buf,sz);
     size_payload = sz;
@@ -194,6 +204,8 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     }
 
     coap_post();
+
+    count_send += 1;
 
     return sz;
 }
@@ -217,20 +229,18 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         numbers directly from the packets and handle eventual packet loss.
     */
 
-    if(!offset) count_read += 1;
-
-    //printf("Client RECV...%d count %d\n",sz,count_read);
+    //printf("Client RECV...%d\n",count_read);
 
     #ifndef MODULE_WOLFSSL_PSK
 
-    if(count_read == 2 || count_read == 3 || count_read == 4 || count_read == 5){
+    if(count_read == 1 || count_read == 2 || count_read == 3 || count_read == 4 || count_read == 5){
         if(!get_flag) coap_get();
         get_flag = 1;
     }
 
     #else 
 
-    if(count_read == 2 || count_read == 3){
+    if(count_read == 1 || count_read == 2){
         if(!get_flag) coap_get();
         get_flag = 1;
     }
@@ -257,6 +267,8 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         offset = 0;
         get_flag = 0;
     }
+
+    if(!offset) count_read += 1;
     
     return sz;
 }
@@ -272,14 +284,32 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
     }
 
 #ifndef MODULE_WOLFSSL_PSK
+    
     /* Disable certificate validation from the client side */
-    wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, 0);
+    wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER |
+                     SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
 
-    /* Load certificate file for the TLS client */
-    if (wolfSSL_CTX_use_certificate_buffer(ctx, server_cert,
-                server_cert_len, SSL_FILETYPE_ASN1 ) != SSL_SUCCESS)
+    /* Load certificate file for the TLS CA */
+    if (wolfSSL_CTX_load_verify_buffer(ctx, ca_cert,
+                ca_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
     {
-        LOG(LOG_ERROR, "Error loading cert buffer\n");
+        LOG(LOG_ERROR, "Error loading CA cert buffer\n");
+        return NULL;
+    }
+
+    /* Load certificate file for the TLS server */
+    if (wolfSSL_CTX_use_certificate_buffer(ctx, client_cert,
+                client_cert_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
+    {
+        LOG(LOG_ERROR, "Failed to load certificate from memory.\r\n");
+        return NULL;
+    }
+
+    /* Load the private key */
+    if (wolfSSL_CTX_use_PrivateKey_buffer(ctx, client_key,
+                client_key_len, SSL_FILETYPE_PEM ) != SSL_SUCCESS)
+    {
+        LOG(LOG_ERROR, "Failed to load private key from memory.\r\n");
         return NULL;
     }
 
@@ -292,6 +322,15 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
             printf("Error :can't set cipher\n");
             wolfSSL_CTX_free(ctx);
             return NULL;
+    }
+
+    ret = wolfSSL_CTX_UseSNI(ctx, WOLFSSL_SNI_HOST_NAME, "www.prova.com",
+    strlen("www.prova.com"));
+    if (ret != SSL_SUCCESS) {
+        printf("ret = %d\n", ret);
+        printf("Error :can't set SNI\n");
+        wolfSSL_CTX_free(ctx);
+        return NULL;
     }
 
     wolfSSL_SetIORecv(ctx, client_recv);
@@ -368,7 +407,7 @@ int start_tls_client(int argc, char **argv)
     printf("TLS version is %s\n", wolfSSL_get_version(sslCli));
     printf("Cipher Suite is %s\n",
            wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(sslCli)));
-
+/*
     char send_msg[] = "This is ATLS client!\n";
 
     printf("Sending hello message...\n");
@@ -382,7 +421,7 @@ int start_tls_client(int argc, char **argv)
     
     LOG(LOG_INFO, "Received: '%s'\r\n", buf);
 
-    /* Clean up and exit. */
+     Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
 
     client_cleanup(sslCli,ctxCli);

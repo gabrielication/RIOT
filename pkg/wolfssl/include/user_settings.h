@@ -304,7 +304,7 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define HAVE_TLS13
 #define WOLFSSL_TLS13
 #define HAVE_HKDF
-#define WOLFSSL_NO_TLS12
+//#define WOLFSSL_NO_TLS12
 #endif
 
 #ifdef __cplusplus
