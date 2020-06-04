@@ -16,6 +16,8 @@
 #include "mutex.h"
 #include "thread.h"
 
+#include "certs.h"
+
 #include "log.h"
 
 #define mbedtls_fprintf    fprintf
@@ -46,6 +48,8 @@ static mbedtls_timing_delay_context timer;
 #if defined(MBEDTLS_X509_CRT_PARSE_C)
     static mbedtls_x509_crt srvcert;
     static mbedtls_pk_context pkey;
+
+    static mbedtls_x509_crt cacert;
 #endif
 
 extern char payload_tls[];
@@ -166,27 +170,28 @@ int mbedtls_server_init(void)
 
     #if defined(MBEDTLS_X509_CRT_PARSE_C)
         mbedtls_x509_crt_init( &srvcert );
+        mbedtls_x509_crt_init( &cacert );
         mbedtls_pk_init( &pkey );
 
         // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
-        ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) mbedtls_test_srv_crt,
-                              mbedtls_test_srv_crt_len );
+        ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) server_cert,
+                              server_cert_len );
         if( ret != 0 )
         {
-            mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", ret );
+            mbedtls_printf( " failed\n  !  server mbedtls_x509_crt_parse returned %d\n\n", ret );
             return ret;
         }
 
-        ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) mbedtls_test_cas_pem,
-                              mbedtls_test_cas_pem_len );
+        ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) ca_cert,
+                              ca_cert_len );
         if( ret != 0 )
         {
-            mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", ret );
+            mbedtls_printf( " failed\n  !  ca mbedtls_x509_crt_parse returned %d\n\n", ret );
             return ret;
         }
 
-        ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) mbedtls_test_srv_key,
-                             mbedtls_test_srv_key_len, NULL, 0 );
+        ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) server_key,
+                             server_key_len, NULL, 0 );
         if( ret != 0 )
         {
             mbedtls_printf( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", ret );
@@ -299,19 +304,22 @@ int mbedtls_server_init(void)
                 return ret;
     }
 
-    const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
-    ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
+    //const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
+    //ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
 
     mbedtls_ssl_conf_ciphersuites( &conf, cipher );
 
     #if defined(MBEDTLS_X509_CRT_PARSE_C)
 
-        mbedtls_ssl_conf_ca_chain( &conf, srvcert.next, NULL );
+        mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
+
         if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
         {
             mbedtls_printf( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
             return ret;
         }
+
+        mbedtls_ssl_conf_authmode(&conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
 
     #endif
 
@@ -343,7 +351,7 @@ int mbedtls_server_init(void)
 
     mbedtls_ssl_set_bio( &ssl, NULL, mbedtls_ssl_send, mbedtls_ssl_recv, NULL );
 
-    mbedtls_ssl_set_datagram_packing (&ssl, 0);
+    //mbedtls_ssl_set_datagram_packing (&ssl, 0);
 
     return ret;
 }
@@ -383,7 +391,7 @@ int start_server(int argc, char **argv)
 
     printf("Initializing server...\n");
 
-    //mbedtls_debug_set_threshold(5);
+    //mbedtls_debug_set_threshold(3);
 
     ret = mbedtls_server_init();
     if( ret != 0){
@@ -423,7 +431,7 @@ reset:
     printf(">>> SERVER CONNECTED SUCCESSFULLY!\n");
     printf("Protocol is %s \nCiphersuite is %s\n\n",
         mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl));
-
+/*
     len = sizeof(buf) - 1;
     memset( buf, 0, sizeof(buf) );
     ret = mbedtls_ssl_read( &ssl, buf, len );
@@ -436,7 +444,7 @@ reset:
     len = sprintf( (char *) buf, RESPONSE );
 
     ret = mbedtls_ssl_write( &ssl, buf, len );
-
+*/
     mbedtls_ssl_close_notify( &ssl );
 
     mbedtls_server_exit(0);

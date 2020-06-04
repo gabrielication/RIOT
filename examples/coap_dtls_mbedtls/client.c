@@ -15,6 +15,8 @@
 #include "net/gcoap.h"
 #include "mutex.h"
 
+#include "certs.h"
+
 #include "log.h"
 
 #define mbedtls_fprintf    fprintf
@@ -44,6 +46,9 @@ static mbedtls_timing_delay_context timer;
 
 #if defined(MBEDTLS_X509_CRT_PARSE_C)
     static mbedtls_x509_crt cacert;
+
+    static mbedtls_x509_crt clicert;
+    static mbedtls_pk_context pkey;
 #endif
 
 static int tls_version = MBEDTLS_SSL_MINOR_VERSION_3;
@@ -185,7 +190,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 
     printf("Client RECV...%d\n",recv_count);
     //printf("RECV ssl state %d\n",ssl.state);
-
+/*
 #if defined(MBEDTLS_CERTS_C)
     if(recv_count == -2 || recv_count == 3 || recv_count == 4 || recv_count == -6){
         coap_get();
@@ -195,7 +200,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         coap_get();
     }
 #endif
-    
+    */
     mutex_lock(&client_lock);
 
     memcpy(buf, payload_tls, len);
@@ -261,13 +266,31 @@ int mbedtls_client_init(void)
     #if defined(MBEDTLS_X509_CRT_PARSE_C)
 
         mbedtls_x509_crt_init( &cacert );
-        // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
-        ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) mbedtls_test_cas_pem,
-                              mbedtls_test_cas_pem_len );
+        mbedtls_x509_crt_init( &clicert );
+        mbedtls_pk_init( &pkey );
 
+        // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
+        ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) ca_cert,
+                              ca_cert_len );
         if( ret < 0 )
         {
-            printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
+            printf( " failed\n  !  CA mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
+            return ret;
+        }
+
+        ret = mbedtls_x509_crt_parse( &clicert, (const unsigned char *) client_cert,
+                              client_cert_len );
+        if( ret != 0 )
+        {
+            mbedtls_printf( " failed\n  !  client mbedtls_x509_crt_parse returned %d\n\n", ret );
+            return ret;
+        }
+
+        ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) client_key,
+                             client_key_len, NULL, 0 );
+        if( ret != 0 )
+        {
+            mbedtls_printf( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", ret );
             return ret;
         }
 
@@ -295,10 +318,6 @@ int mbedtls_client_init(void)
     mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, tls_version);
     mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, tls_version);
 
-    /* OPTIONAL is not optimal for security,
-     * but makes interop easier in this simplified example */
-    mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
-
 #if defined(MBEDTLS_TIMING_C)
     mbedtls_ssl_set_timer_cb( &ssl, &timer, mbedtls_timing_set_delay,
                                             mbedtls_timing_get_delay );
@@ -307,6 +326,16 @@ int mbedtls_client_init(void)
     #if defined(MBEDTLS_X509_CRT_PARSE_C)
 
         mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
+
+        if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &clicert, &pkey ) ) != 0 )
+        {
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
+            return ret;
+        }
+
+        /* OPTIONAL is not optimal for security,
+        * but makes interop easier in this simplified example */
+        mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
 
     #endif
 
@@ -438,7 +467,7 @@ int start_client(int argc, char **argv)
 
     printf("Initializing client...\n");
 
-    //mbedtls_debug_set_threshold(5);
+    //mbedtls_debug_set_threshold(3);
 
     ret = mbedtls_client_init();
     if( ret != 0){
@@ -479,7 +508,7 @@ int start_client(int argc, char **argv)
     printf("CLIENT CONNECTED SUCCESSFULLY!\n");
     printf("Protocol is %s \nCiphersuite is %s\n\n",
         mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl));
-
+/*
     len = sprintf( (char *) buf, GET_REQUEST );
 
     ret = mbedtls_ssl_write( &ssl, buf, len );
@@ -493,7 +522,7 @@ int start_client(int argc, char **argv)
     len = ret;
     buf[len] = '\0';
     printf( ">>> %d bytes read\n\n%s\n", len, (char *) buf );
-
+*/
     mbedtls_ssl_close_notify( &ssl );
 
     mbedtls_client_exit(0);
