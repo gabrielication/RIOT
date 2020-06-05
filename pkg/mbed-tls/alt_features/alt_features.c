@@ -81,9 +81,7 @@ static void handler(void *arg)
 static void handler(int signum)
 {
     mbedtls_timing_alarmed = 1;
-    #ifdef BOARD_NATIVE
-        signal( signum, handler );
-    #endif
+    signal( signum, handler );
 }
 
 #endif
