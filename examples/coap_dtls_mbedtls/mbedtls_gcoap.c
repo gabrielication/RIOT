@@ -31,9 +31,6 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-#define COAP_POST 2
-#define COAP_GET 1
-
 #define PAYLOAD_TLS_SIZE 1280
 
 static ssize_t _encode_link(const coap_resource_t *resource, char *buf,
@@ -54,9 +51,6 @@ int size_payload = 0;
 
 unsigned char last_post = 0;
 unsigned char last_get = 0;
-
-extern int coap_post();
-extern int coap_get();
 
 /* CoAP resources. Must be sorted by path (ASCII order). */
 static const coap_resource_t _resources[] = {

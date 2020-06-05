@@ -117,7 +117,7 @@ int sni_callback( void *p_info, mbedtls_ssl_context *ssl,
 
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
-    int i;
+    unsigned int i;
 
     //printf("Server SEND... %d\n",len);
     //printf("SEND ssl state %d\n",ssl.state);
