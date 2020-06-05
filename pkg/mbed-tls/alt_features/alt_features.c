@@ -69,6 +69,15 @@ unsigned long mbedtls_timing_get_timer(struct mbedtls_timing_hr_time *val, int r
     return( delta );
 }
 
+#ifndef BOARD_NATIVE
+
+static void handler(void *arg)
+{
+    mbedtls_timing_alarmed = 1;
+}
+
+#else
+
 static void handler(int signum)
 {
     mbedtls_timing_alarmed = 1;
@@ -76,6 +85,9 @@ static void handler(int signum)
         signal( signum, handler );
     #endif
 }
+
+#endif
+
 
 void mbedtls_set_alarm( int seconds )
 {
