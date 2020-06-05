@@ -41,7 +41,7 @@
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
 
-static int config_index = 5;
+static int config_index = 2;
 static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
@@ -301,6 +301,15 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
         return NULL;
     }
 
+    ret = wolfSSL_CTX_UseSNI(ctx, WOLFSSL_SNI_HOST_NAME, "www.prova.com",
+    strlen("www.prova.com"));
+    if (ret != SSL_SUCCESS) {
+        printf("ret = %d\n", ret);
+        printf("Error :can't set SNI\n");
+        wolfSSL_CTX_free(ctx);
+        return NULL;
+    }
+
 #else /* !def MODULE_WOLFSSL_PSK */
     wolfSSL_CTX_set_psk_client_callback(ctx, my_psk_client_cb);
 #endif
@@ -310,15 +319,6 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
             printf("Error :can't set cipher\n");
             wolfSSL_CTX_free(ctx);
             return NULL;
-    }
-
-    ret = wolfSSL_CTX_UseSNI(ctx, WOLFSSL_SNI_HOST_NAME, "www.prova.com",
-    strlen("www.prova.com"));
-    if (ret != SSL_SUCCESS) {
-        printf("ret = %d\n", ret);
-        printf("Error :can't set SNI\n");
-        wolfSSL_CTX_free(ctx);
-        return NULL;
     }
 
     wolfSSL_SetIORecv(ctx, client_recv);
