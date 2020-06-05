@@ -77,7 +77,6 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define TFM_TIMING_RESISTANT
 #define NO_RC4
 #define NO_OLD_TLS
-#define HAVE_SNI
 #define NO_ASN_TIME
 #define NO_MD5
 
@@ -101,6 +100,11 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #ifdef MODULE_WOLFCRYPT_AESGCM
 #define HAVE_AESGCM
 #define GCM_SMALL
+#endif
+
+#undef HAVE_SNI
+#ifdef MODULE_WOLFSSL_SNI
+#define HAVE_SNI
 #endif
 
 #undef HAVE_FFDHE_2048
