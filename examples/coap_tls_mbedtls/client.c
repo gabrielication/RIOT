@@ -21,7 +21,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #define GET_REQUEST "This is ATLS client!\n"
 
@@ -152,7 +152,7 @@ int coap_get(void)
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
 
-    printf("Client SEND... %d\n",send_count);
+    //printf("Client SEND... %d\n",send_count);
     //printf("SEND ssl state %d\n",ssl.state);
 
 #if defined(MBEDTLS_CERTS_C)
@@ -160,7 +160,6 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 #else
     if (send_count == 2 || send_count == 3){
 #endif
-        printf("wait\n");
         mutex_lock(&client_send_lock);
     }
 
@@ -190,7 +189,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     unsigned int i;
 
-    printf("Client RECV...%d\n",recv_count);
+    //printf("Client RECV...%d\n",recv_count);
     //printf("RECV ssl state %d\n",ssl.state);
 
 #if defined(MBEDTLS_CERTS_C)
@@ -419,7 +418,7 @@ int mbedtls_client_init(void)
 
 **/
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-PSK-WITH-AES-256-GCM-SHA384");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
