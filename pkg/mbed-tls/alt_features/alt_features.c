@@ -29,13 +29,12 @@ int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t 
 
 #ifdef MODULE_PERIPH_HWRNG
     hwrng_read((void*) output, len);
-
     *olen = len;
 #else
     *output= random_uint32();
     *olen = 4;
 #endif
-    
+
     return 0;
 }
 
@@ -51,7 +50,7 @@ volatile int mbedtls_timing_alarmed = 0;
 // Taken from original mbed-tls library/timing.c
 unsigned long mbedtls_timing_get_timer(struct mbedtls_timing_hr_time *val, int reset)
 {
-	unsigned long delta;
+    unsigned long delta;
     struct timeval offset;
     struct _hr_time *t = (struct _hr_time *) val;
 
@@ -70,13 +69,23 @@ unsigned long mbedtls_timing_get_timer(struct mbedtls_timing_hr_time *val, int r
     return( delta );
 }
 
+#ifndef BOARD_NATIVE
+
+static void handler(void *arg)
+{
+    mbedtls_timing_alarmed = 1;
+}
+
+#else
+
 static void handler(int signum)
 {
     mbedtls_timing_alarmed = 1;
-    #ifdef BOARD_NATIVE
-        signal( signum, handler );
-    #endif
+    signal( signum, handler );
 }
+
+#endif
+
 
 void mbedtls_set_alarm( int seconds )
 {
