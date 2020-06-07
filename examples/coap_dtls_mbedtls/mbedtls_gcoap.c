@@ -31,7 +31,7 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-#define PAYLOAD_TLS_SIZE 1024
+#define PAYLOAD_TLS_SIZE 2048
 
 #define COAP_POST 2
 #define COAP_GET 1

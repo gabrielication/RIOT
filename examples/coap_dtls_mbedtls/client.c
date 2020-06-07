@@ -15,12 +15,14 @@
 #include "net/gcoap.h"
 #include "mutex.h"
 
+#include "certs.h"
+
 #include "log.h"
 
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #define GET_REQUEST "This is ATLS client!\n"
 
@@ -42,11 +44,16 @@ static mbedtls_ssl_config conf;
 
 #if defined(MBEDTLS_X509_CRT_PARSE_C)
     static mbedtls_x509_crt cacert;
+
+    static mbedtls_x509_crt clicert;
+    static mbedtls_pk_context pkey;
 #endif
 
 static mbedtls_timing_delay_context timer;
 
-static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
+//KEY_EXCHANGE_MODE_ECDHE_ECDSA
+//KEY_EXCHANGE_MODE_PSK_KE
+static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_ECDHE_ECDSA;
 static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
 
 extern char payload_tls[];
@@ -151,13 +158,16 @@ int coap_get(void)
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
 
-    printf("Client SEND... %d\n",client_send);
+    //printf("Client SEND... %d\n",client_send);
     //printf("SEND ssl state %d\n",ssl.state);
 
-    
-    if(client_send == -2){
+#if defined(MBEDTLS_CERTS_C)
+    if(client_send == 2 || client_send == 3){
         mutex_lock(&client_send_lock);
     }
+#else
+    
+#endif
 
     memcpy(payload_tls,buf,len);
     size_payload = len;
@@ -185,12 +195,18 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    printf("Client RECV...%d\n",client_recv);
+    //printf("Client RECV...%d\n",client_recv);
     //printf("RECV ssl state %d\n",ssl.state);
 
+#if defined(MBEDTLS_CERTS_C)
+    if(client_recv == 1 || client_recv == 2 || client_recv == 3 || client_recv == 4 || client_recv == 5){
+        coap_get();
+    }
+#else
     if(client_recv == 1 || client_recv == 2){
         coap_get();
     }
+#endif
 
     mutex_lock(&client_lock);
 
@@ -258,13 +274,32 @@ int mbedtls_client_init()
 #if defined(MBEDTLS_X509_CRT_PARSE_C)
 
     mbedtls_x509_crt_init( &cacert );
+    mbedtls_x509_crt_init( &clicert );
+    mbedtls_pk_init( &pkey );
+
     // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
-    ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) mbedtls_test_cas_pem,
-                          mbedtls_test_cas_pem_len );
+    ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) ca_cert,
+                          ca_cert_len );
     if( ret < 0 )
     {
-        printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
+        printf( " failed\n  !  CA mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
         return ret;
+    }
+
+    ret = mbedtls_x509_crt_parse( &clicert, (const unsigned char *) client_cert,
+                              client_cert_len );
+    if( ret != 0 )
+    {
+        mbedtls_printf( " failed\n  !  client mbedtls_x509_crt_parse returned %d\n\n", ret );
+        return ret;
+    }
+
+    ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) client_key,
+                         client_key_len, NULL, 0 );
+    if( ret != 0 )
+    {
+        mbedtls_printf( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", ret );
+            return ret;
     }
 
 #endif
@@ -298,6 +333,16 @@ int mbedtls_client_init()
 #if defined(MBEDTLS_X509_CRT_PARSE_C)
 
     mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
+
+    if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &clicert, &pkey ) ) != 0 )
+    {
+        mbedtls_printf( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
+        return ret;
+    }
+
+    /* OPTIONAL is not optimal for security,
+    * but makes interop easier in this simplified example */
+    mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
 
 #endif
 
@@ -395,7 +440,7 @@ int mbedtls_client_init()
     }
 
 #if defined(MBEDTLS_X509_CRT_PARSE_C)
-    if( ( ret = mbedtls_ssl_set_hostname( &ssl, "ssl_server" ) ) != 0 )
+    if( ( ret = mbedtls_ssl_set_hostname( &ssl, "www.prova.com" ) ) != 0 )
     {
         mbedtls_printf( " failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret );
         return ret;
