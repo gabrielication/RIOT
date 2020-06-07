@@ -20,7 +20,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #define GET_REQUEST "This is ATLS client!\n"
 
@@ -63,6 +63,9 @@ char *addr_str;
 
 static int offset = 0;
 static int get_flag = 0;
+
+static int client_send=0;
+static int client_recv=0;
 
 static void usage(const char *cmd_name)
 {
@@ -148,12 +151,12 @@ int coap_get(void)
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
 
-    //printf("Client SEND... %d\n",len);
+    printf("Client SEND... %d\n",client_send);
     //printf("SEND ssl state %d\n",ssl.state);
 
     
-    if(ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER && ssl.out_msgtype != MBEDTLS_SSL_MSG_ALERT){
-        //mutex_lock(&client_send_lock);
+    if(client_send == -2){
+        mutex_lock(&client_send_lock);
     }
 
     memcpy(payload_tls,buf,len);
@@ -173,6 +176,8 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 
     coap_post();
 
+    client_send++;
+
     return len;
 }
 
@@ -180,10 +185,10 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    //printf("Client RECV...%d\n",len);
+    printf("Client RECV...%d\n",client_recv);
     //printf("RECV ssl state %d\n",ssl.state);
 
-    if(ssl.state > MBEDTLS_SSL_SERVER_HELLO && ssl.state < MBEDTLS_SSL_HANDSHAKE_OVER){
+    if(client_recv == 1 || client_recv == 2){
         coap_get();
     }
 
@@ -200,6 +205,8 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         }
         printf("\n/*-------------------- END RECV -----------------*/\n");
     }
+
+    client_recv++;
     
     return size_payload;
 }
@@ -487,7 +494,7 @@ int start_client(int argc, char **argv)
     printf("CLIENT CONNECTED SUCCESSFULLY!\n");
     printf("Protocol is %s \nCiphersuite is %s\nKey Exchange Mode is %s\n\n",
         mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl), mbedtls_ssl_get_key_exchange_name(&ssl));
-
+/*
     len = sizeof( buf ) - 1;
     memset( buf, 0, sizeof( buf ) );
     ret = mbedtls_ssl_read( &ssl, buf, len );
@@ -513,7 +520,7 @@ int start_client(int argc, char **argv)
     len = ret;
     buf[len] = '\0';
     printf( ">>> %d bytes read\n\n%s\n", len, (char *) buf );
-
+*/
     mbedtls_ssl_close_notify( &ssl );
 
     mbedtls_client_exit(0);

@@ -11,6 +11,7 @@
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
 #include "mbedtls/timing.h"
+#include "mbedtls/ssl_cookie.h"
 
 #include "mutex.h"
 #include "thread.h"
@@ -20,7 +21,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #define RESPONSE "This is ATLS server!\n"
 
@@ -37,6 +38,8 @@ static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
 static mbedtls_ssl_config conf;
+static mbedtls_ssl_cookie_ctx cookie_ctx;
+static unsigned char info[5] = {'c', 'o', 'a', 'p', '\0'};
 
 #if defined(MBEDTLS_X509_CRT_PARSE_C)
     static mbedtls_x509_crt srvcert;
@@ -60,6 +63,9 @@ static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
 static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
 
 static int cipher[2];
+
+static int server_recv=0;
+static int server_send=0;
 
 static void usage(const char *cmd_name)
 {
@@ -100,6 +106,8 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 
     thread_wakeup(main_pid);
 
+    server_send++;
+
     return len;
 }
 
@@ -107,7 +115,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    //printf("Server RECV... %d\n",len);
+    printf("Server RECV... %d\n",server_recv);
     //printf("RECV ssl state %d\n",ssl.state);
 
     mutex_lock(&server_lock);
@@ -129,6 +137,8 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
         //thread_wakeup(main_pid);
     }
 
+    server_recv++;
+
     return size_payload;
 }
 
@@ -142,6 +152,7 @@ int mbedtls_server_init()
     mbedtls_ssl_init( &ssl );
     mbedtls_ssl_config_init( &conf );
     mbedtls_ctr_drbg_init( &ctr_drbg );
+    mbedtls_ssl_cookie_init( &cookie_ctx );
 
     mbedtls_entropy_init( &entropy );
 
@@ -269,6 +280,15 @@ int mbedtls_server_init()
 
     mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
 
+    /**
+    
+    TLS_AES_128_CCM_SHA256
+    TLS_AES_128_GCM_SHA256
+    TLS_AES_256_GCM_SHA384
+
+    **/
+
+
     cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_128_CCM_SHA256");
     cipher[1] = 0;
 
@@ -299,6 +319,22 @@ int mbedtls_server_init()
     }
 
 #endif
+
+    if( ( ret = mbedtls_ssl_cookie_setup( &cookie_ctx,
+                                  mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
+    {
+        printf( " failed\n  ! mbedtls_ssl_cookie_setup returned %d\n\n", ret );
+        return ret;
+    }
+
+    mbedtls_ssl_conf_cookies( &conf, mbedtls_ssl_cookie_write, mbedtls_ssl_cookie_check,
+                               &cookie_ctx, MBEDTLS_SSL_FORCE_RR_CHECK_OFF );
+
+    if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
+    {
+        printf( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
+        return ret;
+    }
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
@@ -384,11 +420,28 @@ int start_server(int argc, char **argv)
         mbedtls_server_exit(ret);
         return ret;
     }
+
+reset:
+    mbedtls_ssl_session_reset( &ssl );
+
+    if( ( ret = mbedtls_ssl_set_client_transport_id( &ssl,
+                    info, sizeof(info) ) ) != 0 )
+    {
+        printf( " failed\n  ! "
+                "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", -ret );
+        return ret;
+    }
     
     printf("Proceeding to handshake...\n");
     while( ( ret = mbedtls_ssl_handshake( &ssl ) ) != 0 )
     {
-        if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
+        if( ret == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
+        {
+            printf( " hello verification requested\n" );
+            ret = 0;
+            goto reset;
+        }
+        else if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
         {
             mbedtls_printf( " failed\n  ! mbedtls_ssl_handshake returned %d\n\n", ret );
             mbedtls_server_exit(ret);
@@ -399,7 +452,7 @@ int start_server(int argc, char **argv)
     printf(">>> SERVER CONNECTED SUCCESSFULLY!\n");
     printf("Protocol is %s \nCiphersuite is %s\nKey Exchange Mode is %s\n\n",
         mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl), mbedtls_ssl_get_key_exchange_name(&ssl));
-
+/*
     len = sizeof(buf) - 1;
     memset( buf, 0, sizeof(buf) );
     ret = mbedtls_ssl_read( &ssl, buf, len );
@@ -418,7 +471,7 @@ int start_server(int argc, char **argv)
     len = sizeof(buf) - 1;
     memset( buf, 0, sizeof(buf) );
     ret = mbedtls_ssl_read( &ssl, buf, len );
-
+*/
     mbedtls_ssl_close_notify( &ssl );
 
     mbedtls_server_exit(0);
