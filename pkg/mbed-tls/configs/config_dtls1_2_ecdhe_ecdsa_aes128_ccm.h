@@ -810,7 +810,7 @@
 *
 * Comment this macro to disable support for TLS 1.3 / DTLS 1.3
 */
-#define MBEDTLS_SSL_PROTO_TLS1_3
+//#define MBEDTLS_SSL_PROTO_TLS1_3
 
 /**
 *  \def MBEDTLS_SSL_EARLY_DATA_MAX_DELAY
@@ -874,7 +874,7 @@
 *
 * Comment this macro to disable support for DTLS
 */
-//#define MBEDTLS_SSL_PROTO_DTLS
+#define MBEDTLS_SSL_PROTO_DTLS
 
 /**
 * \def MBEDTLS_SSL_ALPN
@@ -917,7 +917,7 @@
 *
 * Comment this to disable support for HelloVerifyRequest.
 */
-//#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
+#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
 
 /**
 * \def MBEDTLS_SSL_DTLS_CLIENT_PORT_REUSE

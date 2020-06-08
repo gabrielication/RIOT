@@ -381,8 +381,8 @@
 //#define MBEDTLS_ECP_DP_SECP192R1_ENABLED
 //#define MBEDTLS_ECP_DP_SECP224R1_ENABLED
 #define MBEDTLS_ECP_DP_SECP256R1_ENABLED
-#define MBEDTLS_ECP_DP_SECP384R1_ENABLED
-#define MBEDTLS_ECP_DP_SECP521R1_ENABLED
+//#define MBEDTLS_ECP_DP_SECP384R1_ENABLED
+//#define MBEDTLS_ECP_DP_SECP521R1_ENABLED
 //#define MBEDTLS_ECP_DP_SECP192K1_ENABLED
 //#define MBEDTLS_ECP_DP_SECP224K1_ENABLED
 //#define MBEDTLS_ECP_DP_SECP256K1_ENABLED
@@ -414,7 +414,7 @@
 *
 * Comment this macro to disable the MBEDTLS_ECDSA_SECP384r1_SHA384 signature algo
 */
-#define MBEDTLS_ECDSA_SECP384r1_SHA384
+//#define MBEDTLS_ECDSA_SECP384r1_SHA384
 
 
 /**
@@ -427,7 +427,7 @@
 *
 * Comment this macro to disable the MBEDTLS_ECDSA_SECP521r1_SHA512 signature algo
 */
-#define MBEDTLS_ECDSA_SECP521r1_SHA512
+//#define MBEDTLS_ECDSA_SECP521r1_SHA512
 
 
 /**
@@ -810,7 +810,7 @@
 *
 * Comment this macro to disable support for TLS 1.3 / DTLS 1.3
 */
-#define MBEDTLS_SSL_PROTO_TLS1_3
+//#define MBEDTLS_SSL_PROTO_TLS1_3
 
 /**
 *  \def MBEDTLS_SSL_EARLY_DATA_MAX_DELAY
@@ -874,7 +874,7 @@
 *
 * Comment this macro to disable support for DTLS
 */
-//#define MBEDTLS_SSL_PROTO_DTLS
+#define MBEDTLS_SSL_PROTO_DTLS
 
 /**
 * \def MBEDTLS_SSL_ALPN
@@ -917,7 +917,7 @@
 *
 * Comment this to disable support for HelloVerifyRequest.
 */
-//#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
+#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
 
 /**
 * \def MBEDTLS_SSL_DTLS_CLIENT_PORT_REUSE
@@ -1260,7 +1260,7 @@
 * enabled as well.
 */
 // TBD: Should actually be called MBEDTLS_CIPHER_MODE_CCM
-//#define MBEDTLS_CCM_C
+#define MBEDTLS_CCM_C
 
 /**
 * \def MBEDTLS_CERTS_C
@@ -1400,7 +1400,7 @@
 * This module enables the AES-GCM and CAMELLIA-GCM ciphersuites, if other
 * requisites are enabled as well.
 */
-#define MBEDTLS_GCM_C
+//#define MBEDTLS_GCM_C
 
 /**
 * \def MBEDTLS_HAVEGE_C
@@ -1692,7 +1692,7 @@
 *
 * This module adds support for SHA-512 and SHA-384.
 */
-#define MBEDTLS_SHA512_C
+//#define MBEDTLS_SHA512_C
 
 /**
 * \def MBEDTLS_SSL_CACHE_C
