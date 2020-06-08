@@ -851,8 +851,8 @@
 *
 */
 // The value below are set for debugging purposes.
-#define MBEDTLS_SSL_DTLS_TIMEOUT_DFL_MIN   600000
-#define MBEDTLS_SSL_DTLS_TIMEOUT_DFL_MAX  1800000
+//#define MBEDTLS_SSL_DTLS_TIMEOUT_DFL_MIN   600000
+//#define MBEDTLS_SSL_DTLS_TIMEOUT_DFL_MAX  1800000
 
 // These values represent resonable settings. 
 /*
