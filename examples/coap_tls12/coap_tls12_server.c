@@ -231,6 +231,20 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
         return NULL;
     }
 
+    if (wolfSSL_CTX_UseSupportedCurve(ctx, WOLFSSL_ECC_SECP256R1) != SSL_SUCCESS)
+    {
+        LOG(LOG_ERROR, "Unsupported curve.\r\n");
+        return NULL;
+    }
+
+#ifdef MODULE_WOLFCRYPT_ECC521
+    if (wolfSSL_CTX_UseSupportedCurve(ctx, WOLFSSL_ECC_SECP521R1) != SSL_SUCCESS)
+    {
+        LOG(LOG_ERROR, "Unsupported curve.\r\n");
+        return NULL;
+    }
+#endif
+
     ret = wolfSSL_CTX_UseSNI(ctx, WOLFSSL_SNI_HOST_NAME, "www.prova.com",
     strlen("www.prova.com"));
     if (ret != SSL_SUCCESS) {

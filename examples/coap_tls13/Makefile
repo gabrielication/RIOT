@@ -60,6 +60,7 @@ CFLAGS += -DGCOAP_PDU_BUF_SIZE=384
 #USEMODULE += wolfcrypt_aesccm
 USEMODULE += wolfcrypt_aesgcm
 USEMODULE += wolfcrypt_sha512
+USEMODULE += wolfcrypt_ecc521
 
 CFLAGS += -Wno-unused-parameter -Wno-unused-variable
 

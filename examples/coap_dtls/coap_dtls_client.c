@@ -39,7 +39,7 @@
 
 #endif
 
-static int config_index = 2;
+static int config_index = 5;
 static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
@@ -273,6 +273,27 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
         LOG(LOG_ERROR, "Failed to load private key from memory.\r\n");
         return NULL;
     }
+
+    /**
+    
+    WOLFSSL_ECC_SECP256R1
+    WOLFSSL_ECC_SECP521R1
+
+    **/
+
+    if (wolfSSL_CTX_UseSupportedCurve(ctx, WOLFSSL_ECC_SECP256R1) != SSL_SUCCESS)
+    {
+        LOG(LOG_ERROR, "Unsupported curve.\r\n");
+        return NULL;
+    }
+
+#ifdef MODULE_WOLFCRYPT_ECC521
+    if (wolfSSL_CTX_UseSupportedCurve(ctx, WOLFSSL_ECC_SECP521R1) != SSL_SUCCESS)
+    {
+        LOG(LOG_ERROR, "Unsupported curve.\r\n");
+        return NULL;
+    }
+#endif
 
     ret = wolfSSL_CTX_UseSNI(ctx, WOLFSSL_SNI_HOST_NAME, "www.prova.com",
     strlen("www.prova.com"));
