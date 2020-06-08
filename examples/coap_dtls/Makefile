@@ -56,7 +56,7 @@ CFLAGS += -DGCOAP_PDU_BUF_SIZE=1280
 #USEMODULE += wolfssl_psk
 #CFLAGS += -DGCOAP_PDU_BUF_SIZE=256
 
-USEMODULE += wolfcrypt_aesccm
+#USEMODULE += wolfcrypt_aesccm
 USEMODULE += wolfcrypt_aesgcm
 USEMODULE += wolfcrypt_sha512
 USEMODULE += wolfcrypt_ecc521
