@@ -461,7 +461,7 @@
 * Enable the PSK based ciphersuite modes.
 *
 */
-//#define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
 
 
 /**
@@ -917,7 +917,7 @@
 *
 * Comment this to disable support for HelloVerifyRequest.
 */
-#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
+//#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
 
 /**
 * \def MBEDTLS_SSL_DTLS_CLIENT_PORT_REUSE

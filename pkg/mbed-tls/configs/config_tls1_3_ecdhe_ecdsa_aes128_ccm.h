@@ -461,7 +461,7 @@
 * Enable the PSK based ciphersuite modes.
 *
 */
-//#define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
 
 
 /**
