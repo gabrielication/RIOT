@@ -34,9 +34,6 @@
     static size_t psk_len = 0;
 #endif
 
-extern unsigned char last_post;
-extern unsigned char last_get;
-
 static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
@@ -53,7 +50,7 @@ static mbedtls_timing_delay_context timer;
 
 //KEY_EXCHANGE_MODE_ECDHE_ECDSA
 //KEY_EXCHANGE_MODE_PSK_KE
-static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_ECDHE_ECDSA;
+static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
 static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
 
 extern char payload_tls[];
@@ -96,9 +93,6 @@ int coap_post(void)
         a PDU and the eventual payload.
     */
 
-    last_post = 1;
-    last_get = 0;
-
     // The GCOAP macro is 128B because it is typically enough to hold all the header options
     // But we have to be sure it is enoguh to hold also the payload!!!
     // We solve that by redefining it in the Makefile.
@@ -136,8 +130,6 @@ int coap_post(void)
 
 int coap_get(void)
 {
-    last_post = 0;
-    last_get = 1;
 
     uint8_t buf_pdu[GCOAP_PDU_BUF_SIZE];
     coap_pkt_t pdu;
@@ -251,7 +243,7 @@ static void mbedtls_client_exit(int ret)
     printf("Exiting mbedtls...\n");
 }
 
-int mbedtls_client_init()
+int mbedtls_client_init(void)
 {
     int ret;
 
@@ -427,10 +419,10 @@ int mbedtls_client_init()
                 ret = 2;
                 return ret;
     }
-
+/*
     const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
     ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
-
+*/
     mbedtls_ssl_conf_ciphersuites( &conf, cipher );
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )

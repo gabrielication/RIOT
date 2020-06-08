@@ -414,7 +414,7 @@
 *
 * Comment this macro to disable the MBEDTLS_ECDSA_SECP384r1_SHA384 signature algo
 */
-#define MBEDTLS_ECDSA_SECP384r1_SHA384
+//#define MBEDTLS_ECDSA_SECP384r1_SHA384
 
 
 /**
@@ -427,7 +427,7 @@
 *
 * Comment this macro to disable the MBEDTLS_ECDSA_SECP521r1_SHA512 signature algo
 */
-#define MBEDTLS_ECDSA_SECP521r1_SHA512
+//#define MBEDTLS_ECDSA_SECP521r1_SHA512
 
 
 /**

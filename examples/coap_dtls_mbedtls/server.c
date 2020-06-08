@@ -79,7 +79,7 @@ static int offset = 0;
 static int wake_flag = 0;
 
 //KEY_EXCHANGE_MODE_ECDHE_ECDSA
-static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_ECDHE_ECDSA;
+static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
 static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
 
 static int cipher[2];
@@ -122,7 +122,7 @@ int sni_callback( void *p_info, mbedtls_ssl_context *ssl,
 
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
-    int i;
+    unsigned int i;
 
     //printf("Server SEND... %d\n",len);
     //printf("SEND ssl state %d\n",ssl.state);
@@ -187,7 +187,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
     return ret;
 }
 
-int mbedtls_server_init()
+int mbedtls_server_init(void)
 {
     int ret;
 
@@ -350,10 +350,10 @@ int mbedtls_server_init()
                 ret = 2;
                 return ret;
     }
-
+/*
     const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
     ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
-
+*/
     mbedtls_ssl_conf_ciphersuites( &conf, cipher );
 
 #if defined(MBEDTLS_TIMING_C)
