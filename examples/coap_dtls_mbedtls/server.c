@@ -329,7 +329,7 @@ int mbedtls_server_init(void)
             TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384
 **/
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-PSK-WITH-AES-128-CCM");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256");
     cipher[1] = 0;
 
     if (cipher[0] == 0)

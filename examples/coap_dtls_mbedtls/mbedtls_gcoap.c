@@ -49,9 +49,6 @@ kernel_pid_t main_pid;
 char payload_tls[PAYLOAD_TLS_SIZE];
 int size_payload = 0;
 
-unsigned char last_post = 0;
-unsigned char last_get = 0;
-
 /* CoAP resources. Must be sorted by path (ASCII order). */
 static const coap_resource_t _resources[] = {
     { "/.well-known/atls", COAP_GET | COAP_POST, _atls_handler, NULL},

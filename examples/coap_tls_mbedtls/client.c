@@ -33,9 +33,6 @@
     static size_t psk_len = 0;
 #endif
 
-extern unsigned char last_post;
-extern unsigned char last_get;
-
 static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
@@ -90,9 +87,6 @@ int coap_post(void)
         a PDU and the eventual payload.
     */
 
-    last_post = 1;
-    last_get = 0;
-
     // The GCOAP macro is 128B because it is typically enough to hold all the header options
     // But we have to be sure it is enoguh to hold also the payload!!!
     // We solve that by redefining it in the Makefile.
@@ -130,8 +124,6 @@ int coap_post(void)
 
 int coap_get(void)
 {
-    last_post = 0;
-    last_get = 1;
 
     uint8_t buf_pdu[GCOAP_PDU_BUF_SIZE];
     coap_pkt_t pdu;
@@ -418,7 +410,7 @@ int mbedtls_client_init(void)
 
 **/
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256");
     cipher[1] = 0;
 
     if (cipher[0] == 0)

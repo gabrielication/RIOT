@@ -874,7 +874,7 @@
 *
 * Comment this macro to disable support for DTLS
 */
-#define MBEDTLS_SSL_PROTO_DTLS
+//#define MBEDTLS_SSL_PROTO_DTLS
 
 /**
 * \def MBEDTLS_SSL_ALPN
@@ -917,7 +917,7 @@
 *
 * Comment this to disable support for HelloVerifyRequest.
 */
-#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
+//#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
 
 /**
 * \def MBEDTLS_SSL_DTLS_CLIENT_PORT_REUSE
@@ -1260,7 +1260,7 @@
 * enabled as well.
 */
 // TBD: Should actually be called MBEDTLS_CIPHER_MODE_CCM
-#define MBEDTLS_CCM_C
+//#define MBEDTLS_CCM_C
 
 /**
 * \def MBEDTLS_CERTS_C
@@ -1400,7 +1400,7 @@
 * This module enables the AES-GCM and CAMELLIA-GCM ciphersuites, if other
 * requisites are enabled as well.
 */
-//#define MBEDTLS_GCM_C
+#define MBEDTLS_GCM_C
 
 /**
 * \def MBEDTLS_HAVEGE_C
