@@ -25,7 +25,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #define RESPONSE "This is ATLS server!\n"
 
@@ -79,7 +79,7 @@ static int offset = 0;
 static int wake_flag = 0;
 
 //KEY_EXCHANGE_MODE_ECDHE_ECDSA
-static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
+static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_ECDHE_ECDSA;
 static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
 
 static int cipher[2];
@@ -124,7 +124,7 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
     unsigned int i;
 
-    //printf("Server SEND... %d\n",len);
+    printf("Server SEND... %d\n",len);
     //printf("SEND ssl state %d\n",ssl.state);
 
     mutex_lock(&server_req_lock);
@@ -154,7 +154,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
     int i;
     int ret;
 
-    //printf("Server RECV... %d\n",server_recv);
+    printf("Server RECV... %d\n",server_recv);
     //printf("RECV ssl state %d\n",ssl.state);
 
     mutex_lock(&server_lock);
@@ -503,7 +503,9 @@ reset:
     printf(">>> SERVER CONNECTED SUCCESSFULLY!\n");
     printf("Protocol is %s \nCiphersuite is %s\nKey Exchange Mode is %s\n\n",
         mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl), mbedtls_ssl_get_key_exchange_name(&ssl));
-/*
+
+    mbedtls_ssl_close_notify( &ssl );
+    /*
     len = sizeof(buf) - 1;
     memset( buf, 0, sizeof(buf) );
     ret = mbedtls_ssl_read( &ssl, buf, len );
@@ -511,7 +513,7 @@ reset:
     len = ret;
     buf[len] = '\0';
     printf( ">>> %d bytes read\n\n%s\n", len, (char *) buf );
-
+/*
     memset( buf, 0, sizeof(buf) );
     len = sprintf( (char *) buf, RESPONSE );
 
@@ -523,7 +525,7 @@ reset:
     memset( buf, 0, sizeof(buf) );
     ret = mbedtls_ssl_read( &ssl, buf, len );
 */
-    mbedtls_ssl_close_notify( &ssl );
+    //mbedtls_ssl_close_notify( &ssl );
 
     mbedtls_server_exit(0);
 

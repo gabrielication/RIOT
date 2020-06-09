@@ -22,7 +22,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #define GET_REQUEST "This is ATLS client!\n"
 
@@ -50,7 +50,7 @@ static mbedtls_timing_delay_context timer;
 
 //KEY_EXCHANGE_MODE_ECDHE_ECDSA
 //KEY_EXCHANGE_MODE_PSK_KE
-static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
+static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_ECDHE_ECDSA;
 static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
 
 extern char payload_tls[];
@@ -150,7 +150,7 @@ int coap_get(void)
 static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
 {
 
-    //printf("Client SEND... %d\n",client_send);
+    printf("Client SEND... %d\n",client_send);
     //printf("SEND ssl state %d\n",ssl.state);
 
 #if defined(MBEDTLS_CERTS_C)
@@ -158,7 +158,9 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
         mutex_lock(&client_send_lock);
     }
 #else
-    
+    if(client_send == -2){
+        mutex_lock(&client_send_lock);
+    }
 #endif
 
     memcpy(payload_tls,buf,len);
@@ -187,7 +189,7 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 {
     int i;
 
-    //printf("Client RECV...%d\n",client_recv);
+    printf("Client RECV...%d\n",client_recv);
     //printf("RECV ssl state %d\n",ssl.state);
 
 #if defined(MBEDTLS_CERTS_C)
@@ -531,11 +533,11 @@ int start_client(int argc, char **argv)
     printf("CLIENT CONNECTED SUCCESSFULLY!\n");
     printf("Protocol is %s \nCiphersuite is %s\nKey Exchange Mode is %s\n\n",
         mbedtls_ssl_get_version(&ssl), mbedtls_ssl_get_ciphersuite(&ssl), mbedtls_ssl_get_key_exchange_name(&ssl));
-/*
+
     len = sizeof( buf ) - 1;
     memset( buf, 0, sizeof( buf ) );
     ret = mbedtls_ssl_read( &ssl, buf, len );
-
+/*
     len = sprintf( (char *) buf, GET_REQUEST );
 
     while( ( ret = mbedtls_ssl_write( &ssl, buf, len ) ) <= 0 )
