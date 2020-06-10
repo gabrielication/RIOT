@@ -26,7 +26,7 @@
 
 #define GET_REQUEST "This is ATLS client!\n"
 
-#if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
+#if !defined(MBEDTLS_CERTS_C)
     // !!!CAREFUL!!! ONLY FOR TESTING PURPOSES!
     #define DFL_PSK                 "a66d258de75987d31a4537ecd1ff7a34517bf92f2c07abb20fa0fb517f2491f1"
     #define DFL_PSK_IDENTITY        "Client_identity"
@@ -343,7 +343,7 @@ int mbedtls_client_init(void)
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
 
-#if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
+#if !defined(MBEDTLS_CERTS_C)
     /*
      * Unhexify the pre-shared key if any is given
      */
@@ -412,7 +412,7 @@ int mbedtls_client_init(void)
 
     mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_128_CCM_SHA256");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_256_GCM_SHA384");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
