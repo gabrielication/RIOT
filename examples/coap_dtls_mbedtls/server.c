@@ -17,6 +17,10 @@
 
 #include "certs.h"
 
+#ifdef MBEDTLS_PLATFORM_MEMORY
+#include "mbedtls/platform.h"
+#endif
+
 #include "mutex.h"
 #include "thread.h"
 
@@ -25,7 +29,7 @@
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #define RESPONSE "This is ATLS server!\n"
 
@@ -75,10 +79,18 @@ extern mutex_t server_req_lock;
 
 extern kernel_pid_t main_pid;
 
+#ifdef MBEDTLS_PLATFORM_MEMORY
+extern unsigned int mem_max;
+
+extern void* MyCalloc(size_t n, size_t size);
+extern void MyFree(void* ptr);
+#endif
+
 static int offset = 0;
 static int wake_flag = 0;
 
 //KEY_EXCHANGE_MODE_ECDHE_ECDSA
+//KEY_EXCHANGE_MODE_PSK_KE
 static unsigned char key_exchange_modes = KEY_EXCHANGE_MODE_ECDHE_ECDSA;
 static int dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
 
@@ -465,6 +477,10 @@ int start_server(int argc, char **argv)
 
     //mbedtls_debug_set_threshold(5);
 
+#ifdef MBEDTLS_PLATFORM_MEMORY
+    mbedtls_platform_set_calloc_free(MyCalloc,MyFree);
+#endif
+
     ret = mbedtls_server_init();
     if( ret != 0){
         printf("mbedtls_client_init() failed!\n");
@@ -525,7 +541,9 @@ reset:
     memset( buf, 0, sizeof(buf) );
     ret = mbedtls_ssl_read( &ssl, buf, len );
 */
-    //mbedtls_ssl_close_notify( &ssl );
+#ifdef MBEDTLS_PLATFORM_MEMORY
+    printf("MAX HEAP IS %d\n", mem_max);
+#endif
 
     mbedtls_server_exit(0);
 
