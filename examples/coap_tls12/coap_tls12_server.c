@@ -59,6 +59,10 @@ extern mutex_t server_lock;
 extern mutex_t server_req_lock;
 extern kernel_pid_t main_pid;
 
+#ifdef MODULE_WOLFSSL_XUSER
+extern unsigned int mem_max;
+#endif
+
 int count = 0;
 static int offset = 0;
 static int wake_flag = 0;
@@ -342,6 +346,10 @@ int start_tls_server(int argc, char **argv)
     LOG(LOG_INFO, "Sending 'TLS OK'...\r\n");
     wolfSSL_write(sslServ, reply, strlen(reply));
 */
+
+#ifdef MODULE_WOLFSSL_XUSER
+    printf("Max Heap used %d bytes.\n",mem_max);
+#endif
 
     /* Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");

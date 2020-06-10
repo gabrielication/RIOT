@@ -45,15 +45,15 @@ unsigned int mem_max = 0;
 
 void* MyMalloc(size_t size)
 {
-    void*   p;
+    void* p = NULL;
     unsigned int* p32;
 
     p32 = malloc(size + sizeof(unsigned int) * 4);
 
-    p32[0] = (unsigned int) size;
-    p = (void*)(p32 + 4);
-
     if(p32 != NULL){
+        p32[0] = (unsigned int) size;
+        p = (void*)(p32 + 4);
+
         mem_count += size;
         if(mem_count > mem_max){
             mem_max = mem_count;
