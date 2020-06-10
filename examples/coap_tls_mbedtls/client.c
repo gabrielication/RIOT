@@ -13,6 +13,10 @@
 
 #include "certs.h"
 
+#ifdef MBEDTLS_PLATFORM_MEMORY
+#include "mbedtls/platform.h"
+#endif
+
 #include "net/gcoap.h"
 #include "mutex.h"
 
@@ -52,6 +56,13 @@ extern int size_payload;
 
 extern mutex_t client_lock;
 extern mutex_t client_send_lock;
+
+#ifdef MBEDTLS_PLATFORM_MEMORY
+extern unsigned int mem_max;
+
+extern void* MyCalloc(size_t n, size_t size);
+extern void MyFree(void* ptr);
+#endif
 
 static int cipher[2];
 
@@ -410,7 +421,7 @@ int mbedtls_client_init(void)
 
 **/
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -463,6 +474,10 @@ int start_client(int argc, char **argv)
     printf("Initializing client...\n");
 
     //mbedtls_debug_set_threshold(3);
+
+#ifdef MBEDTLS_PLATFORM_MEMORY
+    mbedtls_platform_set_calloc_free(MyCalloc,MyFree);
+#endif
 
     ret = mbedtls_client_init();
     if( ret != 0){
@@ -519,6 +534,10 @@ int start_client(int argc, char **argv)
     printf( ">>> %d bytes read\n\n%s\n", len, (char *) buf );
 */
     mbedtls_ssl_close_notify( &ssl );
+
+#ifdef MBEDTLS_PLATFORM_MEMORY
+    printf("MAX HEAP IS %d\n", mem_max);
+#endif
 
     mbedtls_client_exit(0);
 
