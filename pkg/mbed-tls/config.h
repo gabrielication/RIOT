@@ -153,7 +153,14 @@
 *
 * Enable this layer to allow use of alternative memory allocators.
 */
-//#define MBEDTLS_PLATFORM_MEMORY
+#ifdef MBED_HEAP_LOG
+#define MBEDTLS_PLATFORM_MEMORY
+
+#define mbedtls_time      time
+#define mbedtls_time_t    time_t
+#define mbedtls_printf    printf
+#define mbedtls_snprintf  snprintf
+#endif
 
 /**
 * \def MBEDTLS_PLATFORM_NO_STD_FUNCTIONS
@@ -414,7 +421,7 @@
 *
 * Comment this macro to disable the MBEDTLS_ECDSA_SECP384r1_SHA384 signature algo
 */
-//#define MBEDTLS_ECDSA_SECP384r1_SHA384
+#define MBEDTLS_ECDSA_SECP384r1_SHA384
 
 
 /**
@@ -427,7 +434,7 @@
 *
 * Comment this macro to disable the MBEDTLS_ECDSA_SECP521r1_SHA512 signature algo
 */
-//#define MBEDTLS_ECDSA_SECP521r1_SHA512
+#define MBEDTLS_ECDSA_SECP521r1_SHA512
 
 
 /**
@@ -851,8 +858,8 @@
 *
 */
 // The value below are set for debugging purposes.
-#define MBEDTLS_SSL_DTLS_TIMEOUT_DFL_MIN   600000
-#define MBEDTLS_SSL_DTLS_TIMEOUT_DFL_MAX  1800000
+//#define MBEDTLS_SSL_DTLS_TIMEOUT_DFL_MIN   600000
+//#define MBEDTLS_SSL_DTLS_TIMEOUT_DFL_MAX  1800000
 
 // These values represent resonable settings. 
 /*
@@ -874,7 +881,7 @@
 *
 * Comment this macro to disable support for DTLS
 */
-#define MBEDTLS_SSL_PROTO_DTLS
+//#define MBEDTLS_SSL_PROTO_DTLS
 
 /**
 * \def MBEDTLS_SSL_ALPN
@@ -1260,7 +1267,7 @@
 * enabled as well.
 */
 // TBD: Should actually be called MBEDTLS_CIPHER_MODE_CCM
-#define MBEDTLS_CCM_C
+//#define MBEDTLS_CCM_C
 
 /**
 * \def MBEDTLS_CERTS_C
@@ -1312,7 +1319,7 @@
 *
 * This module provides debugging functions.
 */
-#define MBEDTLS_DEBUG_C
+//#define MBEDTLS_DEBUG_C
 
 
 /**
@@ -1400,7 +1407,7 @@
 * This module enables the AES-GCM and CAMELLIA-GCM ciphersuites, if other
 * requisites are enabled as well.
 */
-//#define MBEDTLS_GCM_C
+#define MBEDTLS_GCM_C
 
 /**
 * \def MBEDTLS_HAVEGE_C
@@ -1657,7 +1664,7 @@
 *
 * This module enables abstraction of common (libc) functions.
 */
-#if defined(_WIN32)
+#ifdef MBED_HEAP_LOG
 #define MBEDTLS_PLATFORM_C
 #endif
 
@@ -1692,7 +1699,7 @@
 *
 * This module adds support for SHA-512 and SHA-384.
 */
-//#define MBEDTLS_SHA512_C
+#define MBEDTLS_SHA512_C
 
 /**
 * \def MBEDTLS_SSL_CACHE_C
