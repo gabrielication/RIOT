@@ -102,9 +102,16 @@ void* MyRealloc(void* ptr, size_t size)
         p32[0] = (unsigned int) size;
         newp = (void*)(p32 + 4);
 
-        printf("REEEAlloc: %p -> %u\n", newp, (unsigned int) size);
+        //printf("REAlloc: %p -> %u\n", newp, (unsigned int) size);
         if (ptr != NULL) {
-            printf("Free: %p -> %u\n", ptr, oldLen);
+            //printf("Free: %p -> %u\n", ptr, oldLen);
+        }
+
+        mem_count -= oldLen;
+        mem_count += size;
+
+        if(mem_count > mem_max){
+            mem_max = mem_count;
         }
     }
 
