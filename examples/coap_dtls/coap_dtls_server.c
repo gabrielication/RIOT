@@ -60,6 +60,10 @@ extern mutex_t server_lock;
 extern mutex_t server_req_lock;
 extern kernel_pid_t main_pid;
 
+#ifdef MODULE_WOLFSSL_XUSER
+extern unsigned int mem_max;
+#endif
+
 static unsigned char thread_wakeup_flag = 0;
 
 static unsigned int recv_count = 0;
@@ -67,8 +71,6 @@ static unsigned int send_count = 0;
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
-
-#define DFL_PSK "01020304"
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -334,6 +336,11 @@ int start_dtls_server(int argc, char **argv)
     LOG(LOG_INFO, "Sending 'DTLS OK'...\r\n");
     wolfSSL_write(sslServ, reply, strlen(reply));
 */
+    
+#ifdef MODULE_WOLFSSL_XUSER
+    printf("Max Heap used %d bytes.\n",mem_max);
+#endif
+
     /* Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
 

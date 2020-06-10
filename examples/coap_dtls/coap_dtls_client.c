@@ -59,6 +59,10 @@ extern const int ca_cert_len;
 extern char payload_dtls[];
 extern int size_payload;
 
+#ifdef MODULE_WOLFSSL_XUSER
+extern unsigned int mem_max;
+#endif
+
 char *addr_str;
 
 static unsigned int recv_count = 0;
@@ -408,6 +412,10 @@ int start_dtls_client(int argc, char **argv)
     /* Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
 
+#ifdef MODULE_WOLFSSL_XUSER
+    printf("Max Heap used %d bytes.\n",mem_max);
+#endif
+    
     client_cleanup(sslCli,ctxCli);
 
     return 0;

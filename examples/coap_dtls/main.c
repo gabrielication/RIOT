@@ -38,6 +38,81 @@ static const shell_command_t shell_commands[] = {
     { NULL, NULL, NULL }
 };
 
+#ifdef MODULE_WOLFSSL_XUSER
+
+unsigned int mem_count = 0;
+unsigned int mem_max = 0;
+
+void* MyMalloc(size_t size)
+{
+    void*   p;
+    unsigned int* p32;
+
+    p32 = malloc(size + sizeof(unsigned int) * 4);
+
+    p32[0] = (unsigned int) size;
+    p = (void*)(p32 + 4);
+
+    if(p32 != NULL){
+        mem_count += size;
+        if(mem_count > mem_max){
+            mem_max = mem_count;
+        }
+    }
+
+    //printf("Alloc: %p -> %u COUNT %d MAX IS: %d\n", p, (unsigned int) size, mem_count,mem_max);
+
+    return p;
+}
+
+void MyFree(void* ptr)
+{
+    unsigned int* p32 = (unsigned int*)ptr;
+
+    if (ptr != NULL) {
+        p32 -= 4;
+
+        mem_count -= p32[0];
+        if(mem_count > mem_max){
+            mem_max = mem_count;
+        }
+
+        //printf("Free: %p -> %u COUNT %d MAX %d\n", ptr, p32[0], mem_count, mem_max);
+        free(p32);
+    }
+
+}
+
+void* MyRealloc(void* ptr, size_t size)
+{
+    void*   newp = NULL;
+    unsigned int* p32;
+    unsigned int* oldp32 = NULL;
+    unsigned int  oldLen;
+
+    if (ptr != NULL) {
+        oldp32 = (unsigned int*)ptr;
+        oldp32 -= 4;
+        oldLen = oldp32[0];
+    }
+
+    p32 = realloc(oldp32, size + sizeof(unsigned int) * 4);
+
+    if (p32 != NULL) {
+        p32[0] = (unsigned int) size;
+        newp = (void*)(p32 + 4);
+
+        printf("REEEAlloc: %p -> %u\n", newp, (unsigned int) size);
+        if (ptr != NULL) {
+            printf("Free: %p -> %u\n", ptr, oldLen);
+        }
+    }
+
+    return newp;
+}
+
+#endif
+
 int main(void)
 {
     /* for the thread running the shell */
