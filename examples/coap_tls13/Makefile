@@ -49,6 +49,9 @@ USEMODULE += wolfssl
 USEMODULE += wolfssl_tls13
 USEMODULE += wolfcrypt_ecc
 
+# Max Heap logging
+USEMODULE += wolfssl_xuser
+
 # Select public key algorithm (or PSK) support for ciphersuites:
 # You have to redefine also the PDU_BUF_SIZE and SHA
 USEMODULE += wolfssl_sni

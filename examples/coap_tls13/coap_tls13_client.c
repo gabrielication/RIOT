@@ -58,6 +58,10 @@ extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 extern char payload_tls[];
 extern int size_payload;
 
+#ifdef MODULE_WOLFSSL_XUSER
+extern unsigned int mem_max;
+#endif
+
 char *addr_str;
 
 int count_read = 0;
@@ -437,6 +441,10 @@ int start_tls_client(int argc, char **argv)
 
      Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
+
+#ifdef MODULE_WOLFSSL_XUSER
+    printf("Max Heap used %d bytes.\n",mem_max);
+#endif
 
     client_cleanup(sslCli,ctxCli);
 
