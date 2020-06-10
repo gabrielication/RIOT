@@ -13,6 +13,10 @@
 #include "mbedtls/ssl_cookie.h"
 #include "mbedtls/timing.h"
 
+#ifdef MBEDTLS_PLATFORM_MEMORY
+#include "mbedtls/platform.h"
+#endif
+
 #include "mutex.h"
 #include "thread.h"
 
@@ -81,6 +85,13 @@ static int tls_version = MBEDTLS_SSL_MINOR_VERSION_3;
 static int cipher[2];
 
 static int recv_count;
+
+#ifdef MBEDTLS_PLATFORM_MEMORY
+extern unsigned int mem_max;
+
+extern void* MyCalloc(size_t n, size_t size);
+extern void MyFree(void* ptr);
+#endif
 
 static void usage(const char *cmd_name)
 {
@@ -329,7 +340,7 @@ int mbedtls_server_init(void)
             TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384
 **/
 
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256");
+    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS-PSK-WITH-AES-128-CCM");
     cipher[1] = 0;
 
     if (cipher[0] == 0)
@@ -420,6 +431,10 @@ int start_server(int argc, char **argv)
     int len;
     unsigned char buf[MBEDTLS_SSL_MAX_CONTENT_LEN + 1];
 
+#ifdef MBEDTLS_PLATFORM_MEMORY
+    mbedtls_platform_set_calloc_free(MyCalloc,MyFree);
+#endif
+
     printf("Initializing server...\n");
 
     //mbedtls_debug_set_threshold(3);
@@ -476,6 +491,11 @@ reset:
 
     ret = mbedtls_ssl_write( &ssl, buf, len );
 */
+
+#ifdef MBEDTLS_PLATFORM_MEMORY
+    printf("MAX HEAP IS %d\n", mem_max);
+#endif
+
     mbedtls_ssl_close_notify( &ssl );
 
     mbedtls_server_exit(0);

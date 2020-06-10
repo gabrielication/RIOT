@@ -53,6 +53,9 @@ USEMODULE += ps
 
 USEPKG += mbed-tls
 
+# Enable this line if you want MAX HEAP LOGGING
+# CFLAGS += -DMBED_HEAP_LOG
+
 CFLAGS += -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function
 
 # Uncomment the following line to add debug symbols
