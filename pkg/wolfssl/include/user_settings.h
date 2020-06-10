@@ -86,6 +86,16 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define WC_NO_RNG
 #endif
 
+/* Max Heap logging */
+#undef XMALLOC_USER
+#ifdef MODULE_WOLFSSL_XUSER
+#define XMALLOC_USER
+
+#define XMALLOC(sz, heap, type)     MyMalloc(sz)
+#define XREALLOC(p, sz, heap, type) MyRealloc(p, sz)
+#define XFREE(p, heap, type)        MyFree(p)
+#endif
+
 #undef WOLFSSL_DTLS
 #ifdef MODULE_WOLFSSL_DTLS
 #define WOLFSSL_DTLS
