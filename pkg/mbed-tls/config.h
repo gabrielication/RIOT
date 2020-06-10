@@ -153,7 +153,9 @@
 *
 * Enable this layer to allow use of alternative memory allocators.
 */
-//#define MBEDTLS_PLATFORM_MEMORY
+#ifdef MBED_HEAP_LOG
+#define MBEDTLS_PLATFORM_MEMORY
+#endif
 
 /**
 * \def MBEDTLS_PLATFORM_NO_STD_FUNCTIONS
@@ -381,8 +383,8 @@
 //#define MBEDTLS_ECP_DP_SECP192R1_ENABLED
 //#define MBEDTLS_ECP_DP_SECP224R1_ENABLED
 #define MBEDTLS_ECP_DP_SECP256R1_ENABLED
-//#define MBEDTLS_ECP_DP_SECP384R1_ENABLED
-//#define MBEDTLS_ECP_DP_SECP521R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP384R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP521R1_ENABLED
 //#define MBEDTLS_ECP_DP_SECP192K1_ENABLED
 //#define MBEDTLS_ECP_DP_SECP224K1_ENABLED
 //#define MBEDTLS_ECP_DP_SECP256K1_ENABLED
@@ -402,7 +404,7 @@
 *
 * Comment this macro to disable the MBEDTLS_ECDSA_SECP256r1_SHA256 signature algo
 */
-#define MBEDTLS_ECDSA_SECP256r1_SHA256
+//#define MBEDTLS_ECDSA_SECP256r1_SHA256
 
 /**
 * \def MBEDTLS_ECDSA_SECP384r1_SHA384
@@ -453,7 +455,7 @@
 *
 * Comment this macro to disable deterministic ECDSA.
 */
-#define MBEDTLS_ECDSA_DETERMINISTIC
+//#define MBEDTLS_ECDSA_DETERMINISTIC
 
 /**
 * \def MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
@@ -461,7 +463,7 @@
 * Enable the PSK based ciphersuite modes.
 *
 */
-//#define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
 
 
 /**
@@ -514,7 +516,7 @@
 *      MBEDTLS_TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA
 *      MBEDTLS_TLS_ECDHE_ECDSA_WITH_RC4_128_SHA
 */
-#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
+//#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
 
 
 /**
@@ -874,7 +876,7 @@
 *
 * Comment this macro to disable support for DTLS
 */
-//#define MBEDTLS_SSL_PROTO_DTLS
+#define MBEDTLS_SSL_PROTO_DTLS
 
 /**
 * \def MBEDTLS_SSL_ALPN
@@ -917,7 +919,7 @@
 *
 * Comment this to disable support for HelloVerifyRequest.
 */
-//#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
+#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
 
 /**
 * \def MBEDTLS_SSL_DTLS_CLIENT_PORT_REUSE
@@ -995,7 +997,7 @@
 *
 * Comment this macro to disable support for server name indication in SSL
 */
-#define MBEDTLS_SSL_SERVER_NAME_INDICATION
+//#define MBEDTLS_SSL_SERVER_NAME_INDICATION
 
 
 /**
@@ -1067,7 +1069,7 @@
 *
 * Comment to skip keyUsage checking for both CA and leaf certificates.
 */
-#define MBEDTLS_X509_CHECK_KEY_USAGE
+//#define MBEDTLS_X509_CHECK_KEY_USAGE
 
 /**
 * \def MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE
@@ -1080,7 +1082,7 @@
 *
 * Comment to skip extendedKeyUsage checking for certificates.
 */
-#define MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE
+//#define MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE
 
 /**
 * \def MBEDTLS_X509_RSASSA_PSS_SUPPORT
@@ -1202,7 +1204,7 @@
 *          library/pkcs5.c
 *          library/pkparse.c
 */
-#define MBEDTLS_ASN1_PARSE_C
+//#define MBEDTLS_ASN1_PARSE_C
 
 /**
 * \def MBEDTLS_ASN1_WRITE_C
@@ -1216,7 +1218,7 @@
 *          library/x509write_crt.c
 *          library/mbedtls_x509write_csr.c
 */
-#define MBEDTLS_ASN1_WRITE_C
+//#define MBEDTLS_ASN1_WRITE_C
 
 /**
 * \def MBEDTLS_BASE64_C
@@ -1260,7 +1262,7 @@
 * enabled as well.
 */
 // TBD: Should actually be called MBEDTLS_CIPHER_MODE_CCM
-//#define MBEDTLS_CCM_C
+#define MBEDTLS_CCM_C
 
 /**
 * \def MBEDTLS_CERTS_C
@@ -1272,7 +1274,7 @@
 *
 * This module is used for testing (ssl_client/server).
 */
-#define MBEDTLS_CERTS_C
+//#define MBEDTLS_CERTS_C
 
 /**
 * \def MBEDTLS_CIPHER_C
@@ -1329,7 +1331,7 @@
 *
 * Requires: MBEDTLS_ECP_C
 */
-#define MBEDTLS_ECDH_C
+//#define MBEDTLS_ECDH_C
 
 /**
 * \def MBEDTLS_ECDSA_C
@@ -1345,7 +1347,7 @@
 * Requires: MBEDTLS_ECP_C, MBEDTLS_ASN1_WRITE_C, MBEDTLS_ASN1_PARSE_C
 * (In TLS 1.3 we do not necessarily require ASN.1 routines in some cases.)
 */
-#define MBEDTLS_ECDSA_C
+//#define MBEDTLS_ECDSA_C
 
 
 /**
@@ -1360,7 +1362,7 @@
 *
 * Requires: MBEDTLS_BIGNUM_C and at least one MBEDTLS_ECP_DP_XXX_ENABLED
 */
-#define MBEDTLS_ECP_C
+//#define MBEDTLS_ECP_C
 
 /**
 * \def MBEDTLS_ENTROPY_C
@@ -1400,7 +1402,7 @@
 * This module enables the AES-GCM and CAMELLIA-GCM ciphersuites, if other
 * requisites are enabled as well.
 */
-#define MBEDTLS_GCM_C
+//#define MBEDTLS_GCM_C
 
 /**
 * \def MBEDTLS_HAVEGE_C
@@ -1500,7 +1502,7 @@
 *
 * This modules translates between OIDs and internal values.
 */
-#define MBEDTLS_OID_C
+//#define MBEDTLS_OID_C
 
 /**
 * \def MBEDTLS_PADLOCK_C
@@ -1532,7 +1534,7 @@
 *
 * This modules adds support for decoding / parsing PEM files.
 */
-#define MBEDTLS_PEM_PARSE_C
+//#define MBEDTLS_PEM_PARSE_C
 
 /**
 * \def MBEDTLS_PEM_WRITE_C
@@ -1548,7 +1550,7 @@
 *
 * This modules adds support for encoding / writing PEM files.
 */
-#define MBEDTLS_PEM_WRITE_C
+//#define MBEDTLS_PEM_WRITE_C
 
 /**
 * \def MBEDTLS_PK_C
@@ -1564,7 +1566,7 @@
 *
 * Uncomment to enable generic public key wrappers.
 */
-#define MBEDTLS_PK_C
+//#define MBEDTLS_PK_C
 
 /**
 * \def MBEDTLS_PK_PARSE_C
@@ -1579,7 +1581,7 @@
 *
 * Uncomment to enable generic public key parse functions.
 */
-#define MBEDTLS_PK_PARSE_C
+//#define MBEDTLS_PK_PARSE_C
 
 /**
 * \def MBEDTLS_PK_WRITE_C
@@ -1657,7 +1659,7 @@
 *
 * This module enables abstraction of common (libc) functions.
 */
-#if defined(_WIN32)
+#ifdef MBED_HEAP_LOG
 #define MBEDTLS_PLATFORM_C
 #endif
 
@@ -1843,7 +1845,7 @@
 *
 * This module is required for the X.509 parsing modules.
 */
-#define MBEDTLS_X509_USE_C
+//#define MBEDTLS_X509_USE_C
 
 /**
 * \def MBEDTLS_X509_CRT_PARSE_C
@@ -1859,7 +1861,7 @@
 *
 * This module is required for X.509 certificate parsing.
 */
-#define MBEDTLS_X509_CRT_PARSE_C
+//#define MBEDTLS_X509_CRT_PARSE_C
 
 /**
 * \def MBEDTLS_X509_CRL_PARSE_C
@@ -1873,7 +1875,7 @@
 *
 * This module is required for X.509 CRL parsing.
 */
-#define MBEDTLS_X509_CRL_PARSE_C
+//#define MBEDTLS_X509_CRL_PARSE_C
 
 /**
 * \def MBEDTLS_X509_CSR_PARSE_C
@@ -2004,9 +2006,9 @@
 //#define MBEDTLS_SSL_MAX_CONTENT_LEN             16384 /**< Maxium fragment length in bytes, determines the size of each of the two internal I/O buffers */
 #define MBEDTLS_SSL_MAX_CONTENT_LEN             2048 /**< Maxium fragment length in bytes, determines the size of each of the two internal I/O buffers */
 #define MBEDTLS_SSL_DEFAULT_TICKET_LIFETIME     86400 /**< Lifetime of session tickets (if enabled) */
-//#define MBEDTLS_PSK_MAX_LEN               48 /**< Max size of TLS pre-shared keys, in bytes (default 384 bits) */
+#define MBEDTLS_PSK_MAX_LEN               48 /**< Max size of TLS pre-shared keys, in bytes (default 384 bits) */
 #define MBEDTLS_SSL_COOKIE_TIMEOUT        60 /**< Default expiration delay of DTLS cookies, in seconds if HAVE_TIME, or in number of cookies issued */
-//#define MBEDTLS_PSK_IDENTITY_MAX_LEN     250 /**< Max size of psk identity, in bytes */
+#define MBEDTLS_PSK_IDENTITY_MAX_LEN     250 /**< Max size of psk identity, in bytes */
 /**
 * Complete list of ciphersuites to use, in order of preference.
 *

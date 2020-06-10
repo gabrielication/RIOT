@@ -153,8 +153,9 @@
 *
 * Enable this layer to allow use of alternative memory allocators.
 */
-//#define MBEDTLS_PLATFORM_MEMORY
-
+#ifdef MBED_HEAP_LOG
+#define MBEDTLS_PLATFORM_MEMORY
+#endif
 /**
 * \def MBEDTLS_PLATFORM_NO_STD_FUNCTIONS
 *
@@ -1657,7 +1658,7 @@
 *
 * This module enables abstraction of common (libc) functions.
 */
-#if defined(_WIN32)
+#ifdef MBED_HEAP_LOG
 #define MBEDTLS_PLATFORM_C
 #endif
 
