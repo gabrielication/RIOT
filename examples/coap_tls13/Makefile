@@ -48,6 +48,7 @@ USEMODULE += wolfcrypt
 USEMODULE += wolfssl
 USEMODULE += wolfssl_tls13
 USEMODULE += wolfcrypt_ecc
+USEMODULE += wolfcrypt_asn
 
 # Max Heap logging
 USEMODULE += wolfssl_xuser

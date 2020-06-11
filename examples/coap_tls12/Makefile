@@ -46,7 +46,7 @@ USEMODULE += ps
 USEPKG += wolfssl
 USEMODULE += wolfcrypt
 USEMODULE += wolfssl
-USEMODULE += wolfssl_dtls
+USEMODULE += wolfssl_tls
 
 # Max Heap logging
 USEMODULE += wolfssl_xuser
@@ -55,12 +55,13 @@ USEMODULE += wolfssl_xuser
 # You have to redefine also the PDU_BUF_SIZE
 USEMODULE += wolfssl_sni
 USEMODULE += wolfcrypt_ecc
+USEMODULE += wolfcrypt_asn
 CFLAGS += -DGCOAP_PDU_BUF_SIZE=1024
 
 #USEMODULE += wolfssl_psk
 #CFLAGS += -DGCOAP_PDU_BUF_SIZE=256
 
-USEMODULE += wolfcrypt_aesccm
+#USEMODULE += wolfcrypt_aesccm
 USEMODULE += wolfcrypt_aesgcm
 USEMODULE += wolfcrypt_sha512
 USEMODULE += wolfcrypt_ecc521
