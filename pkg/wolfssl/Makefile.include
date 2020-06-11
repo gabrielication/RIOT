@@ -2,7 +2,6 @@ CFLAGS += -DWOLFSSL_USER_SETTINGS=1
 CFLAGS += -DWOLFSSL_RIOT_OS=1
 INCLUDES += -I$(PKGDIRBASE)/../../../
 INCLUDES += -I$(PKGDIRBASE)/wolfssl
-INCLUDES += -I$(RIOTBASE)/pkg/wolfssl/sock_tls
 INCLUDES += -I$(RIOTBASE)/pkg/wolfssl/include
 
 # One current limitation is that it is not possible to build `wolfcrypt` without
@@ -25,9 +24,6 @@ ifneq (,$(filter wolfcrypt-benchmark,$(USEMODULE)))
 endif
 ifneq (,$(filter wolfssl,$(USEPKG)))
   DIRS += $(PKGDIRBASE)/wolfssl/src
-endif
-ifneq (,$(filter sock_tls,$(USEMODULE)))
-  DIRS += $(RIOTBASE)/pkg/wolfssl/sock_tls
 endif
 
 # wolfcrypt implements different options using pseudomodules

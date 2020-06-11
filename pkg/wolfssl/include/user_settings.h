@@ -36,19 +36,9 @@ extern "C" {
  * using sockets
  */
 #ifndef MODULE_WOLFSSL_SOCKET
-#define WOLFSSL_GNRC
 #define WOLFSSL_USER_IO
 #else
 #include <sys/socket.h>
-#endif
-
-/* Select wolfcrypt only / +wolfssl
- * at compile time (via USEMODULE)
- */
-#if !defined(MODULE_WOLFSSL_TLS) && !defined(MODULE_WOLFSSL_TLS13)
-#define WOLFCRYPT_ONLY
-#else
-#define HAVE_TLS_EXTENSIONS
 #endif
 
 /* Align on 32-bit (exc. native,
@@ -79,6 +69,7 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 #define NO_OLD_TLS
 #define NO_ASN_TIME
 #define NO_MD5
+#define HAVE_TLS_EXTENSIONS
 
 /* Modules */
 #undef WC_NO_RNG
@@ -160,6 +151,7 @@ int strncasecmp(const char *s1, const char * s2, unsigned int sz);
 
 #ifndef MODULE_WOLFCRYPT_ASN
 #define NO_ASN
+#define NO_CERTS
 #endif
 
 #ifndef MODULE_WOLFCRYPT_HMAC
