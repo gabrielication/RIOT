@@ -531,11 +531,12 @@ int start_client(int argc, char **argv)
     buf[len] = '\0';
     printf( ">>> %d bytes read\n\n%s\n", len, (char *) buf );
 */
+
+    mbedtls_ssl_close_notify( &ssl );
+
 #ifdef MBEDTLS_PLATFORM_MEMORY
     printf("MAX HEAP IS %d\n", mem_max);
 #endif
-
-    mbedtls_ssl_close_notify( &ssl );
 
     mbedtls_client_exit(0);
 

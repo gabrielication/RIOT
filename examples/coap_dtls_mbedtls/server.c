@@ -492,11 +492,11 @@ reset:
     ret = mbedtls_ssl_write( &ssl, buf, len );
 */
 
+    mbedtls_ssl_close_notify( &ssl );
+
 #ifdef MBEDTLS_PLATFORM_MEMORY
     printf("MAX HEAP IS %d\n", mem_max);
 #endif
-
-    mbedtls_ssl_close_notify( &ssl );
 
     mbedtls_server_exit(0);
 
