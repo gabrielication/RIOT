@@ -38,7 +38,7 @@
 
 #endif
 
-static int config_index = 2;
+static int config_index = 0;
 static char *config[] = {"TLS13-AES128-CCM-SHA256", "TLS13-AES128-GCM-SHA256", "TLS13-AES256-GCM-SHA384"};
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
