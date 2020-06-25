@@ -101,7 +101,15 @@ static int server_send=0;
 
 static void usage(const char *cmd_name)
 {
-    LOG(LOG_ERROR, "\nUsage: %s [optional: <key_exchange_mode> <tls_version>]\n\n<key_exchange_mode: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n<tls_version: dtls1_2, dtls1_3 (default)>\n", cmd_name);
+    LOG(LOG_ERROR, "\nUsage: %s <key-exchange-mode> <ciphersuite>\n\n \
+        - Admitted key exchange modes:\n\n \
+        psk\n \
+        ecdhe_ecdsa\n\n \
+        - Admitted ciphersuites: \n\n \
+        TLS_AES_128_CCM_SHA256\n \
+        TLS_AES_128_GCM_SHA256\n \
+        TLS_AES_256_GCM_SHA384\n\n \
+        (Also check that your config.h is coherent with your choice)\n", cmd_name);
 }
 
 static void my_debug( void *ctx, int level,
@@ -352,16 +360,6 @@ int mbedtls_server_init(void)
 
     **/
 
-
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_256_GCM_SHA384");
-    cipher[1] = 0;
-
-    if (cipher[0] == 0)
-            {
-                mbedtls_printf("forced ciphersuite not found\n");
-                ret = 2;
-                return ret;
-    }
 /*
     const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
     ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
@@ -445,32 +443,29 @@ int start_server(int argc, char **argv)
     int len;
     unsigned char buf[MBEDTLS_SSL_MAX_CONTENT_LEN + 1];
 
-    if (argc > 1){
+    if (argc == 3){
         if (strcmp(argv[1], "psk") == 0)
                 key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
-        else if (strcmp(argv[1], "psk_dhe") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_DHE_KE;
         else if (strcmp(argv[1], "ecdhe_ecdsa") == 0)
                 key_exchange_modes = KEY_EXCHANGE_MODE_ECDHE_ECDSA;
-        else if (strcmp(argv[1], "psk_all") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_ALL;
-        else if (strcmp(argv[1], "all") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_ALL;
         else{
+            printf("Key exchange mode not found\n");
             usage(argv[0]);
             return -1;
         }
-    }
 
-    if (argc > 2){
-        if (strcmp(argv[2], "dtls1_2") == 0)
-                dtls_version = MBEDTLS_SSL_MINOR_VERSION_3;
-        else if (strcmp(argv[2], "dtls1_3") == 0)
-                dtls_version = MBEDTLS_SSL_MINOR_VERSION_4;
-        else{
+        cipher[0] = mbedtls_ssl_get_ciphersuite_id(argv[2]);
+        cipher[1] = 0;
+
+        if (cipher[0] == 0)
+                {
+                    mbedtls_printf("Forced ciphersuite not found\n");
+                    usage(argv[0]);
+                    return -1;
+                }
+    } else {
             usage(argv[0]);
             return -1;
-        }
     }
 
     printf("Initializing server...\n");
