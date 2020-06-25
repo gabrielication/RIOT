@@ -44,6 +44,8 @@ mutex_t client_lock = MUTEX_INIT_LOCKED;
 mutex_t server_req_lock = MUTEX_INIT_LOCKED;
 mutex_t client_send_lock = MUTEX_INIT_LOCKED;
 
+int iface;
+
 kernel_pid_t main_pid;
 
 char payload_tls[PAYLOAD_TLS_SIZE];
@@ -233,9 +235,7 @@ size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str)
     sock_udp_ep_t remote;
 
     remote.family = AF_INET6;
-
-    /* parse for interface */
-    int iface = ipv6_addr_split_iface(addr_str);
+    
     if (iface == -1) {
         if (gnrc_netif_numof() == 1) {
             /* assign the single interface found in gnrc_netif_numof() */

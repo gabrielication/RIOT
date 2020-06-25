@@ -59,6 +59,7 @@ extern int size_payload;
 
 extern mutex_t client_lock;
 extern mutex_t client_send_lock;
+extern int iface;
 
 #ifdef MBEDTLS_PLATFORM_MEMORY
 extern unsigned int mem_max;
@@ -181,7 +182,9 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
         printf("\n/*-------------------- END SEND -----------------*/\n");
     }
 
-    coap_post();
+    if(coap_post() != 0){
+        return -1; //POST FAILED
+    }
 
     send_count += 1;
 
@@ -468,6 +471,9 @@ int start_client(int argc, char **argv)
     }
 
     addr_str = argv[1];
+
+    /* parse for interface */
+    iface = ipv6_addr_split_iface(addr_str);
 
     printf("Initializing client...\n");
 
