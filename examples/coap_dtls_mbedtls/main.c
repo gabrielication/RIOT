@@ -18,8 +18,8 @@ extern int start_client(int argc, char **argv);
 extern int start_server(int argc, char **argv);
 
 static const shell_command_t commands[] = {
-    { "tlsc", "Start mbedtls client", start_client},
-    { "tlss", "Start mbedtls server", start_server},
+    { "dtlsc", "Start mbedtls client", start_client},
+    { "dtlss", "Start mbedtls server", start_server},
     { NULL, NULL, NULL }
 };
 
@@ -79,7 +79,7 @@ int main(void)
     msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
     gcoap_cli_init();
 
-    puts("Mbed ATLS example");
+    puts("Mbed ADTLS 1.2 example");
 
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(commands, line_buf, SHELL_DEFAULT_BUFSIZE);

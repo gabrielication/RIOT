@@ -83,7 +83,15 @@ static int recv_count = 0;
 
 static void usage(const char *cmd_name)
 {
-    LOG(LOG_ERROR, "\nUsage: %s <server-address> [optional: <key_exchange_mode> <tls_version>]\n\n<key_exchange_mode: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n<tls_version: tls1_2, tls1_3 (default)>\n", cmd_name);
+    LOG(LOG_ERROR, "\nUsage: %s <server-address> <ciphersuite>\n\n \
+        Admitted ciphersuites: \n\n \
+        TLS-PSK-WITH-AES-128-CCM\n \
+        TLS-PSK-WITH-AES-128-GCM-SHA256\n \
+        TLS-PSK-WITH-AES-256-GCM-SHA384\n \
+        TLS-ECDHE-ECDSA-WITH-AES-128-CCM\n \
+        TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256\n \
+        TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384\n\n \
+        (Also check that your config.h is coherent with your choice)\n", cmd_name);
 }
 
 static void my_debug( void *ctx, int level,
@@ -465,7 +473,17 @@ int start_client(int argc, char **argv)
     unsigned char buf[MBEDTLS_SSL_MAX_CONTENT_LEN + 1];
     int len;
 
-    if (argc < 2) {
+    if (argc == 3) {
+        cipher[0] = mbedtls_ssl_get_ciphersuite_id(argv[2]);
+        cipher[1] = 0;
+
+        if (cipher[0] == 0)
+                {
+                    mbedtls_printf("Forced ciphersuite not found\n");
+                    usage(argv[0]);
+                    return -1;
+        }
+    } else {
         usage(argv[0]);
         return -1;
     }
