@@ -48,7 +48,7 @@ USEMODULE += wolfssl
 USEMODULE += wolfssl_dtls
 
 # Max Heap logging
-USEMODULE += wolfssl_xuser
+#USEMODULE += wolfssl_xuser
 
 # Select public key algorithm (or PSK) support for ciphersuites:
 # You have to redefine also the PDU_BUF_SIZE

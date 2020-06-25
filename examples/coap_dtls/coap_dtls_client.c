@@ -39,8 +39,8 @@
 
 #endif
 
-static int config_index = 2;
-static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
+//static int config_index = 2;
+//static char *config[] = {"PSK-AES128-CCM", "PSK-AES128-GCM-SHA256", "PSK-AES256-GCM-SHA384", "ECDHE-ECDSA-AES128-CCM-8", "ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"};
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
@@ -59,6 +59,8 @@ extern const int ca_cert_len;
 extern char payload_dtls[];
 extern int size_payload;
 
+static char ciphersuite[32];
+
 #ifdef MODULE_WOLFSSL_XUSER
 extern unsigned int mem_max;
 #endif
@@ -70,6 +72,8 @@ static unsigned int send_count = 0;
 
 extern mutex_t client_lock;
 extern mutex_t client_send_lock;
+
+extern int iface;
 
 #ifdef MODULE_WOLFSSL_PSK
 
@@ -100,7 +104,15 @@ static inline unsigned int my_psk_client_cb(WOLFSSL* ssl, const char* hint,
 
 static void usage(const char *cmd_name)
 {
-    LOG(LOG_ERROR, "Usage: %s <server-address>\n", cmd_name);
+        LOG(LOG_ERROR, "\nUsage: %s <server-address> <ciphersuite>\n\n \
+        Admitted ciphersuites: \n\n \
+        PSK-AES128-CCM\n \
+        PSK-AES128-GCM-SHA256\n \
+        PSK-AES256-GCM-SHA384\n \
+        ECDHE-ECDSA-AES128-CCM\n \
+        ECDHE-ECDSA-AES128-GCM-SHA256\n \
+        ECDHE-ECDSA-AES256-GCM-SHA384\n\n \
+        (Also check that your Makefile is coherent with your choice)\n", cmd_name);
 }
 
 int coap_post(void)
@@ -192,7 +204,9 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         printf("\n/*-------------------- END SEND -----------------*/\n");
     }
 
-    coap_post();
+    if(coap_post() != 0){
+        return -1; //POST FAILED
+    }
 
     send_count++;
 
@@ -312,7 +326,7 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
     wolfSSL_CTX_set_psk_client_callback(ctx, my_psk_client_cb);
 #endif
 
-    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, config[config_index])) != SSL_SUCCESS) {
+    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, ciphersuite)) != SSL_SUCCESS) {
             printf("ret = %d\n", ret);
             printf("Error :can't set cipher\n");
             wolfSSL_CTX_free(ctx);
@@ -349,12 +363,41 @@ int start_dtls_client(int argc, char **argv)
     (void) argc;
     (void) argv;
 
-    if (argc != 2) {
+    if (argc == 3)
+    {
+        if(strcmp(argv[2],"PSK-AES128-CCM") == 0){
+            strcpy(ciphersuite, "PSK-AES128-CCM");
+        }
+        else if(strcmp(argv[2],"PSK-AES128-GCM-SHA256") == 0){
+            strcpy(ciphersuite, "PSK-AES128-GCM-SHA256");
+        }
+        else if(strcmp(argv[2],"PSK-AES256-GCM-SHA384") == 0){
+            strcpy(ciphersuite, "PSK-AES256-GCM-SHA384");
+        }
+        else if(strcmp(argv[2],"ECDHE-ECDSA-AES128-CCM") == 0){
+            strcpy(ciphersuite, "ECDHE-ECDSA-AES128-CCM");
+        }
+        else if(strcmp(argv[2],"ECDHE-ECDSA-AES128-GCM-SHA256") == 0){
+            strcpy(ciphersuite, "PSK-AES128-CCM");
+        }
+        else if(strcmp(argv[2],"ECDHE-ECDSA-AES256-GCM-SHA384") == 0){
+            strcpy(ciphersuite, "PSK-AES128-CCM");
+        }
+        else {
+            printf("Ciphersuite not found\n");
+            usage(argv[0]);
+            return -1;
+        }
+
+    } else {
         usage(argv[0]);
         return -1;
     }
 
     addr_str = argv[1];
+
+    /* parse for interface */
+    iface = ipv6_addr_split_iface(addr_str);
 
     int ret = SSL_FAILURE;
 
