@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = coap_dtls_mbedtls
+APPLICATION = coap_dtls12_mbedtls
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
