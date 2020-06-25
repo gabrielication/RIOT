@@ -1,0 +1,3 @@
+MODULE = mbed-tls13
+
+include $(RIOTBASE)/Makefile.base
