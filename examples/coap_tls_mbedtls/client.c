@@ -42,6 +42,8 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 static mbedtls_ssl_context ssl;
 static mbedtls_ssl_config conf;
 
+extern int iface;
+
 #if defined(MBEDTLS_X509_CRT_PARSE_C)
     static mbedtls_x509_crt cacert;
 
@@ -81,7 +83,15 @@ static int recv_count = 0;
 
 static void usage(const char *cmd_name)
 {
-    LOG(LOG_ERROR, "\nUsage: %s <server-address> [optional: <key_exchange_mode> <tls_version>]\n\n<key_exchange_mode: psk (default), psk_dhe, psk_all, ecdhe_ecdsa, all>\n<tls_version: tls1_2, tls1_3 (default)>\n", cmd_name);
+    LOG(LOG_ERROR, "\nUsage: %s <server-address> <key-exchange-mode> <ciphersuite>\n\n \
+        - Admitted key exchange modes:\n\n \
+        psk\n \
+        ecdhe_ecdsa\n\n \
+        - Admitted ciphersuites: \n\n \
+        TLS_AES_128_CCM_SHA256\n \
+        TLS_AES_128_GCM_SHA256\n \
+        TLS_AES_256_GCM_SHA384\n\n \
+        (Also check that your config.h is coherent with your choice)\n", cmd_name);
 }
 
 static void my_debug( void *ctx, int level,
@@ -190,7 +200,9 @@ static int mbedtls_ssl_send(void *ctx, const unsigned char *buf, size_t len)
         printf("\n/*-------------------- END SEND -----------------*/\n");
     }
 
-    coap_post();
+    if(coap_post() != 0){
+        return -1; //POST FAILED
+    }
 
     send_count++;
 
@@ -211,13 +223,17 @@ static int mbedtls_ssl_recv(void *ctx, unsigned char *buf, size_t len)
 */
 #if defined(MBEDTLS_CERTS_C)
     if(recv_count == 1 || recv_count == 2 || recv_count == 3 || recv_count == 4 || recv_count == 5){
-        if(!get_flag) coap_get();
-            get_flag = 1;
+        if(!get_flag){
+            if(coap_get() != 0) return -1;
+            else get_flag = 1;
+        }
     }
 #else
     if(recv_count == 1 || recv_count == 2 || recv_count == -3 || recv_count == -4 || recv_count == -5){
-        if(!get_flag) coap_get();
-            get_flag = 1;
+        if(!get_flag){
+            if(coap_get() != 0) return -1;
+            else get_flag = 1;
+        }
     }
 #endif
 
@@ -331,22 +347,8 @@ int mbedtls_client_init(void)
         return ret;
     }
 
-    /** TLS 1.2
-    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
-    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
-    **/
-
-    /** TLS 1.3
-    mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
-    mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
-    **/
-
     mbedtls_ssl_conf_min_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, tls_version);
     mbedtls_ssl_conf_max_version( &conf, MBEDTLS_SSL_MAJOR_VERSION_3, tls_version);
-
-    /* OPTIONAL is not optimal for security,
-     * but makes interop easier in this simplified example */
-    //mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
 
     #if defined(MBEDTLS_X509_CRT_PARSE_C)
 
@@ -429,23 +431,6 @@ int mbedtls_client_init(void)
 
     mbedtls_ssl_conf_ke(&conf,key_exchange_modes);
 
-    /**
-    
-    TLS_AES_128_CCM_SHA256
-    TLS_AES_128_GCM_SHA256
-    TLS_AES_256_GCM_SHA384
-
-    **/
-
-    cipher[0] = mbedtls_ssl_get_ciphersuite_id("TLS_AES_256_GCM_SHA384");
-    cipher[1] = 0;
-
-    if (cipher[0] == 0)
-            {
-                mbedtls_printf("forced ciphersuite not found\n");
-                ret = 2;
-                return ret;
-    }
 /*
     const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
     ciphersuite_info = mbedtls_ssl_ciphersuite_from_id( cipher[0] );
@@ -489,32 +474,31 @@ int start_client(int argc, char **argv)
 
     addr_str = argv[1];
 
-    if (argc > 2){
+    iface = ipv6_addr_split_iface(addr_str);
+
+    if (argc == 4){
         if (strcmp(argv[2], "psk") == 0)
                 key_exchange_modes = KEY_EXCHANGE_MODE_PSK_KE;
-        else if (strcmp(argv[2], "psk_dhe") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_DHE_KE;
         else if (strcmp(argv[2], "ecdhe_ecdsa") == 0)
                 key_exchange_modes = KEY_EXCHANGE_MODE_ECDHE_ECDSA;
-        else if (strcmp(argv[2], "psk_all") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_PSK_ALL;
-        else if (strcmp(argv[2], "all") == 0)
-                key_exchange_modes = KEY_EXCHANGE_MODE_ALL;
         else{
+            printf("Key exchange mode not found\n");
             usage(argv[0]);
             return -1;
         }
-    }
 
-    if (argc > 3){
-        if (strcmp(argv[3], "tls1_2") == 0)
-                tls_version = MBEDTLS_SSL_MINOR_VERSION_3;
-        else if (strcmp(argv[3], "tls1_3") == 0)
-                tls_version = MBEDTLS_SSL_MINOR_VERSION_4;
-        else{
+        cipher[0] = mbedtls_ssl_get_ciphersuite_id(argv[3]);
+        cipher[1] = 0;
+
+        if (cipher[0] == 0)
+                {
+                    mbedtls_printf("Forced ciphersuite not found\n");
+                    usage(argv[0]);
+                    return -1;
+                }
+    } else {
             usage(argv[0]);
             return -1;
-        }
     }
 
     printf("Initializing client...\n");
