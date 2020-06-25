@@ -38,8 +38,8 @@
 
 #endif
 
-static int config_index = 0;
-static char *config[] = {"TLS13-AES128-CCM-SHA256", "TLS13-AES128-GCM-SHA256", "TLS13-AES256-GCM-SHA384"};
+//static int config_index = 0;
+//static char *config[] = {"TLS13-AES128-CCM-SHA256", "TLS13-AES128-GCM-SHA256", "TLS13-AES256-GCM-SHA384"};
 
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
@@ -53,10 +53,14 @@ extern const int client_key_len;
 extern const unsigned char ca_cert[];
 extern const int ca_cert_len;
 
+extern int iface;
+
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
 extern char payload_tls[];
 extern int size_payload;
+
+static char cciphersuite[32];
 
 #ifdef MODULE_WOLFSSL_XUSER
 extern unsigned int mem_max;
@@ -94,7 +98,7 @@ static inline unsigned int my_psk_client_cb(WOLFSSL* ssl, const char* hint,
         key[i] = b;
     }
 
-    *ciphersuite = config[config_index];
+    *ciphersuite = (char *) cciphersuite;
 
     return 64;   /* length of key in octets or 0 for error */
 }
@@ -102,7 +106,12 @@ static inline unsigned int my_psk_client_cb(WOLFSSL* ssl, const char* hint,
 
 static void usage(const char *cmd_name)
 {
-    LOG(LOG_ERROR, "Usage: %s <server-address>\n", cmd_name);
+        LOG(LOG_ERROR, "\nUsage: %s <server-address> <ciphersuite>\n\n \
+        Admitted ciphersuites: \n\n \
+        TLS13-AES128-CCM-SHA256\n \
+        TLS13-AES128-GCM-SHA256\n \
+        TLS13-AES256-GCM-SHA384\n\n \
+        (Also check that your Makefile is coherent with your choice)\n", cmd_name);
 }
 
 int coap_post(void)
@@ -207,7 +216,9 @@ int client_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         printf("\n/*-------------------- END SEND -----------------*/\n");
     }
 
-    coap_post();
+    if(coap_post() != 0){
+        return -1; //POST FAILED
+    }
 
     count_send += 1;
 
@@ -238,15 +249,19 @@ int client_recv(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     #ifndef MODULE_WOLFSSL_PSK
 
     if(count_read == 1 || count_read == 2 || count_read == 3 || count_read == 4 || count_read == 5){
-        if(!get_flag) coap_get();
-        get_flag = 1;
+        if(!get_flag){
+            if(coap_get() != 0) return -1;
+            get_flag = 1;
+        }
     }
 
     #else 
 
     if(count_read == 1 || count_read == 2){
-        if(!get_flag) coap_get();
-        get_flag = 1;
+        if(!get_flag){
+            if(coap_get() != 0) return -1;
+            get_flag = 1;
+        }
     }
 
     #endif
@@ -344,7 +359,7 @@ WOLFSSL* Client(WOLFSSL_CTX* ctx, char* suite, int setSuite, int doVerify)
     wolfSSL_CTX_set_psk_client_tls13_callback(ctx, my_psk_client_cb);
 #endif
 
-    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, config[config_index])) != SSL_SUCCESS) {
+    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, cciphersuite)) != SSL_SUCCESS) {
             printf("ret = %d\n", ret);
             printf("Error :can't set cipher\n");
             wolfSSL_CTX_free(ctx);
@@ -379,12 +394,32 @@ int start_tls_client(int argc, char **argv)
     (void) argc;
     (void) argv;
 
-    if (argc != 2) {
+    if (argc == 3)
+    {
+        if(strcmp(argv[2],"TLS13-AES128-CCM-SHA256") == 0){
+            strcpy(cciphersuite, "TLS13-AES128-CCM-SHA256");
+        }
+        else if(strcmp(argv[2],"TLS13-AES128-GCM-SHA256") == 0){
+            strcpy(cciphersuite, "TLS13-AES128-GCM-SHA256");
+        }
+        else if(strcmp(argv[2],"TLS13-AES256-GCM-SHA384") == 0){
+            strcpy(cciphersuite, "TLS13-AES256-GCM-SHA384");
+        }
+        else {
+            printf("Ciphersuite not found\n");
+            usage(argv[0]);
+            return -1;
+        }
+
+    } else {
         usage(argv[0]);
         return -1;
     }
 
     addr_str = argv[1];
+
+    /* parse for interface */
+    iface = ipv6_addr_split_iface(addr_str);
 
     int ret = SSL_FAILURE;
 
@@ -394,8 +429,6 @@ int start_tls_client(int argc, char **argv)
 
     wolfSSL_Init();
 
-    //  Example usage (not implemented)
-    //  sslServ = Server(ctxServ, "ECDHE-RSA-AES128-SHA", 1);
     sslCli  = Client(ctxCli, NULL, 0, 0);
 
     if (sslCli == NULL) {

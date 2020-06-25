@@ -39,8 +39,8 @@
 
 #endif
 
-static int config_index = 0;
-static char *config[] = {"TLS13-AES128-CCM-SHA256", "TLS13-AES128-GCM-SHA256", "TLS13-AES256-GCM-SHA384"};
+//static int config_index = 0;
+//static char *config[] = {"TLS13-AES128-CCM-SHA256", "TLS13-AES128-GCM-SHA256", "TLS13-AES256-GCM-SHA384"};
 
 extern size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str);
 
@@ -70,6 +70,8 @@ static int wake_flag = 0;
 /* identity is OpenSSL testing default for openssl s_client, keep same */
 static const char* kIdentityStr = "Client_identity";
 
+static char cciphersuite[32];
+
 #ifdef MODULE_WOLFSSL_PSK
 
 static inline unsigned int my_psk_server_cb(WOLFSSL* ssl, const char* identity,
@@ -91,12 +93,22 @@ static inline unsigned int my_psk_server_cb(WOLFSSL* ssl, const char* identity,
         key[i] = b;
     }
 
-    *ciphersuite = config[config_index];
+    *ciphersuite = (char *) cciphersuite;
 
     return 64;   /* length of key in octets or 0 for error */
 }
 
 #endif /* MODULE_WOLFSSL_PSK */
+
+static void usage(const char *cmd_name)
+{
+        LOG(LOG_ERROR, "\nUsage: %s <ciphersuite>\n\n \
+        Admitted ciphersuites: \n\n \
+        TLS13-AES128-CCM-SHA256\n \
+        TLS13-AES128-GCM-SHA256\n \
+        TLS13-AES256-GCM-SHA384\n\n \
+        (Also check that your Makefile is coherent with your choice)\n", cmd_name);
+}
 
 int server_send(WOLFSSL *ssl, char *buf, int sz, void *ctx)
 {
@@ -271,7 +283,7 @@ WOLFSSL* Server(WOLFSSL_CTX* ctx, char* suite, int setSuite)
     wolfSSL_CTX_use_psk_identity_hint(ctx, "hint");
 #endif /* MODULE_WOLFSSL_PSK */
 
-    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, config[config_index])) != SSL_SUCCESS) {
+    if (( ret = wolfSSL_CTX_set_cipher_list(ctx, cciphersuite)) != SSL_SUCCESS) {
             printf("ret = %d\n", ret);
             printf("Error :can't set cipher\n");
             wolfSSL_CTX_free(ctx);
@@ -306,6 +318,28 @@ int start_tls_server(int argc, char **argv)
     WOLFSSL_CTX* ctxServ = NULL;
 
     //wolfSSL_Debugging_ON();
+
+    if (argc == 2)
+    {
+        if(strcmp(argv[1],"TLS13-AES128-CCM-SHA256") == 0){
+            strcpy(cciphersuite, "TLS13-AES128-CCM-SHA256");
+        }
+        else if(strcmp(argv[1],"TLS13-AES128-GCM-SHA256") == 0){
+            strcpy(cciphersuite, "TLS13-AES128-GCM-SHA256");
+        }
+        else if(strcmp(argv[1],"TLS13-AES256-GCM-SHA384") == 0){
+            strcpy(cciphersuite, "TLS13-AES256-GCM-SHA384");
+        }
+        else {
+            printf("Ciphersuite not found\n");
+            usage(argv[0]);
+            return -1;
+        }
+
+    } else {
+        usage(argv[0]);
+        return -1;
+    }
 
     wolfSSL_Init();
 
@@ -357,7 +391,8 @@ int start_tls_server(int argc, char **argv)
     /* Clean up and exit. */
     LOG(LOG_INFO, "Closing connection.\r\n");
 
-    //thread_wakeup(main_pid);
+    wolfSSL_read(sslServ, buf, PAYLOAD_TLS_SIZE);
+    buf[size_payload] = (char)0;
 
 #ifdef MODULE_WOLFSSL_XUSER
     printf("Max Heap used %d bytes.\n",mem_max);
