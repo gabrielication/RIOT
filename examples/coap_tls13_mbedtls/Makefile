@@ -51,7 +51,7 @@ USEMODULE += shell
 USEMODULE += shell_commands
 USEMODULE += ps
 
-USEPKG += mbed-tls
+USEPKG += mbed-tls13
 
 # Enable this line if you want MAX HEAP LOGGING
 #CFLAGS += -DMBED_HEAP_LOG

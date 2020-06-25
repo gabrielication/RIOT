@@ -1,4 +1,0 @@
-INCLUDES += -I$(RIOTPKG)/mbed-tls/alt_features
-INCLUDES += -I$(PKGDIRBASE)/mbed-tls/include
-
-DIRS += $(RIOTBASE)/pkg/mbed-tls/alt_features

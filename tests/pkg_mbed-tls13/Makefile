@@ -1,6 +1,6 @@
 include ../Makefile.tests_common
 
-USEPKG += mbed-tls
+USEPKG += mbed-tls13
 
 # A larger stack size is required or the board will reboot
 ifneq ($(BOARD),native)
