@@ -28,6 +28,8 @@
 #include "mutex.h"
 #include "thread.h"
 
+#include <periph/pm.h>
+
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
@@ -105,6 +107,9 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
 
     if (req_state == GCOAP_MEMO_TIMEOUT) {
         printf("gcoap: timeout for msg ID %02u\n", coap_get_id(pdu));
+
+        puts("Going to reboot...\n");
+        pm_reboot();
         
         /*retry
         if(last_post) coap_post();
@@ -115,6 +120,10 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
     }
     else if (req_state == GCOAP_MEMO_ERR) {
         printf("gcoap: error in response\n");
+
+        puts("Going to reboot...\n");
+        pm_reboot();
+        
         return;
     }
 
