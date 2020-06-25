@@ -28,6 +28,8 @@
 #include "mutex.h"
 #include "thread.h"
 
+#include <periph/pm.h>
+
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
@@ -43,6 +45,8 @@ mutex_t server_lock = MUTEX_INIT_LOCKED;
 mutex_t client_lock = MUTEX_INIT_LOCKED;
 mutex_t server_req_lock = MUTEX_INIT_LOCKED;
 mutex_t client_send_lock = MUTEX_INIT_LOCKED;
+
+int iface;
 
 kernel_pid_t main_pid;
 
@@ -108,11 +112,18 @@ static void _resp_handler(unsigned req_state, coap_pkt_t* pdu,
         if(last_post) coap_post();
         else if (last_get) coap_get();
         */
+
+        puts("Going to reboot...\n");
+        pm_reboot();
         
         return;
     }
     else if (req_state == GCOAP_MEMO_ERR) {
         printf("gcoap: error in response\n");
+
+        puts("Going to reboot...\n");
+        pm_reboot();
+        
         return;
     }
 
@@ -234,8 +245,6 @@ size_t _send(uint8_t *buf, size_t len, char *addr_str, char *port_str)
 
     remote.family = AF_INET6;
 
-    /* parse for interface */
-    int iface = ipv6_addr_split_iface(addr_str);
     if (iface == -1) {
         if (gnrc_netif_numof() == 1) {
             /* assign the single interface found in gnrc_netif_numof() */
