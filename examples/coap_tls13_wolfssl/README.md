@@ -7,7 +7,7 @@ The [wolfSSL](https://github.com/wolfSSL/wolfssl) library was used for the TLS 1
 
 ## Testing
 
-Only the 'native' emulator was tested at the time of this release.
+You can test both on native and/or your board. Keep in mind that to this release only nrf52840dk was tested, other boards may not have enough RAM and/or flash memory.
 
 Go to the `Makefiles` folder inside the example, copy the content of one of the configurations coherently with the ciphersuite and key exchange that you want to use. Paste that to the main Makefile in the example and save.
 
