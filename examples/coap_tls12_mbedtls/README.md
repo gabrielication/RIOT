@@ -1,4 +1,4 @@
-# ADTLS 1.2 over CoAP with Mbed TLS
+# ATLS 1.2 over CoAP with Mbed TLS
 
 This program provides an example of a TLS 1.2 handshake using CoAP as a transport layer.
 The [Mbed TLS](https://github.com/ARMmbed/mbedtls) library was used for the TLS implementation and [gCoAP](https://riot-os.org/api/group__net__gcoap.html) as the CoAP implementation.
