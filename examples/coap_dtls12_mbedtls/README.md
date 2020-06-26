@@ -46,7 +46,7 @@ You have to start the client now. Open a new terminal on the same folder. Type:
 
     PORT=tap1 make term
     
-And then type `tlsc` followed by the previous server address you copied from the server and the ciphersuite like:
+And then type `dtlsc` followed by the previous server address you copied from the server and the ciphersuite like:
 
     > dtlsc fe80::ac4a:f4ff:fef7:b23d TLS-PSK-WITH-AES-128-CCM
 
