@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = coap_tls13_wolfssl
+APPLICATION = coap_tls12_wolfssl
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
@@ -46,25 +46,25 @@ USEMODULE += ps
 USEPKG += wolfssl
 USEMODULE += wolfcrypt
 USEMODULE += wolfssl
-USEMODULE += wolfssl_tls13
-USEMODULE += wolfcrypt_ecc
-USEMODULE += wolfcrypt_asn
+USEMODULE += wolfssl_tls
 
 # Max Heap logging
 #USEMODULE += wolfssl_xuser
 
 # Select public key algorithm (or PSK) support for ciphersuites:
-# You have to redefine also the PDU_BUF_SIZE and SHA
-#USEMODULE += wolfssl_sni
-#CFLAGS += -DGCOAP_PDU_BUF_SIZE=1024
+# You have to redefine also the PDU_BUF_SIZE
+USEMODULE += wolfssl_sni
+USEMODULE += wolfcrypt_ecc
+USEMODULE += wolfcrypt_asn
+USEMODULE += wolfcrypt_ecc521
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=1024
 
-USEMODULE += wolfssl_psk
-CFLAGS += -DGCOAP_PDU_BUF_SIZE=384
+#USEMODULE += wolfssl_psk
+#CFLAGS += -DGCOAP_PDU_BUF_SIZE=256
 
-USEMODULE += wolfcrypt_aesccm
-#USEMODULE += wolfcrypt_aesgcm
-#USEMODULE += wolfcrypt_sha512
-#USEMODULE += wolfcrypt_ecc521
+#USEMODULE += wolfcrypt_aesccm
+USEMODULE += wolfcrypt_aesgcm
+USEMODULE += wolfcrypt_sha512
 
 CFLAGS += -Wno-unused-parameter -Wno-unused-variable
 

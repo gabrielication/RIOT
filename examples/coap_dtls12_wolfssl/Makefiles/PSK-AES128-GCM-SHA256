@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = coap_tls13_wolfssl
+APPLICATION = coap_dtls12_wolfssl
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
@@ -26,7 +26,6 @@ CFLAGS += -DGCOAP_RESEND_BUFS_MAX=$(GCOAP_RESEND_BUFS_MAX)
 # NOTE: 6LoWPAN will be included if IEEE802.15.4 devices are present
 USEMODULE += gnrc_netdev_default
 USEMODULE += auto_init_gnrc_netif
-# Specify the mandatory networking modules
 USEMODULE += gcoap
 # Additional networking modules that can be dropped if not needed
 USEMODULE += gnrc_icmpv6_echo
@@ -46,29 +45,31 @@ USEMODULE += ps
 USEPKG += wolfssl
 USEMODULE += wolfcrypt
 USEMODULE += wolfssl
-USEMODULE += wolfssl_tls13
-USEMODULE += wolfcrypt_ecc
-USEMODULE += wolfcrypt_asn
+USEMODULE += wolfssl_dtls
 
 # Max Heap logging
 #USEMODULE += wolfssl_xuser
 
 # Select public key algorithm (or PSK) support for ciphersuites:
-# You have to redefine also the PDU_BUF_SIZE and SHA
+# You have to redefine also the PDU_BUF_SIZE
 #USEMODULE += wolfssl_sni
-#CFLAGS += -DGCOAP_PDU_BUF_SIZE=1024
+#USEMODULE += wolfcrypt_ecc
+#USEMODULE += wolfcrypt_asn
+#CFLAGS += -DGCOAP_PDU_BUF_SIZE=1280
 
 USEMODULE += wolfssl_psk
-CFLAGS += -DGCOAP_PDU_BUF_SIZE=384
+CFLAGS += -DGCOAP_PDU_BUF_SIZE=256
 
-USEMODULE += wolfcrypt_aesccm
-#USEMODULE += wolfcrypt_aesgcm
+#USEMODULE += wolfcrypt_aesccm
+USEMODULE += wolfcrypt_aesgcm
 #USEMODULE += wolfcrypt_sha512
 #USEMODULE += wolfcrypt_ecc521
 
-CFLAGS += -Wno-unused-parameter -Wno-unused-variable
+# DTLS stuff
+CFLAGS += -DDTLS_DEFAULT_PORT=$(DTLS_PORT) -DDTLS_WOLFSSL -Wno-unused-parameter -Wno-unused-variable
 
 # A larger stack size is required if using ECC or RSA
+# You also need a bigger default thread stacksize
 ifneq ($(BOARD),native)
   # 2048 is the minimum when using certificates
   # YOU CAN DISABLE THIS IF YOU WANT TO USE PSK ONLY OTHERWISE
