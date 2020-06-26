@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Gabriele Restuccia
+ * Copyright (C) 2020 Gabriele Restuccia
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -11,10 +11,9 @@
  * @{
  *
  * @file
- * @brief       Example application of ATLS 1.3 over CoAP
+ * @brief       Demonstrating ATLS 1.3 using MbedTLS
  *
- * @author      Gabriele Restuccia <restuccia.1548310@studenti.uniroma1.it>
- *
+ * @author      Gabriele Restuccia <grestuccia@cnit.it>
  * @}
  */
 

@@ -7,13 +7,13 @@
  */
 
 /**
- * @ingroup     tests
+ * @ingroup     pkg
  * @{
  *
  * @file
- * @brief       Alternative callbacks for mbed-tls
+ * @brief       Alternative callbacks for Mbed TLS (1.3 prototype)
  *
- * @author      Gabriele Restuccia <restuccia.1548310@studenti.uniroma1.it>
+ * @author      Gabriele Restuccia <grestuccia@cnit.it>
  *
  * @}
  */

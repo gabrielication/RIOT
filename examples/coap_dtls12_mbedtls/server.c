@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2020 Gabriele Restuccia
+ *
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
+ */
+
+/**
+ * @ingroup     examples
+ * @{
+ *
+ * @file
+ * @brief       Demonstrating ADTLS 1.2 using Mbed TLS
+ *
+ * @author      Gabriele Restuccia <grestuccia@cnit.it>
+ * @}
+ */
+
 #include <stdio.h>
 #include <string.h>
 

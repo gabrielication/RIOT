@@ -1,4 +1,3 @@
-/* Created from wolfssl-examples test certificate+keys, ECC/RSA. 28/08/2019 */
 
 #ifdef MODULE_WOLFCRYPT_ECC
 
